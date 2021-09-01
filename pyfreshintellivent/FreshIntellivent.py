@@ -1,5 +1,6 @@
 import bluepy.btle as ble
-from . import characteristics, helpers
+from . import characteristics
+from .helpers import *
 from struct import pack, unpack
 
 class Sky(object):
