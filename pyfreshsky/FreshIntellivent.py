@@ -1,9 +1,8 @@
 import bluepy.btle as ble
-import binascii
-import characteristics, helpers
+from . import characteristics, helpers
 from struct import pack, unpack
 
-class FreshSky(object):
+class Sky(object):
 
     def __init__(self, addr=None, auth=None, debug=False):
         self._auth = False
@@ -57,7 +56,7 @@ class FreshSky(object):
             if self._debug:
                 print("[Fresh Intellivent Sky] [Error] Read error - {}".format(str(e)))
             raise e
-
+# 
     def _writeCharacteristic(self, uuid, value):
         if (self._debug):
             print("[Fresh Intellivent Sky] [W] {} = {}".format(uuid, value))
@@ -67,32 +66,32 @@ class FreshSky(object):
             if self._debug:
                 print("[Fresh Intellivent Sky] [Error] Write error - {}".format(str(e)))
             raise e
-
+# 
     def getHumidity(self):
         value = unpack('<BBH', self._readCharacterisitc(uuid=characteristics.HUMIDITY))
         self.humidityEnabled = bool(value[0])
         self.humidityDetection = value[1]
         self.humidityRPM = value[2]
-
+# 
         return {
             "enabled": self.humidityEnabled,
             "detection": self.humidityDetection,
             "rpm": self.humidityRPM
         }
-
+# 
     def setHumidity(self, humidityEnabled, humidityDetection, humidityRPM):
         value = pack('<BBH', humidityEnabled,
             validatedDetection(humidityDetection),
             validatedRPM(humidityRPM))
         self._writeCharacteristic(characteristics.HUMIDITY, value)
-
+# 
     def getLightVOC(self):
         value = unpack('<4B', self._readCharacterisitc(uuid=characteristics.LIGHT_VOC))
         lightEnabled = bool(value[0])
         lightDetection = value[1]
         vocEnabled = bool(value[2])
         vocDetection = value[3]
-
+# 
         return {
             "light": {
                 "enabled": lightEnabled,
@@ -103,7 +102,7 @@ class FreshSky(object):
                 "detection": vocDetection
             }
         }
-
+# 
     def setLightVOC(self, lightEnabled, lightDetection, vocEnabled, vocDetection):
         value = pack('<4b',
             bool(lightEnabled),
@@ -111,23 +110,23 @@ class FreshSky(object):
             bool(vocEnabled),
             validatedDetection(vocDetection))
         self._writeCharacteristic(characteristics.LIGHT_VOC, value)
-
+# 
     def getConstantSpeed(self):
         value = unpack('<BH', self._readCharacterisitc(uuid=characteristics.CONSTANT_SPEED))
         constantSpeedEnabled = bool(value[0])
         constantSpeedRPM = value[1]
-
+# 
         return {
             "enabled": constantSpeedEnabled,
             "rpm": constantSpeedRPM
         }
-
+# 
     def setConstantSpeed(self, constantSpeedEnabled, constantSpeedRPM):
         value = pack('<BH',
             constantSpeedEnabled,
             validatedRPM(constantSpeedRPM))
         self._writeCharacteristic(characteristics.CONSTANT_SPEED, value)
-
+# 
     def getTimer(self):
         value = unpack('<3BH', self._readCharacterisitc(uuid=characteristics.TIMER))
         timerRunningTime = value[0]

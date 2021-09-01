@@ -1,3 +1,5 @@
+import binascii
+
 def validatedRPM(self, value):
     if value < 800:
         return 800

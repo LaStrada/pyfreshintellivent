@@ -1,1 +1,1 @@
-from .FreshSky import FreshSky;
+from .FreshIntellivent import Sky
