@@ -6,6 +6,7 @@ def validatedRPM(value):
     else:
         return value
 
+
 def validatedDetection(value):
     if value < 0:
         return 0
@@ -13,6 +14,7 @@ def validatedDetection(value):
         return 3
     else:
         return int(value)
+
 
 def validatedMinutes(value):
     if value < 0:
