@@ -1,5 +1,3 @@
-import binascii
-
 def validatedRPM(value):
     if value < 800:
         return 800
@@ -7,6 +5,7 @@ def validatedRPM(value):
         return 2400
     else:
         return value
+
 
 def validatedDetection(value):
     if value < 0:
@@ -16,14 +15,9 @@ def validatedDetection(value):
     else:
         return int(value)
 
+
 def validatedMinutes(value):
     if value < 0:
         return 0
     else:
         return int(value)
-
-def bytesToString(value):
-    return
-
-def stringToBytes(value):
-    return binascii.b2a_hex(value).decode('utf-8')
