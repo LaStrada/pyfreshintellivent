@@ -137,3 +137,5 @@ Light detection on, high light detection, odour detection on, high odour detecti
 **Format:** BH
 **B:** Off/on (off: `00`, on: `01`)\
 **H:** RPM
+
+Will keep the speed you send in as long as you are connected. This will override all other modes.
