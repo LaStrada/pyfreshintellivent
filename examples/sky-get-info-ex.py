@@ -1,0 +1,10 @@
+from pyfreshintellivent.pyfreshintellivent.FreshIntellivent import Sky
+p = Sky("Fan adress","authcode from sky-auth-ex",False)
+print("Humdity" , p.getHumidity() )
+print("LightVOC" , p.getLightVOC() )
+print("ConstantSpeed" , p.getConstantSpeed())
+print("Timer", p.getTimer() )
+print("Airing", p.getAiring() )
+print("Pause", p.getPause() )
+print("Boost" , p.getBoost())
+print("Sensordata", p.getSensorData())
