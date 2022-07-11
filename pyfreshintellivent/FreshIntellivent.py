@@ -245,21 +245,21 @@ class Sky(object):
             self._readCharacterisitc(uuid=characteristics.BOOST))
 
         boostEnabled = bool(value[0])
-        boostMinutes = value[1]
-        boostRPM = value[2]
+        boostSeconds = value[2]
+        boostRPM = value[1]
 
         return {
             "enabled": boostEnabled,
-            "minutes": boostMinutes,
+            "seconds": boostSeconds,
             "rpm": boostRPM
         }
 
-    def setBoost(self, boostEnabled, boostMinutes, boostRPM):
+    def setBoost(self, boostEnabled, boostSeconds, boostRPM):
         value = pack(
-            '<2B',
+            '<B2H',
             bool(boostEnabled),
-            h.validatedMinutes(boostMinutes),
-            h.validatedRPM(boostRPM))
+            h.validatedRPM(boostRPM),
+            h.validatedMinutes(boostSeconds))
 
         self._writeCharacteristic(characteristics.BOOST, value)
 
