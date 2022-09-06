@@ -1,3 +1,3 @@
 from .FreshIntellivent import Sky
 
-__all__ = ['Sky']
+__all__ = ["Sky"]
