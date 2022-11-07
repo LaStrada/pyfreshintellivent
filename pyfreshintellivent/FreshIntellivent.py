@@ -1,91 +1,85 @@
-import bluepy.btle as ble
+import uu
+import asyncio
+from bleak import BleakClient, BleakScanner
+from bleak.exc import BleakError
 from . import characteristics
 from . import helpers as h
 from struct import pack, unpack
 
 
 class Sky(object):
-    def __init__(self, addr=None, auth=None, debug=False):
-        self._auth = False
+    def __init__(self, debug=False):
         self._debug = debug
-        self._conn = ble.Peripheral()
 
-        if addr is not None:
-            self._conn.connect(addr=addr)
-
-            if auth is not None:
-                self.authenticate(auth)
-
-        elif auth is not None:
-            self._log("Warning", "Can't authenticate when address is empty")
-
-    def __del__(self):
-        self.disconnect()
-
-    def disconnect(self):
-        self._conn.disconnect()
+    async def disconnect(self):
+        await self.client.disconnect()
         self._log("Info", "Disconnected")
 
-    def connect(self, addr, auth):
-        self._conn.connect(addr)
+    async def connectAndAuthenticate(self, ble_address, authenticationCode):
+        # TODO: Add validation of authentication code
 
-        if auth is not None:
-            self.auth(auth)
+        device = await BleakScanner.find_device_by_address(ble_address, timeout=20.0)
+        if not device:
+            raise BleakError(f"A device with address {ble_address} could not be found.")
+        self._log("Info", f"Found {ble_address}")
+        
+        self.client = BleakClient(device)
 
-    def fetchAuth(self):
-        return self._readCharacterisitc(characteristics.AUTH)
+        await self.client.connect()
+        self._log("Info", f"Connected to {ble_address}")
 
-    def authenticate(self, auth):
-        self._log("Info", "Authenticating...")
+        self._authenticate(authenticationCode)
+    
+    async def _authenticate(self, authenticationCode):
+        # TODO: Catch errors
+        await self.client.write_gatt_char(
+            char_specifier=characteristics.AUTH,
+            data=bytes.fromhex(authenticationCode)
+        )
+        self._log("Info", "Authenticated")
 
-        try:
-            self._conn.getCharacteristics(uuid=characteristics.AUTH)[0].write(
-                bytes.fromhex(auth), withResponse=True
-            )
+    async def fetchAuthenticationCode(self, device: BleakClient):
+        code = await device.read_gatt_char(
+            char_specifier=characteristics.AUTH
+        )
+        return code
 
-            self._log("Info", "Authenticated!")
+    async def _readCharacterisitc(self, uuid):
+        value = await self.client.read_gatt_char(
+            char_specifier=uuid
+        )
+        self._log("R", "{} = {}".format(uuid, value))
+        return value
 
-        except Exception as e:
-            raise e
-
-        else:
-            self._auth = True
-
-    def _readCharacterisitc(self, uuid):
-        try:
-            value = self._conn.getCharacteristics(uuid=uuid)[0].read()
-            self._log("R", "{} = {}".format(uuid, value))
-            return value
-
-        except Exception as e:
-            self._log("Warning", "Read error - {}".format(str(e)))
-            raise e
-
-    def _writeCharacteristic(self, uuid, value):
+    async def _writeCharacteristic(self, uuid, value):
         self._log("W", "{} = {}".format(uuid, value))
-        try:
-            self._conn.getCharacteristics(uuid=uuid)[0].write(value, withResponse=True)
-
-        except Exception as e:
-            self._log("Error", "Write error - {}".format(str(e)))
-            raise e
+        await self.client.write_gatt_char(
+            char_specifier=characteristics.AUTH,
+            data=bytes.fromhex(value)
+        )
+        # TODO: Handle errorw
 
     def _log(self, level, message):
         if self._debug:
-            print("[Fresh Intellivent Sky] [{}] {}").format(level, message)
+            print(f"[Fresh Intellivent Sky] [{level}] {message}")
 
-    def getHumidity(self):
-        value = unpack("<BBH", self._readCharacterisitc(uuid=characteristics.HUMIDITY))
+    async def getHumidity(self):
+        # value = unpack("<BBH", self._readCharacterisitc(uuid=characteristics.HUMIDITY))
+        if self.client.is_connected:
+            humidity = await self._readCharacterisitc(uuid=characteristics.HUMIDITY)
+            print(humidity)
+        else:
+            print("Not connected")
 
-        self.humidityEnabled = bool(value[0])
-        self.humidityDetection = value[1]
-        self.humidityRPM = value[2]
+        # self.humidityEnabled = bool(value[0])
+        # self.humidityDetection = value[1]
+        # self.humidityRPM = value[2]
 
-        return {
-            "enabled": self.humidityEnabled,
-            "detection": self.humidityDetection,
-            "rpm": self.humidityRPM,
-        }
+        # return {
+        #     "enabled": self.humidityEnabled,
+        #     "detection": self.humidityDetection,
+        #     "rpm": self.humidityRPM,
+        # }
 
     def setHumidity(self, humidityEnabled, humidityDetection, humidityRPM):
         value = (
