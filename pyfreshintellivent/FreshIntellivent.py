@@ -18,19 +18,25 @@ class Sky(object):
                 self._log_message("Info", "Disconnected.")
             else:
                 self._log_message("Info", "Already disconnected.")
-        except AttributeError as e:
+        except AttributeError:
             self._log_message("Info", "No clients available.")
         finally:
             self.client = None
 
-    async def connect_and_authenticate(self, ble_address, authentication_code, timeout=5.0):
+    async def connect_and_authenticate(
+        self, ble_address, authentication_code, timeout=5.0
+    ):
         h.validate_authentication_code(authentication_code)
 
-        device = await BleakScanner.find_device_by_address(device_identifier=ble_address, timeout=timeout)
+        device = await BleakScanner.find_device_by_address(
+            device_identifier=ble_address, timeout=timeout
+        )
         if not device:
-            raise BleakError(f"A device with address {ble_address} could not be found.")
+            raise BleakError(
+                f"A device with address {ble_address} " "could not be found."
+            )
         self._log_message("Info", f"Found {ble_address}")
-        
+
         self.client = BleakClient(device)
 
         await self.client.connect()
@@ -38,54 +44,52 @@ class Sky(object):
 
         # TODO: Add validation of authentication code
         await self._authenticate(authentication_code)
-    
+
     async def _authenticate(self, authentication_code):
         await self.client.write_gatt_char(
-            char_specifier=characteristics.AUTH,
-            data=bytes.fromhex(authentication_code)
+            char_specifier=characteristics.AUTH, data=bytes.fromhex(authentication_code)
         )
         self._log_message("Info", "Authenticated.")
 
     async def fetch_authentication_code(self, device: BleakClient):
-        code = await device.read_gatt_char(
-            char_specifier=characteristics.AUTH
-        )
+        code = await device.read_gatt_char(char_specifier=characteristics.AUTH)
         return code
 
     async def _read_characterisitc(self, uuid):
         value = None
         try:
-            value = await self.client.read_gatt_char(
-                char_specifier=uuid
-            )
+            value = await self.client.read_gatt_char(char_specifier=uuid)
         finally:
-            self._log_data(level="R", uuid=uuid, message=value)
+            self._log_data(command="R", uuid=uuid, message=value)
         return value
 
     async def _write_characteristic(self, uuid, value):
-        self._log_data(level="W", uuid=uuid, message=value)
-        try:
-            await self.client.write_gatt_char(
-                char_specifier=characteristics.AUTH,
-                data=bytes.fromhex(value)
-            )
-        except:
-            self._log_message(
-                level="Warning",
-                message="Failed to write to UUID = {uuid}"
-            )
+        self._log_data(command="W", uuid=uuid, message=value)
+        # try:
+        await self.client.write_gatt_char(
+            char_specifier=characteristics.AUTH, data=bytes.fromhex(value)
+        )
+        # except:
+        #     self._log_message(
+        #         command="Warning",
+        #         message="Failed to write to UUID = {uuid}"
+        #     )
         # TODO: Handle error? Raise error?
 
     def _log_message(self, level, message):
         if self._debug:
             print(f"[Fresh Intellivent Sky] [{level}] {message}")
-    
+
     def _log_data(self, command, uuid, message):
-        hex = ''.join('{:02x}'.format(x) for x in message)
-        self._log_message(command, f"[{command}] {uuid} = {hex or message}")
+        hex = "".join("{:02x}".format(x) for x in message)
+        self._log_message(
+            level=command, message=f"[{command}] {uuid} = {hex or message}"
+        )
 
     async def get_humidity(self):
-        value = unpack("<BBH", await self._read_characterisitc(uuid=characteristics.HUMIDITY))
+        value = unpack(
+            "<BBH", await self._read_characterisitc(uuid=characteristics.HUMIDITY)
+        )
 
         self.humidity_enabled = bool(value[0])
         self.humidity_detection = value[1]
@@ -97,7 +101,7 @@ class Sky(object):
             "rpm": self.humidity_rpm,
         }
 
-    def set_humidity(self, humidity_enabled, humidity_detection, humidity_rpm):
+    async def set_humidity(self, humidity_enabled, humidity_detection, humidity_rpm):
         value = (
             pack(
                 "<BBH",
@@ -107,10 +111,12 @@ class Sky(object):
             ),
         )
 
-        self._write_characteristic(characteristics.HUMIDITY, value)
+        await self._write_characteristic(characteristics.HUMIDITY, value)
 
-    def get_light_and_voc(self):
-        value = unpack("<4B", self._read_characterisitc(uuid=characteristics.LIGHT_VOC))
+    async def get_light_and_voc(self):
+        value = unpack(
+            "<4B", await self._read_characterisitc(uuid=characteristics.LIGHT_VOC)
+        )
 
         light_enabled = bool(value[0])
         light_detection = value[1]
@@ -122,7 +128,9 @@ class Sky(object):
             "voc": {"enabled": voc_enabled, "detection": voc_detection},
         }
 
-    def setLightVOC(self, light_enabled, light_detection, voc_enabled, voc_detection):
+    async def set_light_voc(
+        self, light_enabled, light_detection, voc_enabled, voc_detection
+    ):
         value = pack(
             "<4b",
             bool(light_enabled),
@@ -131,11 +139,11 @@ class Sky(object):
             h.validatedDetection(voc_detection),
         )
 
-        self._write_characteristic(characteristics.LIGHT_VOC, value)
+        await self._write_characteristic(characteristics.LIGHT_VOC, value)
 
-    def get_constant_speed(self):
+    async def get_constant_speed(self):
         value = unpack(
-            "<BH", self._read_characterisitc(uuid=characteristics.CONSTANT_SPEED)
+            "<BH", await self._read_characterisitc(uuid=characteristics.CONSTANT_SPEED)
         )
 
         constant_speed_enabled = bool(value[0])
@@ -143,13 +151,15 @@ class Sky(object):
 
         return {"enabled": constant_speed_enabled, "rpm": constant_speed_rpm}
 
-    def set_constant_speed(self, constant_speed_enabled, constant_speed_rpm):
+    async def set_constant_speed(self, constant_speed_enabled, constant_speed_rpm):
         value = pack("<BH", constant_speed_enabled, h.validatedRPM(constant_speed_rpm))
 
-        self._write_characteristic(characteristics.CONSTANT_SPEED, value)
+        await self._write_characteristic(characteristics.CONSTANT_SPEED, value)
 
-    def get_timer(self):
-        value = unpack("<3BH", self._read_characterisitc(uuid=characteristics.TIMER))
+    async def get_timer(self):
+        value = unpack(
+            "<3BH", await self._read_characterisitc(uuid=characteristics.TIMER)
+        )
 
         timer_runningtime = value[0]
         timer_delay_enabled = bool(value[1])
@@ -162,29 +172,33 @@ class Sky(object):
             "rpm": timer_rpm,
         }
 
-    def set_timer(
-        self, timer_running_time, timer_delay_enabled, timer_delay_minutes, timer_rpm
-    ):
+    async def set_timer(self, running_time, delay_enabled, delay_minutes, rpm):
         value = pack(
             "<3BH",
-            timer_running_time,
-            bool(timer_delay_enabled),
-            timer_delay_minutes,
-            h.validatedRPM(timer_rpm),
+            running_time,
+            bool(delay_enabled),
+            delay_minutes,
+            h.validated_rpm(rpm),
         )
 
-        self._write_characteristic(characteristics.TIMER, value)
+        await self._write_characteristic(characteristics.TIMER, value)
 
-    def get_airing(self):
-        value = unpack("<3BH", self._read_characterisitc(uuid=characteristics.AIRING))
+    async def get_airing(self):
+        value = unpack(
+            "<3BH", await self._read_characterisitc(uuid=characteristics.AIRING)
+        )
 
         airing_enabled = bool(value[0])
         airing_run_time = value[2]
         airing_rpm = value[3]
 
-        return {"enabled": airing_enabled, "runTime": airing_run_time, "rpm": airing_rpm}
+        return {
+            "enabled": airing_enabled,
+            "runTime": airing_run_time,
+            "rpm": airing_rpm,
+        }
 
-    def set_airing(self, airing_enabled, airing_run_time, airing_rpm):
+    async def set_airing(self, airing_enabled, airing_run_time, airing_rpm):
         value = pack(
             "<3BH",
             bool(airing_enabled),
@@ -193,23 +207,27 @@ class Sky(object):
             h.validatedRPM(airing_rpm),
         )
 
-        self._write_characteristic(characteristics.AIRING, value)
+        await self._write_characteristic(characteristics.AIRING, value)
 
-    def get_pause(self):
-        value = unpack("<2B", self._read_characterisitc(uuid=characteristics.PAUSE))
+    async def get_pause(self):
+        value = unpack(
+            "<2B", await self._read_characterisitc(uuid=characteristics.PAUSE)
+        )
 
         pause_enabled = bool(value[0])
         pause_minutes = value[1]
 
         return {"enabled": pause_enabled, "minutes": pause_minutes}
 
-    def set_pause(self, pause_enabled, pause_minutes):
+    async def set_pause(self, pause_enabled, pause_minutes):
         value = pack("<2B", bool(pause_enabled), h.validated_minutes(pause_minutes))
 
-        self._write_characteristic(characteristics.PAUSE, value)
+        await self._write_characteristic(characteristics.PAUSE, value)
 
-    def get_boost(self):
-        value = unpack("<B2H", self._read_characterisitc(uuid=characteristics.BOOST))
+    async def get_boost(self):
+        value = unpack(
+            "<B2H", await self._read_characterisitc(uuid=characteristics.BOOST)
+        )
 
         boost_enabled = bool(value[0])
         boost_minutes = value[1]
@@ -217,7 +235,7 @@ class Sky(object):
 
         return {"enabled": boost_enabled, "minutes": boost_minutes, "rpm": boost_rpm}
 
-    def set_boost(self, boost_enabled, boost_minutes, boost_rpm):
+    async def set_boost(self, boost_enabled, boost_minutes, boost_rpm):
         value = pack(
             "<2B",
             bool(boost_enabled),
@@ -225,7 +243,7 @@ class Sky(object):
             h.validated_rpm(boost_rpm),
         )
 
-        self._write_characteristic(characteristics.BOOST, value)
+        await self._write_characteristic(characteristics.BOOST, value)
 
     async def set_temporary_speed(self, temporary_enabled, temporary_rpm):
         value = pack("<BH", bool(temporary_enabled), h.validated_rpm(temporary_rpm))
@@ -234,12 +252,13 @@ class Sky(object):
 
     async def get_sensor_data(self):
         data = unpack(
-            "<2B5HBH", await self._read_characterisitc(uuid=characteristics.DEVICE_STATUS)
+            "<2B5HBH",
+            await self._read_characterisitc(uuid=characteristics.DEVICE_STATUS),
         )
         return SkySensors(data)
-        
 
-class SkySensors():
+
+class SkySensors:
     def __init__(self, data):
         self._data = data
 
