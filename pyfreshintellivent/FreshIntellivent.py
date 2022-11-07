@@ -224,10 +224,10 @@ class Sky(object):
         )
 
         boost_enabled = bool(value[0])
-        boost_minutes = value[1]
-        boost_rpm = value[2]
+        boost_rpm = value[1]
+        boost_seconds = value[2]
 
-        return {"enabled": boost_enabled, "minutes": boost_minutes, "rpm": boost_rpm}
+        return {"enabled": boost_enabled, "seconds": boost_seconds, "rpm": boost_rpm}
 
     async def set_boost(self, boost_enabled, boost_minutes, boost_rpm):
         value = pack(
@@ -253,9 +253,10 @@ class Sky(object):
 
 class SkySensors:
     def __init__(self, data):
-        self._data = data
+        if data is None or len(data) != 9:
+            raise ValueError("Length of object need to be 9.")
 
-        # TODO: Error handling
+        self._data = data
 
         self.status = bool(data[0])
         self.mode = data[1]
