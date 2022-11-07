@@ -47,7 +47,8 @@ class Sky(object):
 
     async def _authenticate(self, authentication_code):
         await self.client.write_gatt_char(
-            char_specifier=characteristics.AUTH, data=bytes.fromhex(authentication_code)
+            char_specifier=characteristics.AUTH,
+            data=bytes.fromhex(authentication_code)
         )
         self._log_message("Info", "Authenticated.")
 
@@ -65,16 +66,9 @@ class Sky(object):
 
     async def _write_characteristic(self, uuid, value):
         self._log_data(command="W", uuid=uuid, message=value)
-        # try:
         await self.client.write_gatt_char(
             char_specifier=characteristics.AUTH, data=bytes.fromhex(value)
         )
-        # except:
-        #     self._log_message(
-        #         command="Warning",
-        #         message="Failed to write to UUID = {uuid}"
-        #     )
-        # TODO: Handle error? Raise error?
 
     def _log_message(self, level, message):
         if self._debug:
@@ -257,7 +251,6 @@ class Sky(object):
         )
         return SkySensors(data)
 
-
 class SkySensors:
     def __init__(self, data):
         self._data = data
@@ -284,3 +277,13 @@ class SkySensors:
             self.mode_description = "Boost"
         else:
             self.mode_description = "Unknown"
+    
+    def as_dict(self):
+        return {
+            "status": self.status,
+            "mode": {
+                "description": self.mode_description,
+                "raw_value": self.mode,
+            },
+            "rpm": self.rpm,
+        }
