@@ -1,5 +1,3 @@
-import uu
-import asyncio
 from bleak import BleakClient, BleakScanner
 from bleak.exc import BleakError
 from . import characteristics
@@ -8,247 +6,262 @@ from struct import pack, unpack
 
 
 class Sky(object):
+    client = None
+
     def __init__(self, debug=False):
         self._debug = debug
 
     async def disconnect(self):
-        await self.client.disconnect()
-        self._log("Info", "Disconnected")
+        try:
+            if self.client.is_connected:
+                await self.client.disconnect()
+                self._log_message("Info", "Disconnected.")
+            else:
+                self._log_message("Info", "Already disconnected.")
+        except AttributeError as e:
+            self._log_message("Info", "No clients available.")
+        finally:
+            self.client = None
 
-    async def connectAndAuthenticate(self, ble_address, authenticationCode):
-        # TODO: Add validation of authentication code
+    async def connect_and_authenticate(self, ble_address, authentication_code, timeout=5.0):
+        h.validate_authentication_code(authentication_code)
 
-        device = await BleakScanner.find_device_by_address(ble_address, timeout=20.0)
+        device = await BleakScanner.find_device_by_address(device_identifier=ble_address, timeout=timeout)
         if not device:
             raise BleakError(f"A device with address {ble_address} could not be found.")
-        self._log("Info", f"Found {ble_address}")
+        self._log_message("Info", f"Found {ble_address}")
         
         self.client = BleakClient(device)
 
         await self.client.connect()
-        self._log("Info", f"Connected to {ble_address}")
+        self._log_message("Info", f"Connected to {ble_address}")
 
-        self._authenticate(authenticationCode)
+        # TODO: Add validation of authentication code
+        await self._authenticate(authentication_code)
     
-    async def _authenticate(self, authenticationCode):
-        # TODO: Catch errors
+    async def _authenticate(self, authentication_code):
         await self.client.write_gatt_char(
             char_specifier=characteristics.AUTH,
-            data=bytes.fromhex(authenticationCode)
+            data=bytes.fromhex(authentication_code)
         )
-        self._log("Info", "Authenticated")
+        self._log_message("Info", "Authenticated.")
 
-    async def fetchAuthenticationCode(self, device: BleakClient):
+    async def fetch_authentication_code(self, device: BleakClient):
         code = await device.read_gatt_char(
             char_specifier=characteristics.AUTH
         )
         return code
 
-    async def _readCharacterisitc(self, uuid):
-        value = await self.client.read_gatt_char(
-            char_specifier=uuid
-        )
-        self._log("R", "{} = {}".format(uuid, value))
+    async def _read_characterisitc(self, uuid):
+        value = None
+        try:
+            value = await self.client.read_gatt_char(
+                char_specifier=uuid
+            )
+        finally:
+            self._log_data(level="R", uuid=uuid, message=value)
         return value
 
-    async def _writeCharacteristic(self, uuid, value):
-        self._log("W", "{} = {}".format(uuid, value))
-        await self.client.write_gatt_char(
-            char_specifier=characteristics.AUTH,
-            data=bytes.fromhex(value)
-        )
-        # TODO: Handle errorw
+    async def _write_characteristic(self, uuid, value):
+        self._log_data(level="W", uuid=uuid, message=value)
+        try:
+            await self.client.write_gatt_char(
+                char_specifier=characteristics.AUTH,
+                data=bytes.fromhex(value)
+            )
+        except:
+            self._log_message(
+                level="Warning",
+                message="Failed to write to UUID = {uuid}"
+            )
+        # TODO: Handle error? Raise error?
 
-    def _log(self, level, message):
+    def _log_message(self, level, message):
         if self._debug:
             print(f"[Fresh Intellivent Sky] [{level}] {message}")
+    
+    def _log_data(self, command, uuid, message):
+        hex = ''.join('{:02x}'.format(x) for x in message)
+        self._log_message(command, f"[{command}] {uuid} = {hex or message}")
 
-    async def getHumidity(self):
-        # value = unpack("<BBH", self._readCharacterisitc(uuid=characteristics.HUMIDITY))
-        if self.client.is_connected:
-            humidity = await self._readCharacterisitc(uuid=characteristics.HUMIDITY)
-            print(humidity)
-        else:
-            print("Not connected")
+    async def get_humidity(self):
+        value = unpack("<BBH", await self._read_characterisitc(uuid=characteristics.HUMIDITY))
 
-        # self.humidityEnabled = bool(value[0])
-        # self.humidityDetection = value[1]
-        # self.humidityRPM = value[2]
+        self.humidity_enabled = bool(value[0])
+        self.humidity_detection = value[1]
+        self.humidity_rpm = value[2]
 
-        # return {
-        #     "enabled": self.humidityEnabled,
-        #     "detection": self.humidityDetection,
-        #     "rpm": self.humidityRPM,
-        # }
+        return {
+            "enabled": self.humidity_enabled,
+            "detection": self.humidity_detection,
+            "rpm": self.humidity_rpm,
+        }
 
-    def setHumidity(self, humidityEnabled, humidityDetection, humidityRPM):
+    def set_humidity(self, humidity_enabled, humidity_detection, humidity_rpm):
         value = (
             pack(
                 "<BBH",
-                humidityEnabled,
-                h.validatedDetection(humidityDetection),
-                h.validatedRPM(humidityRPM),
+                humidity_enabled,
+                h.validated_detection(humidity_detection),
+                h.validated_rpm(humidity_rpm),
             ),
         )
 
-        self._writeCharacteristic(characteristics.HUMIDITY, value)
+        self._write_characteristic(characteristics.HUMIDITY, value)
 
-    def getLightVOC(self):
-        value = unpack("<4B", self._readCharacterisitc(uuid=characteristics.LIGHT_VOC))
+    def get_light_and_voc(self):
+        value = unpack("<4B", self._read_characterisitc(uuid=characteristics.LIGHT_VOC))
 
-        lightEnabled = bool(value[0])
-        lightDetection = value[1]
-        vocEnabled = bool(value[2])
-        vocDetection = value[3]
+        light_enabled = bool(value[0])
+        light_detection = value[1]
+        voc_enabled = bool(value[2])
+        voc_detection = value[3]
 
         return {
-            "light": {"enabled": lightEnabled, "detection": lightDetection},
-            "voc": {"enabled": vocEnabled, "detection": vocDetection},
+            "light": {"enabled": light_enabled, "detection": light_detection},
+            "voc": {"enabled": voc_enabled, "detection": voc_detection},
         }
 
-    def setLightVOC(self, lightEnabled, lightDetection, vocEnabled, vocDetection):
+    def setLightVOC(self, light_enabled, light_detection, voc_enabled, voc_detection):
         value = pack(
             "<4b",
-            bool(lightEnabled),
-            h.validatedDetection(lightDetection),
-            bool(vocEnabled),
-            h.validatedDetection(vocDetection),
+            bool(light_enabled),
+            h.validatedDetection(light_detection),
+            bool(voc_enabled),
+            h.validatedDetection(voc_detection),
         )
 
-        self._writeCharacteristic(characteristics.LIGHT_VOC, value)
+        self._write_characteristic(characteristics.LIGHT_VOC, value)
 
-    def getConstantSpeed(self):
+    def get_constant_speed(self):
         value = unpack(
-            "<BH", self._readCharacterisitc(uuid=characteristics.CONSTANT_SPEED)
+            "<BH", self._read_characterisitc(uuid=characteristics.CONSTANT_SPEED)
         )
 
-        constantSpeedEnabled = bool(value[0])
-        constantSpeedRPM = value[1]
+        constant_speed_enabled = bool(value[0])
+        constant_speed_rpm = value[1]
 
-        return {"enabled": constantSpeedEnabled, "rpm": constantSpeedRPM}
+        return {"enabled": constant_speed_enabled, "rpm": constant_speed_rpm}
 
-    def setConstantSpeed(self, constantSpeedEnabled, constantSpeedRPM):
-        value = pack("<BH", constantSpeedEnabled, h.validatedRPM(constantSpeedRPM))
+    def set_constant_speed(self, constant_speed_enabled, constant_speed_rpm):
+        value = pack("<BH", constant_speed_enabled, h.validatedRPM(constant_speed_rpm))
 
-        self._writeCharacteristic(characteristics.CONSTANT_SPEED, value)
+        self._write_characteristic(characteristics.CONSTANT_SPEED, value)
 
-    def getTimer(self):
-        value = unpack("<3BH", self._readCharacterisitc(uuid=characteristics.TIMER))
+    def get_timer(self):
+        value = unpack("<3BH", self._read_characterisitc(uuid=characteristics.TIMER))
 
-        timerRunningTime = value[0]
-        timerDelayEnabled = bool(value[1])
-        timerDelayMinutes = value[2]
-        timerRPM = value[3]
+        timer_runningtime = value[0]
+        timer_delay_enabled = bool(value[1])
+        timer_delay_minutes = value[2]
+        timer_rpm = value[3]
 
         return {
-            "delay": {"enabled": timerDelayEnabled, "minutes": timerDelayMinutes},
-            "runTime": timerRunningTime,
-            "rpm": timerRPM,
+            "delay": {"enabled": timer_delay_enabled, "minutes": timer_delay_minutes},
+            "runTime": timer_runningtime,
+            "rpm": timer_rpm,
         }
 
-    def setTimer(
-        self, timerRunningTime, timerDelayEnabled, timerDelayMinutes, timerRPM
+    def set_timer(
+        self, timer_running_time, timer_delay_enabled, timer_delay_minutes, timer_rpm
     ):
         value = pack(
             "<3BH",
-            timerRunningTime,
-            bool(timerDelayEnabled),
-            timerDelayMinutes,
-            h.validatedRPM(timerRPM),
+            timer_running_time,
+            bool(timer_delay_enabled),
+            timer_delay_minutes,
+            h.validatedRPM(timer_rpm),
         )
 
-        self._writeCharacteristic(characteristics.TIMER, value)
+        self._write_characteristic(characteristics.TIMER, value)
 
-    def getAiring(self):
-        value = unpack("<3BH", self._readCharacterisitc(uuid=characteristics.AIRING))
+    def get_airing(self):
+        value = unpack("<3BH", self._read_characterisitc(uuid=characteristics.AIRING))
 
-        airingEnabled = bool(value[0])
-        airingRunTime = value[2]
-        airingRPM = value[3]
+        airing_enabled = bool(value[0])
+        airing_run_time = value[2]
+        airing_rpm = value[3]
 
-        return {"enabled": airingEnabled, "runTime": airingRunTime, "rpm": airingRPM}
+        return {"enabled": airing_enabled, "runTime": airing_run_time, "rpm": airing_rpm}
 
-    def setAiring(self, airingEnabled, airingRunTime, airingRPM):
+    def set_airing(self, airing_enabled, airing_run_time, airing_rpm):
         value = pack(
             "<3BH",
-            bool(airingEnabled),
+            bool(airing_enabled),
             int(26),  # Always 1A? (= 26)
-            h.validatedMinutes(airingRunTime),
-            h.validatedRPM(airingRPM),
+            h.validatedMinutes(airing_run_time),
+            h.validatedRPM(airing_rpm),
         )
 
-        self._writeCharacteristic(characteristics.AIRING, value)
+        self._write_characteristic(characteristics.AIRING, value)
 
-    def getPause(self):
-        value = unpack("<2B", self._readCharacterisitc(uuid=characteristics.PAUSE))
+    def get_pause(self):
+        value = unpack("<2B", self._read_characterisitc(uuid=characteristics.PAUSE))
 
-        pauseEnabled = bool(value[0])
-        pauseMinutes = value[1]
+        pause_enabled = bool(value[0])
+        pause_minutes = value[1]
 
-        return {"enabled": pauseEnabled, "minutes": pauseMinutes}
+        return {"enabled": pause_enabled, "minutes": pause_minutes}
 
-    def setPause(self, pauseEnabled, pauseMinutes):
-        value = pack("<2B", bool(pauseEnabled), h.validatedMinutes(pauseMinutes))
+    def set_pause(self, pause_enabled, pause_minutes):
+        value = pack("<2B", bool(pause_enabled), h.validated_minutes(pause_minutes))
 
-        self._writeCharacteristic(characteristics.PAUSE, value)
+        self._write_characteristic(characteristics.PAUSE, value)
 
-    def getBoost(self):
-        value = unpack("<B2H", self._readCharacterisitc(uuid=characteristics.BOOST))
+    def get_boost(self):
+        value = unpack("<B2H", self._read_characterisitc(uuid=characteristics.BOOST))
 
-        boostEnabled = bool(value[0])
-        boostMinutes = value[1]
-        boostRPM = value[2]
+        boost_enabled = bool(value[0])
+        boost_minutes = value[1]
+        boost_rpm = value[2]
 
-        return {"enabled": boostEnabled, "minutes": boostMinutes, "rpm": boostRPM}
+        return {"enabled": boost_enabled, "minutes": boost_minutes, "rpm": boost_rpm}
 
-    def setBoost(self, boostEnabled, boostMinutes, boostRPM):
+    def set_boost(self, boost_enabled, boost_minutes, boost_rpm):
         value = pack(
             "<2B",
-            bool(boostEnabled),
-            h.validatedMinutes(boostMinutes),
-            h.validatedRPM(boostRPM),
+            bool(boost_enabled),
+            h.validated_minutes(boost_minutes),
+            h.validated_rpm(boost_rpm),
         )
 
-        self._writeCharacteristic(characteristics.BOOST, value)
+        self._write_characteristic(characteristics.BOOST, value)
 
-    def setTemporarySpeed(self, temporaryEnabled, temporaryRPM):
-        value = pack("<BH", bool(temporaryEnabled), h.validatedRPM(temporaryRPM))
+    async def set_temporary_speed(self, temporary_enabled, temporary_rpm):
+        value = pack("<BH", bool(temporary_enabled), h.validated_rpm(temporary_rpm))
 
-        self._writeCharacteristic(characteristics.TEMPORARY_SPEED, value)
+        await self._write_characteristic(characteristics.TEMPORARY_SPEED, value)
 
-    def getSensorData(self):
-        value = unpack(
-            "<2B5HBH", self._readCharacterisitc(uuid=characteristics.DEVICE_STATUS)
+    async def get_sensor_data(self):
+        data = unpack(
+            "<2B5HBH", await self._read_characterisitc(uuid=characteristics.DEVICE_STATUS)
         )
+        return SkySensors(data)
+        
 
-        status = bool(value[0])
-        mode = value[1]
-        rpm = value[5]
-        secs = value[7]
-        temp = value[8]
+class SkySensors():
+    def __init__(self, data):
+        self._data = data
 
-        modeDescription = "Unknown"
-        if mode == 0:
-            modeDescription = "Off"
-        elif mode == 6:
-            modeDescription = "Pause"
-        elif mode == 16:
-            modeDescription = "Constant speed"
-        elif mode == 34:
-            modeDescription = "Light"
-        elif mode == 49:
-            modeDescription = "Humidity"
-        elif mode == 52:
-            modeDescription = "VOC"
-        elif mode == 103:
-            modeDescription = "Boost"
+        # TODO: Error handling
+
+        self.status = bool(data[0])
+        self.mode = data[1]
+        self.rpm = data[5]
+        self.mode_description = "Unknown"
+        if self.mode == 0:
+            self.mode_description = "Off"
+        elif self.mode == 6:
+            self.mode_description = "Pause"
+        elif self.mode == 16:
+            self.mode_description = "Constant speed"
+        elif self.mode == 34:
+            self.mode_description = "Light"
+        elif self.mode == 49:
+            self.mode_description = "Humidity"
+        elif self.mode == 52:
+            self.mode_description = "VOC"
+        elif self.mode == 103:
+            self.mode_description = "Boost"
         else:
-            modeDescription = "Unknown ({})".format(mode)
-
-        return {
-            "status": status,
-            "mode": {"value": mode, "description": modeDescription},
-            "rpm": rpm,
-            "secs": secs,
-            "temp": temp,
-        }
+            self.mode_description = "Unknown"

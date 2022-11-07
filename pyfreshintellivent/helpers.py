@@ -1,4 +1,16 @@
-def validatedRPM(value):
+def validate_authentication_code(value):
+    if value is None:
+        print(value)
+        raise ValueError('Authentication cannot be empty.')
+
+    # Check if value is valid
+    bytes.fromhex(value)
+
+    if len(value) != 8:
+        raise ValueError('Authentication code need to be 8 bytes.')
+    
+
+def validated_rpm(value):
     if value < 800:
         return 800
     elif value > 2400:
@@ -6,8 +18,7 @@ def validatedRPM(value):
     else:
         return value
 
-
-def validatedDetection(value):
+def validated_detection(value):
     if value < 0:
         return 0
     elif value > 3:
@@ -15,8 +26,7 @@ def validatedDetection(value):
     else:
         return int(value)
 
-
-def validatedMinutes(value):
+def validated_minutes(value):
     if value < 0:
         return 0
     else:
