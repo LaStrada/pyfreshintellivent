@@ -18,8 +18,10 @@ def airing_mode_read(value):
         "rpm": rpm,
     }
 
+
 def airing_mode_write(enabled: bool, minutes: int, rpm: int):
-    return pack( "<3BH", enabled, 26, h.validated_time(minutes), h.validated_rpm(rpm))
+    return pack("<3BH", enabled, 26, h.validated_time(minutes), h.validated_rpm(rpm))
+
 
 def boost_read(value):
     if len(value) != 5:
@@ -33,8 +35,10 @@ def boost_read(value):
 
     return {"enabled": enabled, "seconds": seconds, "rpm": rpm}
 
+
 def boost_write(enabled: bool, minutes: int, rpm: int):
     return pack("<2B", enabled, h.validated_time(minutes), h.validated_rpm(rpm))
+
 
 def constant_speed_read(value):
     if len(value) != 3:
@@ -47,8 +51,10 @@ def constant_speed_read(value):
 
     return {"enabled": enabled, "rpm": rpm}
 
+
 def constant_speed_write(enabled: bool, rpm: int):
     return pack("<BH", enabled, h.validated_rpm(rpm))
+
 
 def humidity_mode_read(value):
     if len(value) != 4:
@@ -66,8 +72,10 @@ def humidity_mode_read(value):
         "rpm": humidity_rpm,
     }
 
-def humidity_mode_write(enable: bool, detection: int, rpm: int):
+
+def humidity_mode_write(enabled: bool, detection: int, rpm: int):
     return pack("<BBH", enabled, h.validated_detection(detection), h.validated_rpm(rpm))
+
 
 def light_and_voc_read(value):
     if len(value) != 4:
@@ -85,6 +93,7 @@ def light_and_voc_read(value):
         "voc": {"enabled": voc_enabled, "detection": voc_detection},
     }
 
+
 def light_and_voc_write(
     light_enabled: bool, light_detection: int, voc_enabled: bool, voc_detection: int
 ):
@@ -95,6 +104,7 @@ def light_and_voc_write(
         bool(voc_enabled),
         h.validated_detection(voc_detection),
     )
+
 
 def pause_read(value):
     if len(value) != 2:
@@ -107,11 +117,14 @@ def pause_read(value):
 
     return {"enabled": pause_enabled, "minutes": pause_minutes}
 
+
 def pause_write(enabled: bool, minutes: int):
     return pack("<2B", enabled, h.validated_time(minutes))
 
+
 def temporary_speed_write(enabled: bool, rpm: int):
     return pack("<BH", enabled, h.validated_rpm(rpm))
+
 
 def timer_read(value):
     if len(value) != 5:
@@ -130,4 +143,12 @@ def timer_read(value):
         "rpm": timer_rpm,
     }
 
-def timer_write():
+
+def timer_write(minutes: int, delay_enabled: bool, delay_minutes: int, rpm: int):
+    return pack(
+        "<3BH",
+        minutes,
+        delay_enabled,
+        delay_minutes,
+        h.validated_rpm(rpm),
+    )

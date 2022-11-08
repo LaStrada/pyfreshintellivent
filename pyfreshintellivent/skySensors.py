@@ -1,14 +1,20 @@
+from struct import unpack
+
+
 class SkySensors(object):
-    def __init__(self, data):
+    def __init__(self, data: bytearray):
         if data is None or len(data) != 9:
             raise ValueError("Length of object need to be 9.")
 
-        self._data = data
+        values = unpack("<2B5HBH", data)
 
-        self.status = bool(data[0])
-        self.mode = data[1]
-        self.rpm = data[5]
+        self._values = values
+
+        self.status = bool(values[0])
+        self.mode = values[1]
+        self.rpm = values[5]
         self.mode_description = "Unknown"
+
         if self.mode == 0:
             self.mode_description = "Off"
         elif self.mode == 6:
