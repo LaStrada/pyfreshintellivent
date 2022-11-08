@@ -1,12 +1,6 @@
 name: Lint
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+on: pull_request
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -33,18 +27,28 @@ jobs:
 
       - name: Install Poetry
         uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
 
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install black flake8 pytest
-          pip install -e .[dev]
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-root
 
       - name: Run linters
         uses: wearerequired/lint-action@v2
         with:
           black: true
           flake8: true
+
+      - name: Install project
+        run: poetry install --no-interaction
+
+      - name: Run tests
+        run: |
+          source .venv/bin/activate
+          pytest tests/
+          coverage report
       
-      - name: Test with Pytest
-        run: poetry run pytest
+      - name: Run tests
+        run: python -m poetry run pytest
