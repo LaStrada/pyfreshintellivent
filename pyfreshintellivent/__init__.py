@@ -1,5 +1,5 @@
 from .freshIntellivent import Sky
-from .skyModeParser import SkyModeParser
+from . import skyModeParser
 from .skySensors import SkySensors
 
-__all__ = ["Sky", "SkyModeParser", "SkySensors"]
+__all__ = ["Sky", "skyModeParser", "SkySensors"]

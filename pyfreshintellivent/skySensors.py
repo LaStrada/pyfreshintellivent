@@ -3,8 +3,8 @@ from struct import unpack
 
 class SkySensors(object):
     def __init__(self, data: bytearray):
-        if data is None or len(data) != 9:
-            raise ValueError("Length of object need to be 9.")
+        if data is None or len(data) != 15:
+            raise ValueError(f"Length of object need to be 15, was {len(data)}.")
 
         values = unpack("<2B5HBH", data)
 

@@ -1,26 +1,23 @@
 from bleak import BleakClient, BleakScanner
 from bleak.exc import BleakError
+import logging
 from . import characteristics
 from . import helpers as h
 from . import skyModeParser as parser
-from skySensors import SkySensors
+from .skySensors import SkySensors
 
 
 class Sky(object):
     client = None
-
-    def __init__(self, debug=False):
-        self._debug = debug
+    logger = logging.getLogger(__name__)
 
     async def disconnect(self):
         try:
             if self.client.is_connected:
                 await self.client.disconnect()
-                self._log_message("Info", "Disconnected.")
-            else:
-                self._log_message("Info", "Already disconnected.")
+            self.logger.info("Disconnected.")
         except AttributeError:
-            self._log_message("Info", "No clients available.")
+            self.logger.info("No clients available.")
         finally:
             self.client = None
 
@@ -36,12 +33,12 @@ class Sky(object):
             raise BleakError(
                 f"A device with address {ble_address} " "could not be found."
             )
-        self._log_message("Info", f"Found {ble_address}")
+        self.logger.info(f"Found {ble_address}")
 
         self.client = BleakClient(device)
 
         await self.client.connect()
-        self._log_message("Info", f"Connected to {ble_address}")
+        self.logger.info(f"Connected to {ble_address}")
 
         await self._authenticate(authentication_code)
 
@@ -49,7 +46,7 @@ class Sky(object):
         await self.client.write_gatt_char(
             char_specifier=characteristics.AUTH, data=bytes.fromhex(authentication_code)
         )
-        self._log_message("Info", "Authenticated.")
+        self.logger.info("Authenticated")
 
     async def fetch_authentication_code(self, device: BleakClient):
         code = await device.read_gatt_char(char_specifier=characteristics.AUTH)
@@ -67,15 +64,9 @@ class Sky(object):
             char_specifier=characteristics.AUTH, data=bytes.fromhex(value)
         )
 
-    def _log_message(self, level, message):
-        if self._debug:
-            print(f"[Fresh Intellivent Sky] [{level}] {message}")
-
     def _log_data(self, command, uuid, message):
         hex = "".join("{:02x}".format(x) for x in message)
-        self._log_message(
-            level=command, message=f"[{command}] {uuid} = {hex or message}"
-        )
+        self.logger.info(f"[{command}] {uuid} = {hex or message}")
 
     async def get_humidity(self):
         value = await self._read_characterisitc(uuid=characteristics.HUMIDITY)
@@ -145,7 +136,7 @@ class Sky(object):
 
     async def get_boost(self):
         value = await self._read_characterisitc(uuid=characteristics.BOOST)
-        return parser.boost(value=value)
+        return parser.boost_read(value=value)
 
     async def set_boost(self, enabled: bool, minutes: int, rpm: int):
         value = parser.boost_write(enabled=enabled, minutes=minutes, rpm=rpm)

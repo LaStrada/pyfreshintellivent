@@ -1,10 +1,10 @@
 from struct import pack, unpack
-import helpers as h
+from . import helpers as h
 
 
 def airing_mode_read(value):
     if len(value) != 5:
-        raise ValueError("Length need to be exactly 5.")
+        raise ValueError(f"Length need to be exactly 5, was {len(value)}.")
 
     value = unpack("<3BH", value)
 
@@ -25,7 +25,7 @@ def airing_mode_write(enabled: bool, minutes: int, rpm: int):
 
 def boost_read(value):
     if len(value) != 5:
-        raise ValueError("Length need to be exactly 5.")
+        raise ValueError(f"Length need to be exactly 5, was {len(value)}.")
 
     value = unpack("<B2H", value)
 
@@ -42,7 +42,7 @@ def boost_write(enabled: bool, minutes: int, rpm: int):
 
 def constant_speed_read(value):
     if len(value) != 3:
-        raise ValueError("Length need to be exactly 3.")
+        raise ValueError(f"Length need to be exactly 3, was {len(value)}.")
 
     value = unpack("<BH", value)
 
@@ -58,7 +58,7 @@ def constant_speed_write(enabled: bool, rpm: int):
 
 def humidity_mode_read(value):
     if len(value) != 4:
-        raise ValueError("Length need to be exactly 4.")
+        raise ValueError(f"Length need to be exactly 4, was {len(value)}.")
 
     value = unpack("<BBH", value)
 
@@ -79,7 +79,7 @@ def humidity_mode_write(enabled: bool, detection: int, rpm: int):
 
 def light_and_voc_read(value):
     if len(value) != 4:
-        raise ValueError("Length need to be exactly 4.")
+        raise ValueError(f"Length need to be exactly 4, was {len(value)}.")
 
     value = unpack("<4B", value)
 
@@ -108,7 +108,7 @@ def light_and_voc_write(
 
 def pause_read(value):
     if len(value) != 2:
-        raise ValueError("Length need to be exactly 2.")
+        raise ValueError(f"Length need to be exactly 2, was {len(value)}.")
 
     value = unpack("<2B", value)
 
@@ -128,7 +128,7 @@ def temporary_speed_write(enabled: bool, rpm: int):
 
 def timer_read(value):
     if len(value) != 5:
-        raise ValueError("Length need to be exactly 5.")
+        raise ValueError(f"Length need to be exactly 5, was {len(value)}.")
 
     value = unpack("<3BH", value)
 
