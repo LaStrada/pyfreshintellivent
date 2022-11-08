@@ -58,7 +58,6 @@ class Sky(object):
         return value
 
     async def _write_characteristic(self, uuid: str, value):
-        # TODO: Value type??
         self._log_data(command="W", uuid=uuid, message=value)
         await self.client.write_gatt_char(
             char_specifier=characteristics.AUTH, data=bytes.fromhex(value)
@@ -70,7 +69,7 @@ class Sky(object):
 
     async def get_humidity(self):
         value = await self._read_characterisitc(uuid=characteristics.HUMIDITY)
-        return parser.humidity_mode(value=value)
+        return parser.humidity_mode_read(value=value)
 
     async def set_humidity(self, enabled: bool, detection: int, rpm: int):
         value = parser.humidity_mode_write(enable=enabled, detection=detection, rpm=rpm)
@@ -78,7 +77,7 @@ class Sky(object):
 
     async def get_light_and_voc(self):
         value = await self._read_characterisitc(uuid=characteristics.LIGHT_VOC)
-        return parser.light_and_voc(value=value)
+        return parser.light_and_voc_read(value=value)
 
     async def set_light_voc(
         self,
@@ -128,7 +127,7 @@ class Sky(object):
 
     async def get_pause(self):
         value = await self._read_characterisitc(uuid=characteristics.PAUSE)
-        return parser.pause(value=value)
+        return parser.pause_read(value=value)
 
     async def set_pause(self, enabled: bool, minutes: int):
         value = parser.pause_write(enabled=enabled, minutes=minutes)

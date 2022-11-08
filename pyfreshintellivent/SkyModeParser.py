@@ -9,8 +9,8 @@ def airing_mode_read(value):
     value = unpack("<3BH", value)
 
     enabled = bool(value[0])
-    minutes = value[2]
-    rpm = value[3]
+    minutes = int(value[2])
+    rpm = int(value[3])
 
     return {
         "enabled": enabled,
@@ -30,8 +30,8 @@ def boost_read(value):
     value = unpack("<B2H", value)
 
     enabled = bool(value[0])
-    rpm = value[1]
-    seconds = value[2]
+    rpm = int(value[1])
+    seconds = int(value[2])
 
     return {"enabled": enabled, "seconds": seconds, "rpm": rpm}
 
@@ -47,7 +47,7 @@ def constant_speed_read(value):
     value = unpack("<BH", value)
 
     enabled = bool(value[0])
-    rpm = value[1]
+    rpm = int(value[1])
 
     return {"enabled": enabled, "rpm": rpm}
 
@@ -62,14 +62,15 @@ def humidity_mode_read(value):
 
     value = unpack("<BBH", value)
 
-    humidity_enabled = bool(value[0])
-    humidity_detection = value[1]
-    humidity_rpm = value[2]
+    enabled = bool(value[0])
+    detection = int(value[1])
+    rpm = int(value[2])
 
     return {
-        "enabled": humidity_enabled,
-        "detection": humidity_detection,
-        "rpm": humidity_rpm,
+        "enabled": enabled,
+        "detection": detection,
+        "detection_description": detection_as_string(detection),
+        "rpm": rpm,
     }
 
 
@@ -84,13 +85,21 @@ def light_and_voc_read(value):
     value = unpack("<4B", value)
 
     light_enabled = bool(value[0])
-    light_detection = value[1]
+    light_detection = int(value[1])
     voc_enabled = bool(value[2])
-    voc_detection = value[3]
+    voc_detection = int(value[3])
 
     return {
-        "light": {"enabled": light_enabled, "detection": light_detection},
-        "voc": {"enabled": voc_enabled, "detection": voc_detection},
+        "light": {
+            "enabled": light_enabled,
+            "detection": light_detection,
+            "detection_description": detection_as_string(light_detection, False),
+        },
+        "voc": {
+            "enabled": voc_enabled,
+            "detection": voc_detection,
+            "detection_description": detection_as_string(voc_detection),
+        },
     }
 
 
@@ -112,10 +121,10 @@ def pause_read(value):
 
     value = unpack("<2B", value)
 
-    pause_enabled = bool(value[0])
-    pause_minutes = value[1]
+    enabled = bool(value[0])
+    minutes = int(value[1])
 
-    return {"enabled": pause_enabled, "minutes": pause_minutes}
+    return {"enabled": enabled, "minutes": minutes}
 
 
 def pause_write(enabled: bool, minutes: int):
@@ -132,15 +141,15 @@ def timer_read(value):
 
     value = unpack("<3BH", value)
 
-    timer_runningtime = value[0]
-    timer_delay_enabled = bool(value[1])
-    timer_delay_minutes = value[2]
-    timer_rpm = value[3]
+    minutes = int(value[0])
+    delay_enabled = bool(value[1])
+    delay_minutes = int(value[2])
+    rpm = int(value[3])
 
     return {
-        "delay": {"enabled": timer_delay_enabled, "minutes": timer_delay_minutes},
-        "runTime": timer_runningtime,
-        "rpm": timer_rpm,
+        "delay": {"enabled": delay_enabled, "minutes": delay_minutes},
+        "minutes": minutes,
+        "rpm": rpm,
     }
 
 
@@ -152,3 +161,14 @@ def timer_write(minutes: int, delay_enabled: bool, delay_minutes: int, rpm: int)
         delay_minutes,
         h.validated_rpm(rpm),
     )
+
+def detection_as_string(value: int, regular_order: bool = True):
+    value = h.validated_detection(value)
+    if value == 1:
+        return "Low" if regular_order else "High"
+    elif value == 2:
+        return "Medium"
+    elif value == 3:
+        return "High" if regular_order else "Low"
+    else:
+        return "Unknown"
