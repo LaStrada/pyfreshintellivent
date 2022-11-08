@@ -25,6 +25,17 @@ jobs:
 
       - run: echo '${{ steps.cp310.outputs.python-version }}'
 
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install black flake8 pytest
+
+      - name: Run linters
+        uses: wearerequired/lint-action@v2
+        with:
+          black: true
+          flake8: true
+
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
@@ -34,12 +45,6 @@ jobs:
 
       - name: Install dependencies
         run: poetry install --no-interaction --no-root
-
-      - name: Run linters
-        uses: wearerequired/lint-action@v2
-        with:
-          black: true
-          flake8: true
 
       - name: Install project
         run: poetry install --no-interaction
