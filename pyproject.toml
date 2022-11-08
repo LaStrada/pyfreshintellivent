@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "pyfreshintellivent"
+version = "0.1.0"
+description = "Manage Fresh Intellivent Sky bathroom ventilation fan"
+authors = ["Ståle Storø Hauknes <walnut-caprice.04@icloud.com>"]
+readme = "README.md"
+repository = "https://github.com/LaStrada/pyfreshintellivent"
+license = "Apache License 2.0"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+bleak = "0.19.4"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.2.0"
+black = "^22.10.0"
+flake8 = "^5.0.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
