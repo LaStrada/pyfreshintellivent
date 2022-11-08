@@ -162,6 +162,7 @@ def timer_write(minutes: int, delay_enabled: bool, delay_minutes: int, rpm: int)
         h.validated_rpm(rpm),
     )
 
+
 def detection_as_string(value: int, regular_order: bool = True):
     value = h.validated_detection(value)
     if value == 1:

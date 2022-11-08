@@ -9,13 +9,12 @@ ADDRESS = (
     else "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 )
 
+
 async def main():
     sky = Sky()
     try:
         await sky.connect_and_authenticate(
-            ble_address=ADDRESS,
-            authentication_code="xxxxxxxx",
-            timeout=30.0
+            ble_address=ADDRESS, authentication_code="xxxxxxxx", timeout=30.0
         )
         sensors = await sky.get_sensor_data()
         print(f"Status: {sensors.as_dict()}")
@@ -41,5 +40,6 @@ async def main():
         print(e)
     finally:
         await sky.disconnect()
+
 
 asyncio.run(main())
