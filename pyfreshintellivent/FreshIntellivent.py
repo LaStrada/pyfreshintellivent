@@ -42,8 +42,7 @@ class Sky(object):
         await self.client.connect()
         self._log_message("Info", f"Connected to {ble_address}")
 
-        # TODO: Add validation of authentication code
-        await self._authenticate(authentication_code)
+        # await self._authenticate(authentication_code)
 
     async def _authenticate(self, authentication_code):
         await self.client.write_gatt_char(
@@ -57,11 +56,8 @@ class Sky(object):
         return code
 
     async def _read_characterisitc(self, uuid):
-        value = None
-        try:
-            value = await self.client.read_gatt_char(char_specifier=uuid)
-        finally:
-            self._log_data(command="R", uuid=uuid, message=value)
+        value = await self.client.read_gatt_char(char_specifier=uuid)
+        self._log_data(command="R", uuid=uuid, message=value)
         return value
 
     async def _write_characteristic(self, uuid, value):
@@ -81,19 +77,10 @@ class Sky(object):
         )
 
     async def get_humidity(self):
-        value = unpack(
-            "<BBH", await self._read_characterisitc(uuid=characteristics.HUMIDITY)
-        )
+        value = await self._read_characterisitc(uuid=characteristics.HUMIDITY)
+        return SkyModeParser.humidity_mode(value=value)
+    
 
-        self.humidity_enabled = bool(value[0])
-        self.humidity_detection = value[1]
-        self.humidity_rpm = value[2]
-
-        return {
-            "enabled": self.humidity_enabled,
-            "detection": self.humidity_detection,
-            "rpm": self.humidity_rpm,
-        }
 
     async def set_humidity(self, humidity_enabled, humidity_detection, humidity_rpm):
         value = (
@@ -108,19 +95,8 @@ class Sky(object):
         await self._write_characteristic(characteristics.HUMIDITY, value)
 
     async def get_light_and_voc(self):
-        value = unpack(
-            "<4B", await self._read_characterisitc(uuid=characteristics.LIGHT_VOC)
-        )
-
-        light_enabled = bool(value[0])
-        light_detection = value[1]
-        voc_enabled = bool(value[2])
-        voc_detection = value[3]
-
-        return {
-            "light": {"enabled": light_enabled, "detection": light_detection},
-            "voc": {"enabled": voc_enabled, "detection": voc_detection},
-        }
+        value = await self._read_characterisitc(uuid=characteristics.LIGHT_VOC)
+        return SkyModeParser.light_and_voc(value=value)
 
     async def set_light_voc(
         self, light_enabled, light_detection, voc_enabled, voc_detection
@@ -136,14 +112,8 @@ class Sky(object):
         await self._write_characteristic(characteristics.LIGHT_VOC, value)
 
     async def get_constant_speed(self):
-        value = unpack(
-            "<BH", await self._read_characterisitc(uuid=characteristics.CONSTANT_SPEED)
-        )
-
-        constant_speed_enabled = bool(value[0])
-        constant_speed_rpm = value[1]
-
-        return {"enabled": constant_speed_enabled, "rpm": constant_speed_rpm}
+        value = await self._read_characterisitc(uuid=characteristics.CONSTANT_SPEED)
+        SkyModeParser.constant_speed(value=value)
 
     async def set_constant_speed(self, constant_speed_enabled, constant_speed_rpm):
         value = pack("<BH", constant_speed_enabled, h.validatedRPM(constant_speed_rpm))
@@ -151,20 +121,8 @@ class Sky(object):
         await self._write_characteristic(characteristics.CONSTANT_SPEED, value)
 
     async def get_timer(self):
-        value = unpack(
-            "<3BH", await self._read_characterisitc(uuid=characteristics.TIMER)
-        )
-
-        timer_runningtime = value[0]
-        timer_delay_enabled = bool(value[1])
-        timer_delay_minutes = value[2]
-        timer_rpm = value[3]
-
-        return {
-            "delay": {"enabled": timer_delay_enabled, "minutes": timer_delay_minutes},
-            "runTime": timer_runningtime,
-            "rpm": timer_rpm,
-        }
+        value = await self._read_characterisitc(uuid=characteristics.TIMER)
+        return SkyModeParser.timer(value=value)
 
     async def set_timer(self, running_time, delay_enabled, delay_minutes, rpm):
         value = pack(
@@ -178,19 +136,8 @@ class Sky(object):
         await self._write_characteristic(characteristics.TIMER, value)
 
     async def get_airing(self):
-        value = unpack(
-            "<3BH", await self._read_characterisitc(uuid=characteristics.AIRING)
-        )
-
-        airing_enabled = bool(value[0])
-        airing_run_time = value[2]
-        airing_rpm = value[3]
-
-        return {
-            "enabled": airing_enabled,
-            "runTime": airing_run_time,
-            "rpm": airing_rpm,
-        }
+        value = await self._read_characterisitc(uuid=characteristics.AIRING)
+        return SkyModeParser.airing_mode(value=value)
 
     async def set_airing(self, airing_enabled, airing_run_time, airing_rpm):
         value = pack(
@@ -204,14 +151,8 @@ class Sky(object):
         await self._write_characteristic(characteristics.AIRING, value)
 
     async def get_pause(self):
-        value = unpack(
-            "<2B", await self._read_characterisitc(uuid=characteristics.PAUSE)
-        )
-
-        pause_enabled = bool(value[0])
-        pause_minutes = value[1]
-
-        return {"enabled": pause_enabled, "minutes": pause_minutes}
+        value = await self._read_characterisitc(uuid=characteristics.PAUSE)
+        SkyModeParser.pause(value=value)
 
     async def set_pause(self, pause_enabled, pause_minutes):
         value = pack("<2B", bool(pause_enabled), h.validated_minutes(pause_minutes))
@@ -219,15 +160,8 @@ class Sky(object):
         await self._write_characteristic(characteristics.PAUSE, value)
 
     async def get_boost(self):
-        value = unpack(
-            "<B2H", await self._read_characterisitc(uuid=characteristics.BOOST)
-        )
-
-        boost_enabled = bool(value[0])
-        boost_rpm = value[1]
-        boost_seconds = value[2]
-
-        return {"enabled": boost_enabled, "seconds": boost_seconds, "rpm": boost_rpm}
+        value = await self._read_characterisitc(uuid=characteristics.BOOST)
+        return SkyModeParser.boost(value=value)
 
     async def set_boost(self, boost_enabled, boost_minutes, boost_rpm):
         value = pack(
@@ -251,7 +185,7 @@ class Sky(object):
         )
         return SkySensors(data)
 
-class SkySensors:
+class SkySensors(object):
     def __init__(self, data):
         if data is None or len(data) != 9:
             raise ValueError("Length of object need to be 9.")
