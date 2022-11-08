@@ -1,4 +1,4 @@
-def validate_authentication_code(value):
+def validate_authentication_code(value: str):
     if value is None:
         print(value)
         raise ValueError("Authentication cannot be empty.")
@@ -10,7 +10,7 @@ def validate_authentication_code(value):
         raise ValueError("Authentication code need to be 8 bytes.")
 
 
-def validated_rpm(value):
+def validated_rpm(value: int):
     if value < 800:
         return 800
     elif value > 2400:
@@ -19,7 +19,7 @@ def validated_rpm(value):
         return value
 
 
-def validated_detection(value):
+def validated_detection(value: int):
     if value < 0:
         return 0
     elif value > 3:
@@ -28,7 +28,7 @@ def validated_detection(value):
         return int(value)
 
 
-def validated_minutes(value):
+def validated_time(value: int):
     if value < 0:
         return 0
     else:
