@@ -32,6 +32,9 @@ jobs:
           black: true
           flake8: true
 
+      - uses: actions/checkout@v3
+      - uses: isort/isort-action@v1.0.0
+
   run-tests:
     name: Run tests
     runs-on: ubuntu-latest
