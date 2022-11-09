@@ -2,6 +2,7 @@ import pytest
 
 from pyfreshintellivent import SkyModeParser
 
+
 parser = SkyModeParser()
 
 
