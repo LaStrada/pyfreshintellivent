@@ -1,4 +1,4 @@
-from pyfreshintellivent.skyModeParser import SkyModeParser
+from pyfreshintellivent import SkyModeParser
 
 parser = SkyModeParser()
 
