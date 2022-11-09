@@ -2,7 +2,6 @@ import asyncio
 import sys
 
 from bleak import BleakScanner
-from bleak.backends.characteristic import BleakGATTCharacteristic
 from bleak.backends.device import BLEDevice
 from bleak.backends.scanner import AdvertisementData
 
