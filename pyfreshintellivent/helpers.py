@@ -1,6 +1,5 @@
 def validate_authentication_code(value: str):
     if value is None:
-        print(value)
         raise ValueError("Authentication cannot be empty.")
 
     # Check if value is valid
@@ -8,6 +7,8 @@ def validate_authentication_code(value: str):
 
     if len(value) != 8:
         raise ValueError("Authentication code need to be 8 bytes.")
+
+    return True
 
 
 def validated_rpm(value: int):
