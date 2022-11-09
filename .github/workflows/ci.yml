@@ -66,12 +66,6 @@ jobs:
 
       - name: Install project
         run: poetry install --no-interaction
-
-      - name: Run tests
-        run: |
-          source .venv/bin/activate
-          pytest tests/
-          coverage report
       
       - name: Run tests
         run: python -m poetry run pytest
