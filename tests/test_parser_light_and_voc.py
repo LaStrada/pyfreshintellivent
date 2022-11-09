@@ -1,11 +1,14 @@
 import pytest
 
-from pyfreshintellivent.skyModeParser import light_and_voc_read
+from pyfreshintellivent.skyModeParser import SkyModeParser
+
+
+parser = SkyModeParser()
 
 
 def test_light_and_voc_valid():
     valid = bytearray.fromhex("01010101")
-    val = light_and_voc_read(value=valid)
+    val = parser.light_and_voc_read(value=valid)
     print(val)
     assert val["light"] is not None
     assert val["light"]["enabled"] is True
@@ -18,7 +21,7 @@ def test_light_and_voc_valid():
     assert val["voc"]["detection_description"] == "Low"
 
     valid = bytearray.fromhex("00030003")
-    val = light_and_voc_read(value=valid)
+    val = parser.light_and_voc_read(value=valid)
     print(val)
     assert val["light"] is not None
     assert val["light"]["enabled"] is False
@@ -34,8 +37,8 @@ def test_light_and_voc_valid():
 def test_light_and_voc_invalid():
     invalid = bytearray.fromhex("010101")
     with pytest.raises(ValueError, match=r"Length need to be exactly*"):
-        light_and_voc_read(value=invalid)
+        parser.light_and_voc_read(value=invalid)
 
     invalid = bytearray.fromhex("0101010101")
     with pytest.raises(ValueError, match=r"Length need to be exactly*"):
-        light_and_voc_read(value=invalid)
+        parser.light_and_voc_read(value=invalid)

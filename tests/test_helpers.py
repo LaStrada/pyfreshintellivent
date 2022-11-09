@@ -1,8 +1,11 @@
 import pytest
 
-from pyfreshintellivent.helpers import (validate_authentication_code,
-                                        validated_detection, validated_rpm,
-                                        validated_time)
+from pyfreshintellivent.helpers import (
+    validate_authentication_code,
+    validated_detection,
+    validated_rpm,
+    validated_time,
+)
 
 
 def test_auth_code():
