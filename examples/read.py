@@ -1,7 +1,7 @@
 import asyncio
 import platform
 
-from pyfreshintellivent import Sky
+from pyfreshintellivent import FreshIntelliVent
 
 ADDRESS = (
     "mac-address"
@@ -11,7 +11,7 @@ ADDRESS = (
 
 
 async def main():
-    sky = Sky()
+    sky = FreshIntelliVent()
     try:
         await sky.connect_and_authenticate(
             ble_address=ADDRESS, authentication_code="xxxxxxxx", timeout=30.0

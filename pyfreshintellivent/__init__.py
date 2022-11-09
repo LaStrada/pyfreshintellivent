@@ -5,14 +5,13 @@ from bleak.exc import BleakError
 
 from . import characteristics
 from . import helpers as h
-from .skyModeParser import SkyModeParser
+from . import skyModeParser as parser
 from .skySensors import SkySensors
 
 
 class FreshIntelliVent(object):
     client = None
     logger = logging.getLogger(__name__)
-    parser = SkyModeParser()
 
     async def disconnect(self):
         try:
@@ -72,17 +71,17 @@ class FreshIntelliVent(object):
 
     async def get_humidity(self):
         value = await self._read_characterisitc(uuid=characteristics.HUMIDITY)
-        return self.parser.humidity_mode_read(value=value)
+        return parser.humidity_mode_read(value=value)
 
     async def set_humidity(self, enabled: bool, detection: int, rpm: int):
-        value = self.parser.humidity_mode_write(
+        value = parser.humidity_mode_write(
             enable=enabled, detection=detection, rpm=rpm
         )
         await self._write_characteristic(characteristics.HUMIDITY, value)
 
     async def get_light_and_voc(self):
         value = await self._read_characterisitc(uuid=characteristics.LIGHT_VOC)
-        return self.parser.light_and_voc_read(value=value)
+        return parser.light_and_voc_read(value=value)
 
     async def set_light_voc(
         self,
@@ -91,7 +90,7 @@ class FreshIntelliVent(object):
         voc_enabled: bool,
         voc_detection: int,
     ):
-        value = self.parser.light_and_voc_write(
+        value = parser.light_and_voc_write(
             light_enabled=light_enabled,
             light_detection=light_detection,
             voc_enabled=voc_enabled,
@@ -101,20 +100,20 @@ class FreshIntelliVent(object):
 
     async def get_constant_speed(self):
         value = await self._read_characterisitc(uuid=characteristics.CONSTANT_SPEED)
-        return self.parser.constant_speed_read(value=value)
+        return parser.constant_speed_read(value=value)
 
     async def set_constant_speed(self, enabled, rpm):
-        value = self.parser.constant_speed_write(enabled=enabled, rpm=rpm)
+        value = parser.constant_speed_write(enabled=enabled, rpm=rpm)
         await self._write_characteristic(characteristics.CONSTANT_SPEED, value)
 
     async def get_timer(self):
         value = await self._read_characterisitc(uuid=characteristics.TIMER)
-        return self.parser.timer_read(value=value)
+        return parser.timer_read(value=value)
 
     async def set_timer(
         self, minutes: int, delay_enabled: bool, delay_minutes: int, rpm: int
     ):
-        value = self.parser.timer_write(
+        value = parser.timer_write(
             minutes=minutes,
             delay_enabled=delay_enabled,
             delay_minutes=delay_minutes,
@@ -124,32 +123,32 @@ class FreshIntelliVent(object):
 
     async def get_airing(self):
         value = await self._read_characterisitc(uuid=characteristics.AIRING)
-        return self.parser.airing_mode_read(value=value)
+        return parser.airing_mode_read(value=value)
 
     async def set_airing(self, enabled: bool, minutes: int, rpm: int):
-        value = self.parser.airing_mode_write(
+        value = parser.airing_mode_write(
             enabled=enabled, run_time=minutes, rpm=rpm
         )
         await self._write_characteristic(characteristics.AIRING, value)
 
     async def get_pause(self):
         value = await self._read_characterisitc(uuid=characteristics.PAUSE)
-        return self.parser.pause_read(value=value)
+        return parser.pause_read(value=value)
 
     async def set_pause(self, enabled: bool, minutes: int):
-        value = self.parser.pause_write(enabled=enabled, minutes=minutes)
+        value = parser.pause_write(enabled=enabled, minutes=minutes)
         await self._write_characteristic(characteristics.PAUSE, value)
 
     async def get_boost(self):
         value = await self._read_characterisitc(uuid=characteristics.BOOST)
-        return self.parser.boost_read(value=value)
+        return parser.boost_read(value=value)
 
     async def set_boost(self, enabled: bool, minutes: int, rpm: int):
-        value = self.parser.boost_write(enabled=enabled, minutes=minutes, rpm=rpm)
+        value = parser.boost_write(enabled=enabled, minutes=minutes, rpm=rpm)
         await self._write_characteristic(characteristics.BOOST, value)
 
     async def set_temporary_speed(self, enabled: bool, rpm: int):
-        value = self.parser.temporary_speed_write(enabled=enabled, rpm=rpm)
+        value = parser.temporary_speed_write(enabled=enabled, rpm=rpm)
         await self._write_characteristic(characteristics.TEMPORARY_SPEED, value)
 
     async def get_sensor_data(self):

@@ -1,9 +1,6 @@
 import pytest
 
-from pyfreshintellivent import SkyModeParser
-
-
-parser = SkyModeParser()
+from pyfreshintellivent import skyModeParser as parser
 
 
 def test_detection_as_string():
