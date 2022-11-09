@@ -74,9 +74,7 @@ class FreshIntelliVent(object):
         return parser.humidity_mode_read(value=value)
 
     async def set_humidity(self, enabled: bool, detection: int, rpm: int):
-        value = parser.humidity_mode_write(
-            enable=enabled, detection=detection, rpm=rpm
-        )
+        value = parser.humidity_mode_write(enable=enabled, detection=detection, rpm=rpm)
         await self._write_characteristic(characteristics.HUMIDITY, value)
 
     async def get_light_and_voc(self):
@@ -126,9 +124,7 @@ class FreshIntelliVent(object):
         return parser.airing_mode_read(value=value)
 
     async def set_airing(self, enabled: bool, minutes: int, rpm: int):
-        value = parser.airing_mode_write(
-            enabled=enabled, run_time=minutes, rpm=rpm
-        )
+        value = parser.airing_mode_write(enabled=enabled, run_time=minutes, rpm=rpm)
         await self._write_characteristic(characteristics.AIRING, value)
 
     async def get_pause(self):

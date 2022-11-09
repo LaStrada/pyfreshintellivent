@@ -1,6 +1,6 @@
 import pytest
 
-from pyfreshintellivent import helpers as h
+from pyfreshintellivent import h
 
 
 def test_auth_code():
