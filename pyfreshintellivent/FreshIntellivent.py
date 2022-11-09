@@ -1,6 +1,8 @@
+import logging
+
 from bleak import BleakClient, BleakScanner
 from bleak.exc import BleakError
-import logging
+
 from . import characteristics
 from . import helpers as h
 from . import skyModeParser as parser

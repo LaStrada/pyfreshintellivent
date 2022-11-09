@@ -1,7 +1,7 @@
 import asyncio
 import platform
-from pyfreshintellivent import Sky
 
+from pyfreshintellivent import Sky
 
 ADDRESS = (
     "mac-address"
