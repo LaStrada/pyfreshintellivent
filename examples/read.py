@@ -1,5 +1,6 @@
 import asyncio
 import platform
+import sys
 
 from pyfreshintellivent import FreshIntelliVent
 
@@ -23,7 +24,7 @@ async def main():
         print(f"Boost: {boost}")
 
         constant_speed = await sky.get_constant_speed()
-        print(f"Constand speed: {constant_speed}")
+        print(f"Constant speed: {constant_speed}")
 
         humidity = await sky.get_humidity()
         print(f"Humidity: {humidity}")
