@@ -1,7 +1,8 @@
 import logging
 from struct import pack, unpack
+from typing import Union
 
-from bleak import BleakClient, BleakScanner
+from bleak import BleakClient
 from bleak.exc import BleakError
 
 from . import characteristics
@@ -9,74 +10,91 @@ from . import helpers as h
 
 
 class FreshIntelliVent(object):
-    def __init__(self) -> None:
-        self.client = None
+    _client: BleakClient = None
+
+    def __init__(self, ble_address: str) -> None:
         self.logger = logging.getLogger(__name__)
         self.parser = SkyModeParser()
+        self.ble_address = ble_address
 
     async def disconnect(self):
+        if self._client is None:
+            return
         try:
-            if self.client.is_connected:
-                await self.client.disconnect()
+            if self._client.is_connected:
+                await self._client.disconnect()
             self.logger.info("Disconnected.")
         except AttributeError:
             self.logger.info("No clients available.")
         finally:
-            self.client = None
+            self._client = None
 
-    async def connect_and_authenticate(
-        self, ble_address: str, authentication_code: str, timeout: float = 5.0
-    ):
-        h.validate_authentication_code(authentication_code)
+    async def connect(self, timeout: float = 20.0):
+        if self.is_connected():
+            raise BleakError("Already connected")
 
-        device = await BleakScanner.find_device_by_address(
-            device_identifier=ble_address, timeout=timeout
+        self.logger.info(f"Searching for {self.ble_address}")
+        client = BleakClient(self.ble_address, timeout=timeout)
+        try:
+            await client.connect()
+
+            if client.is_connected is False:
+                self.logger.warn(f"Couldn't connect to {self.ble_address}")
+            else:
+                self._client = client
+                self.logger.info(f"Connected to {self.ble_address}")
+
+        except Exception as e:
+            await client.disconnect()
+            raise e
+
+    def is_connected(self):
+        if self._client is None:
+            return False
+        return self._client.is_connected
+
+    async def authenticate(self, authentication_code: Union[bytes, bytearray, str]):
+        if self.is_connected() is False:
+            raise BleakError("Not connected")
+
+        self.logger.info("Authenticating...")
+
+        await self._write_characteristic(
+            uuid=characteristics.AUTH,
+            data=h.to_bytearray(authentication_code),
         )
-        if not device:
-            raise BleakError(
-                f"A device with address {ble_address} " "could not be found."
-            )
-        self.logger.info(f"Found {ble_address}")
 
-        self.client = BleakClient(device)
-
-        await self.client.connect()
-        self.logger.info(f"Connected to {ble_address}")
-
-        await self._authenticate(authentication_code)
-
-    async def _authenticate(self, authentication_code: str):
-        await self.client.write_gatt_char(
-            char_specifier=characteristics.AUTH, data=bytes.fromhex(authentication_code)
-        )
         self.logger.info("Authenticated")
 
-    async def fetch_authentication_code(self, device: BleakClient):
-        code = await device.read_gatt_char(char_specifier=characteristics.AUTH)
+    async def fetch_authentication_code(self):
+        code = await self._client.read_gatt_char(char_specifier=characteristics.AUTH)
         return code
 
     async def _read_characterisitc(self, uuid: str):
-        value = await self.client.read_gatt_char(char_specifier=uuid)
-        self._log_data(command="R", uuid=uuid, message=value)
+        if self.is_connected() is False:
+            raise BleakError("Not connected")
+        value = await self._client.read_gatt_char(char_specifier=uuid)
+        self._log_data(command="R", uuid=uuid, bytes=value)
         return value
 
-    async def _write_characteristic(self, uuid: str, value):
-        self._log_data(command="W", uuid=uuid, message=value)
-        await self.client.write_gatt_char(
-            char_specifier=characteristics.AUTH, data=bytes.fromhex(value)
+    async def _write_characteristic(self, uuid: str, data: Union[bytes, bytearray]):
+        if self.is_connected() is False:
+            raise BleakError("Not connected")
+        self._log_data(command="W", uuid=uuid, bytes=data)
+        await self._client.write_gatt_char(
+            char_specifier=characteristics.AUTH, data=data, response=True
         )
 
-    def _log_data(self, command, uuid, message):
-        hex = "".join("{:02x}".format(x) for x in message)
-        self.logger.info(f"[{command}] {uuid} = {hex or message}")
+    def _log_data(self, command: str, uuid: str, bytes: bytearray):
+        self.logger.info(f"[{command}] {uuid} = {h.to_hex(bytes)}")
 
     async def get_humidity(self):
         value = await self._read_characterisitc(uuid=characteristics.HUMIDITY)
         return self.parser.humidity_mode_read(value=value)
 
     async def set_humidity(self, enabled: bool, detection: int, rpm: int):
-        value = self.parser.humidity_mode_write(
-            enable=enabled, detection=detection, rpm=rpm
+        value = self.parser.humidity_write(
+            enabled=enabled, detection=detection, rpm=rpm
         )
         await self._write_characteristic(characteristics.HUMIDITY, value)
 
@@ -84,7 +102,7 @@ class FreshIntelliVent(object):
         value = await self._read_characterisitc(uuid=characteristics.LIGHT_VOC)
         return self.parser.light_and_voc_read(value=value)
 
-    async def set_light_voc(
+    async def set_light_and_voc(
         self,
         light_enabled: bool,
         light_detection: int,
@@ -103,7 +121,7 @@ class FreshIntelliVent(object):
         value = await self._read_characterisitc(uuid=characteristics.CONSTANT_SPEED)
         return self.parser.constant_speed_read(value=value)
 
-    async def set_constant_speed(self, enabled, rpm):
+    async def set_constant_speed(self, enabled: bool, rpm: int):
         value = self.parser.constant_speed_write(enabled=enabled, rpm=rpm)
         await self._write_characteristic(characteristics.CONSTANT_SPEED, value)
 
@@ -124,12 +142,10 @@ class FreshIntelliVent(object):
 
     async def get_airing(self):
         value = await self._read_characterisitc(uuid=characteristics.AIRING)
-        return self.parser.airing_mode_read(value=value)
+        return self.parser.airing_read(value=value)
 
     async def set_airing(self, enabled: bool, minutes: int, rpm: int):
-        value = self.parser.airing_mode_write(
-            enabled=enabled, run_time=minutes, rpm=rpm
-        )
+        value = self.parser.airing_write(enabled=enabled, minutes=minutes, rpm=rpm)
         await self._write_characteristic(characteristics.AIRING, value)
 
     async def get_pause(self):
@@ -144,8 +160,8 @@ class FreshIntelliVent(object):
         value = await self._read_characterisitc(uuid=characteristics.BOOST)
         return self.parser.boost_read(value=value)
 
-    async def set_boost(self, enabled: bool, minutes: int, rpm: int):
-        value = self.parser.boost_write(enabled=enabled, minutes=minutes, rpm=rpm)
+    async def set_boost(self, enabled: bool, rpm: int, seconds: int):
+        value = self.parser.boost_write(enabled=enabled, rpm=rpm, seconds=seconds)
         await self._write_characteristic(characteristics.BOOST, value)
 
     async def set_temporary_speed(self, enabled: bool, rpm: int):
@@ -158,18 +174,24 @@ class FreshIntelliVent(object):
 
 
 class SkySensors(object):
-    def __init__(self, data: bytearray):
+    def __init__(self, data: Union[bytes, bytearray]):
         if data is None or len(data) != 15:
-            raise ValueError(f"Length of object need to be 15, was {len(data)}.")
+            raise ValueError(f"Length need to be exactly 15, was {len(data)}.")
 
-        values = unpack("<2B5HBH", data)
+        values = unpack("<2B2H2B2H3B", data)
 
         self._values = values
 
         self.status = bool(values[0])
         self.mode = values[1]
-        self.rpm = values[5]
-        self.mode_description = "Unknown"
+
+        self.humidity = values[2] / 10
+        self.temperature_1 = values[3] / 100
+        self.temperature_2 = values[7] / 100
+        self.unknowns = [values[4], values[8], values[9], values[10]]
+        self.authenticated = bool(values[5])
+
+        self.rpm = values[6]
 
         if self.mode == 0:
             self.mode_description = "Off"
@@ -195,19 +217,23 @@ class SkySensors(object):
                 "description": self.mode_description,
                 "raw_value": self.mode,
             },
+            "temperatures": [self.temperature_1, self.temperature_2],
             "rpm": self.rpm,
+            "humidity": self.humidity,
+            "unknowns": self.unknowns,
+            "authenticated": self.authenticated,
         }
 
 
 class SkyModeParser(object):
-    def airing_mode_read(value):
+    def airing_read(self, value: Union[bytes, bytearray]):
         if len(value) != 5:
             raise ValueError(f"Length need to be exactly 5, was {len(value)}.")
 
         value = unpack("<3BH", value)
 
         enabled = bool(value[0])
-        minutes = int(value[2])
+        minutes = h.validated_time(int(value[2]))
         rpm = int(value[3])
 
         return {
@@ -216,12 +242,12 @@ class SkyModeParser(object):
             "rpm": rpm,
         }
 
-    def airing_mode_write(enabled: bool, minutes: int, rpm: int):
+    def airing_write(self, enabled: bool, minutes: int, rpm: int):
         return pack(
             "<3BH", enabled, 26, h.validated_time(minutes), h.validated_rpm(rpm)
         )
 
-    def boost_read(value):
+    def boost_read(self, value: Union[bytes, bytearray]):
         if len(value) != 5:
             raise ValueError(f"Length need to be exactly 5, was {len(value)}.")
 
@@ -233,10 +259,11 @@ class SkyModeParser(object):
 
         return {"enabled": enabled, "seconds": seconds, "rpm": rpm}
 
-    def boost_write(enabled: bool, minutes: int, rpm: int):
-        return pack("<2B", enabled, h.validated_time(minutes), h.validated_rpm(rpm))
+    def boost_write(self, enabled: bool, rpm: int, seconds: int):
+        val = pack("<B2H", enabled, h.validated_rpm(rpm), h.validated_time(seconds))
+        return val
 
-    def constant_speed_read(value):
+    def constant_speed_read(self, value):
         if len(value) != 3:
             raise ValueError(f"Length need to be exactly 3, was {len(value)}.")
 
@@ -247,10 +274,10 @@ class SkyModeParser(object):
 
         return {"enabled": enabled, "rpm": rpm}
 
-    def constant_speed_write(enabled: bool, rpm: int):
+    def constant_speed_write(self, enabled: bool, rpm: int):
         return pack("<BH", enabled, h.validated_rpm(rpm))
 
-    def humidity_mode_read(self, value):
+    def humidity_read(self, value: Union[bytes, bytearray]):
         if len(value) != 4:
             raise ValueError(f"Length need to be exactly 4, was {len(value)}.")
 
@@ -267,7 +294,7 @@ class SkyModeParser(object):
             "rpm": rpm,
         }
 
-    def humidity_mode_write(enabled: bool, detection: int, rpm: int):
+    def humidity_write(self, enabled: bool, detection: int, rpm: int):
         return pack(
             "<BBH", enabled, h.validated_detection(detection), h.validated_rpm(rpm)
         )
@@ -299,7 +326,11 @@ class SkyModeParser(object):
         }
 
     def light_and_voc_write(
-        light_enabled: bool, light_detection: int, voc_enabled: bool, voc_detection: int
+        self,
+        light_enabled: bool,
+        light_detection: int,
+        voc_enabled: bool,
+        voc_detection: int,
     ):
         return pack(
             "<4b",
@@ -309,7 +340,7 @@ class SkyModeParser(object):
             h.validated_detection(voc_detection),
         )
 
-    def pause_read(value):
+    def pause_read(self, value: Union[bytes, bytearray]):
         if len(value) != 2:
             raise ValueError(f"Length need to be exactly 2, was {len(value)}.")
 
@@ -320,13 +351,13 @@ class SkyModeParser(object):
 
         return {"enabled": enabled, "minutes": minutes}
 
-    def pause_write(enabled: bool, minutes: int):
+    def pause_write(self, enabled: bool, minutes: int):
         return pack("<2B", enabled, h.validated_time(minutes))
 
-    def temporary_speed_write(enabled: bool, rpm: int):
+    def temporary_speed_write(self, enabled: bool, rpm: int):
         return pack("<BH", enabled, h.validated_rpm(rpm))
 
-    def timer_read(value):
+    def timer_read(self, value: Union[bytes, bytearray]):
         if len(value) != 5:
             raise ValueError(f"Length need to be exactly 5, was {len(value)}.")
 
@@ -343,7 +374,9 @@ class SkyModeParser(object):
             "rpm": rpm,
         }
 
-    def timer_write(minutes: int, delay_enabled: bool, delay_minutes: int, rpm: int):
+    def timer_write(
+        self, minutes: int, delay_enabled: bool, delay_minutes: int, rpm: int
+    ):
         return pack(
             "<3BH",
             minutes,

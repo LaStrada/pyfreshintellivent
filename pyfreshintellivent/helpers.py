@@ -1,14 +1,27 @@
-def validate_authentication_code(value: str):
+from typing import Union
+
+
+def validated_authentication_code(value: Union[bytes, bytearray, str]):
     if value is None:
         raise ValueError("Authentication cannot be empty.")
 
-    # Check if value is valid
-    bytes.fromhex(value)
+    if isinstance(value, str):
+        if len(value) != 8:
+            raise ValueError(
+                f"Authentication code need to be 8 characters, was {len(value)}."
+            )
+        bytes = bytearray.fromhex(value)
+        return bytes
 
-    if len(value) != 8:
-        raise ValueError("Authentication code need to be 8 bytes.")
+    elif isinstance(value, (bytes, bytearray)):
+        if len(value) != 4:
+            raise ValueError(
+                f"Authentication code need to be 4 bytes, was {len(value)}."
+            )
+        return value
 
-    return True
+    else:
+        raise TypeError("Wrong type, expected bytes, bytearray or str.")
 
 
 def validated_rpm(value: int):
@@ -34,3 +47,19 @@ def validated_time(value: int):
         return 0
     else:
         return int(value)
+
+
+def to_hex(value: Union[bytes, bytearray, str]):
+    if isinstance(value, str):
+        bytearray.fromhex(value)
+        return value
+    return "".join("{:02x}".format(x) for x in value)
+
+
+def to_bytearray(value: Union[bytes, bytearray, str]):
+    if isinstance(value, (bytes, bytearray)):
+        return value
+    elif isinstance(value, str):
+        return bytearray.fromhex(value)
+    else:
+        raise TypeError("Wrong type, expected bytes, bytearray or str.")

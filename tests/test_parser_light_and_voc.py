@@ -33,11 +33,20 @@ def test_light_and_voc_valid():
     assert val["voc"]["detection_description"] == "High"
 
 
-def test_light_and_voc_invalid():
+def test_light_and_voc_invalid_too_short():
     invalid = bytearray.fromhex("010101")
     with pytest.raises(ValueError, match=r"Length need to be exactly*"):
         parser.light_and_voc_read(value=invalid)
 
+
+def test_light_and_voc_invalid_too_long():
     invalid = bytearray.fromhex("0101010101")
     with pytest.raises(ValueError, match=r"Length need to be exactly*"):
         parser.light_and_voc_read(value=invalid)
+
+
+def test_light_and_voc_valid_write():
+    val = parser.light_and_voc_write(
+        light_enabled=True, light_detection=2, voc_enabled=True, voc_detection=3
+    )
+    assert val == bytearray.fromhex("01020103")
