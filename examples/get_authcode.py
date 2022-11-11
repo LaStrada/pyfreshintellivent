@@ -5,8 +5,8 @@ from bleak import BleakClient, BleakScanner
 
 from pyfreshintellivent import FreshIntelliVent
 
-
 ADDRESS = "mac-address"
+
 
 async def main():
     sky = FreshIntelliVent()
@@ -14,12 +14,11 @@ async def main():
         device = await BleakScanner.find_device_by_address(
             device_identifier=ADDRESS, timeout=30.0
         )
-        
+
         if device is None:
             print("no matching device found, check the BLE address.")
             sys.exit(1)
-        
-        
+
         client = BleakClient(device)
         await client.connect()
         print("Connected")

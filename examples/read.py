@@ -1,6 +1,5 @@
 import asyncio
 import platform
-import sys
 
 from pyfreshintellivent import FreshIntelliVent
 
