@@ -11,11 +11,11 @@ ADDRESS = (
 
 
 async def main():
-    sky = FreshIntelliVent()
+    sky = FreshIntelliVent(ble_address=ADDRESS)
     try:
-        await sky.connect_and_authenticate(
-            ble_address=ADDRESS, authentication_code="xxxxxxxx", timeout=30.0
-        )
+        await sky.connect()
+        await sky.authenticate(authentication_code="xxxxxxxx")
+
         sensors = await sky.get_sensor_data()
         print(f"Status: {sensors.as_dict()}")
 

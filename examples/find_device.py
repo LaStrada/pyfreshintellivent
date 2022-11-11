@@ -23,7 +23,6 @@ async def main():
             print("Found sensor service!")
 
         if val == 2:
-            print("This is it!")
             return True
         else:
             return False
