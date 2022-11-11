@@ -1,7 +1,10 @@
 import asyncio
 import sys
+
 from bleak import BleakClient, BleakScanner
+
 from pyfreshintellivent import FreshIntelliVent
+
 
 ADDRESS = "mac-address"
 
