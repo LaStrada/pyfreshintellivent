@@ -250,7 +250,6 @@ class SkyModeParser(object):
     def boost_read(self, value):
         if len(value) != 5:
             raise ValueError(f"Length need to be exactly 5, was {len(value)}.")
-
         value = unpack("<B2H", value)
 
         enabled = bool(value[0])
@@ -266,7 +265,6 @@ class SkyModeParser(object):
     def constant_speed_read(self, value):
         if len(value) != 3:
             raise ValueError(f"Length need to be exactly 3, was {len(value)}.")
-
         value = unpack("<BH", value)
 
         enabled = bool(value[0])
