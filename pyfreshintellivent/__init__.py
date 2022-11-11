@@ -247,7 +247,7 @@ class SkyModeParser(object):
             "<3BH", enabled, 26, h.validated_time(minutes), h.validated_rpm(rpm)
         )
 
-    def boost_read(self, value):
+    def boost_read(self, value: Union[bytes, bytearray]):
         if len(value) != 5:
             raise ValueError(f"Length need to be exactly 5, was {len(value)}.")
         value = unpack("<B2H", value)
@@ -262,7 +262,7 @@ class SkyModeParser(object):
         val = pack("<B2H", enabled, h.validated_rpm(rpm), h.validated_time(seconds))
         return val
 
-    def constant_speed_read(self, value):
+    def constant_speed_read(self, value: Union[bytes, bytearray]):
         if len(value) != 3:
             raise ValueError(f"Length need to be exactly 3, was {len(value)}.")
         value = unpack("<BH", value)
@@ -297,7 +297,7 @@ class SkyModeParser(object):
             "<BBH", enabled, h.validated_detection(detection), h.validated_rpm(rpm)
         )
 
-    def light_and_voc_read(self, value):
+    def light_and_voc_read(self, value: Union[bytes, bytearray]):
         if len(value) != 4:
             raise ValueError(f"Length need to be exactly 4, was {len(value)}.")
 
@@ -338,7 +338,7 @@ class SkyModeParser(object):
             h.validated_detection(voc_detection),
         )
 
-    def pause_read(self, value):
+    def pause_read(self, value: Union[bytes, bytearray]):
         if len(value) != 2:
             raise ValueError(f"Length need to be exactly 2, was {len(value)}.")
 
@@ -355,7 +355,7 @@ class SkyModeParser(object):
     def temporary_speed_write(self, enabled: bool, rpm: int):
         return pack("<BH", enabled, h.validated_rpm(rpm))
 
-    def timer_read(self, value):
+    def timer_read(self, value: Union[bytes, bytearray]):
         if len(value) != 5:
             raise ValueError(f"Length need to be exactly 5, was {len(value)}.")
 
