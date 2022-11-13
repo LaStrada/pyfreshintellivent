@@ -4,7 +4,7 @@ import asyncio
 import logging
 from contextlib import AsyncExitStack, asynccontextmanager
 from struct import pack, unpack
-from typing import AsyncIterator, Union
+from typing import AsyncIterator
 
 from bleak import BleakClient
 from bleak.backends.device import BLEDevice
@@ -74,7 +74,7 @@ class FreshIntelliVent:
                     logging.info("Disconnected")
                     await self._client_stack.pop_all().aclose()
 
-    async def authenticate(self, authentication_code: Union[bytes, bytearray, str]):
+    async def authenticate(self, authentication_code: bytes | bytearray | str):
         self.logger.info("Authenticating...")
         await self._write_characteristic(
             uuid=characteristics.AUTH,
@@ -102,12 +102,13 @@ class FreshIntelliVent:
             logging.info(f"Failed to read: {uuid}")
             raise FreshIntelliventError("Failed to read") from exc
 
-    async def _write_characteristic(self, uuid: str, data: Union[bytes, bytearray]):
+    async def _write_characteristic(self, uuid: str, data: bytes | bytearray):
         if self._client is None:
             raise FreshIntelliventError("Not connected")
 
         try:
             self._log_data(command="W", uuid=uuid, bytes=data)
+            self.logger.info(f"MSG: {h.to_hex(data)} ({len(data)})")
             await self._client.write_gatt_char(
                 char_specifier=characteristics.AUTH, data=data, response=True
             )
@@ -118,7 +119,7 @@ class FreshIntelliVent:
             logging.info(f"Failed to write: {uuid}")
             raise FreshIntelliventError("Failed to write") from exc
 
-    def _log_data(self, command: str, uuid: str, bytes: bytearray):
+    def _log_data(self, command: str, uuid: str, bytes: bytes | bytearray):
         self.logger.info(f"[{command}] {uuid} = {h.to_hex(bytes)}")
 
     async def get_humidity(self):
@@ -207,7 +208,7 @@ class FreshIntelliVent:
 
 
 class SkySensors(object):
-    def __init__(self, data: Union[bytes, bytearray]):
+    def __init__(self, data: bytes | bytearray):
         if data is None or len(data) != 15:
             raise ValueError(f"Length need to be exactly 15, was {len(data)}.")
 
@@ -259,7 +260,7 @@ class SkySensors(object):
 
 
 class SkyModeParser(object):
-    def airing_read(self, value: Union[bytes, bytearray]):
+    def airing_read(self, value: bytes | bytearray):
         if len(value) != 5:
             raise ValueError(f"Length need to be exactly 5, was {len(value)}.")
 
@@ -280,7 +281,7 @@ class SkyModeParser(object):
             "<3BH", enabled, 26, h.validated_time(minutes), h.validated_rpm(rpm)
         )
 
-    def boost_read(self, value: Union[bytes, bytearray]):
+    def boost_read(self, value: bytes | bytearray):
         if len(value) != 5:
             raise ValueError(f"Length need to be exactly 5, was {len(value)}.")
         value = unpack("<B2H", value)
@@ -295,7 +296,7 @@ class SkyModeParser(object):
         val = pack("<B2H", enabled, h.validated_rpm(rpm), h.validated_time(seconds))
         return val
 
-    def constant_speed_read(self, value: Union[bytes, bytearray]):
+    def constant_speed_read(self, value: bytes | bytearray):
         if len(value) != 3:
             raise ValueError(f"Length need to be exactly 3, was {len(value)}.")
         value = unpack("<BH", value)
@@ -308,7 +309,7 @@ class SkyModeParser(object):
     def constant_speed_write(self, enabled: bool, rpm: int):
         return pack("<BH", enabled, h.validated_rpm(rpm))
 
-    def humidity_read(self, value: Union[bytes, bytearray]):
+    def humidity_read(self, value: bytes | bytearray):
         if len(value) != 4:
             raise ValueError(f"Length need to be exactly 4, was {len(value)}.")
 
@@ -330,7 +331,7 @@ class SkyModeParser(object):
             "<BBH", enabled, h.validated_detection(detection), h.validated_rpm(rpm)
         )
 
-    def light_and_voc_read(self, value: Union[bytes, bytearray]):
+    def light_and_voc_read(self, value: bytes | bytearray):
         if len(value) != 4:
             raise ValueError(f"Length need to be exactly 4, was {len(value)}.")
 
@@ -371,7 +372,7 @@ class SkyModeParser(object):
             h.validated_detection(voc_detection),
         )
 
-    def pause_read(self, value: Union[bytes, bytearray]):
+    def pause_read(self, value: bytes | bytearray):
         if len(value) != 2:
             raise ValueError(f"Length need to be exactly 2, was {len(value)}.")
 
@@ -388,7 +389,7 @@ class SkyModeParser(object):
     def temporary_speed_write(self, enabled: bool, rpm: int):
         return pack("<BH", enabled, h.validated_rpm(rpm))
 
-    def timer_read(self, value: Union[bytes, bytearray]):
+    def timer_read(self, value: bytes | bytearray):
         if len(value) != 5:
             raise ValueError(f"Length need to be exactly 5, was {len(value)}.")
 

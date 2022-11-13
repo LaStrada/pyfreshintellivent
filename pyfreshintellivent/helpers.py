@@ -1,7 +1,4 @@
-from typing import Union
-
-
-def validated_authentication_code(value: Union[bytes, bytearray, str]):
+def validated_authentication_code(value: bytes | bytearray | str):
     if value is None:
         raise ValueError("Authentication cannot be empty.")
 
@@ -49,14 +46,14 @@ def validated_time(value: int):
         return int(value)
 
 
-def to_hex(value: Union[bytes, bytearray, str]):
+def to_hex(value: bytes | bytearray | str):
     if isinstance(value, str):
         bytearray.fromhex(value)
         return value
     return "".join("{:02x}".format(x) for x in value)
 
 
-def to_bytearray(value: Union[bytes, bytearray, str]):
+def to_bytearray(value: bytes | bytearray | str):
     if isinstance(value, (bytes, bytearray)):
         return value
     elif isinstance(value, str):
