@@ -1,96 +1,129 @@
+from __future__ import annotations
+
+import asyncio
 import logging
+from contextlib import AsyncExitStack, asynccontextmanager
 from struct import pack, unpack
-from typing import Union
+from typing import AsyncIterator, Union
 
 from bleak import BleakClient
+from bleak.backends.device import BLEDevice
 from bleak.exc import BleakError
 
 from . import characteristics
 from . import helpers as h
 
 
-class FreshIntelliVent(object):
-    _client: BleakClient = None
+class FreshIntelliventError(Exception):
+    pass
 
-    def __init__(self, ble_address: str) -> None:
+
+class FreshIntelliventTimeoutError(FreshIntelliventError):
+    pass
+
+
+class FreshIntelliventAuthenticationError(FreshIntelliventError):
+    pass
+
+
+class FreshIntelliVent:
+    def __init__(self, address_or_ble_device: BLEDevice | str | None = None) -> None:
         self.logger = logging.getLogger(__name__)
         self.parser = SkyModeParser()
-        self.ble_address = ble_address
+        self.address_or_ble_device = address_or_ble_device
 
-    async def disconnect(self):
-        if self._client is None:
-            return
-        try:
-            if self._client.is_connected:
-                await self._client.disconnect()
-            self.logger.info("Disconnected.")
-        except AttributeError:
-            self.logger.info("No clients available.")
-        finally:
-            self._client = None
+        self._lock = asyncio.Lock()
+        self._client: BleakClient | None = None
+        self._client_stack = AsyncExitStack()
+        self._client_count = 0
 
-    async def connect(self, timeout: float = 20.0):
-        if self.is_connected():
-            raise BleakError("Already connected")
+    @asynccontextmanager
+    async def connect(
+        self,
+        address_or_ble_device: BLEDevice | str | None = None,
+        timeout: float = 20.0,
+    ) -> AsyncIterator[FreshIntelliVent]:
+        if address_or_ble_device is not None:
+            self.address_or_ble_device = address_or_ble_device
 
-        self.logger.info(f"Searching for {self.ble_address}")
-        client = BleakClient(self.ble_address, timeout=timeout)
-        try:
-            await client.connect()
-
-            if client.is_connected is False:
-                self.logger.warn(f"Couldn't connect to {self.ble_address}")
+        async with self._lock:
+            if not self._client:
+                try:
+                    self.logger.debug(f"Searching for {self.address_or_ble_device}")
+                    self._client = await self._client_stack.enter_async_context(
+                        BleakClient(self.address_or_ble_device, timeout=timeout)
+                    )
+                except asyncio.TimeoutError as exc:
+                    logging.info("Timeout on connect", exc_info=exc)
+                    raise FreshIntelliventTimeoutError("Timeout on connect") from exc
+                except BleakError as exc:
+                    logging.info("Error on connect", exc_info=exc)
+                    raise FreshIntelliventError("Error on connect") from exc
             else:
-                self._client = client
-                self.logger.info(f"Connected to {self.ble_address}")
+                logging.info("Connection reused")
+            self._client_count += 1
 
-        except Exception as e:
-            await client.disconnect()
-            raise e
-
-    def is_connected(self):
-        if self._client is None:
-            return False
-        return self._client.is_connected
+        try:
+            async with self._lock:
+                yield self
+        finally:
+            async with self._lock:
+                self._client_count -= 1
+                if self._client_count == 0:
+                    self._client = None
+                    logging.info("Disconnected")
+                    await self._client_stack.pop_all().aclose()
 
     async def authenticate(self, authentication_code: Union[bytes, bytearray, str]):
-        if self.is_connected() is False:
-            raise BleakError("Not connected")
-
         self.logger.info("Authenticating...")
-
         await self._write_characteristic(
             uuid=characteristics.AUTH,
             data=h.to_bytearray(authentication_code),
         )
-
-        self.logger.info("Authenticated")
+        await asyncio.sleep(2)  # Make sure we're authenticated
+        self.logger.info("Authenticated!")
 
     async def fetch_authentication_code(self):
         code = await self._client.read_gatt_char(char_specifier=characteristics.AUTH)
         return code
 
     async def _read_characterisitc(self, uuid: str):
-        if self.is_connected() is False:
-            raise BleakError("Not connected")
-        value = await self._client.read_gatt_char(char_specifier=uuid)
-        self._log_data(command="R", uuid=uuid, bytes=value)
-        return value
+        if self._client is None:
+            raise FreshIntelliventError("Not connected")
+
+        try:
+            value = await self._client.read_gatt_char(char_specifier=uuid)
+            self._log_data(command="R", uuid=uuid, bytes=value)
+            return value
+        except asyncio.TimeoutError as exc:
+            logging.info(f"Timeout on read: {uuid}")
+            raise TimeoutError("Timeout on read") from exc
+        except BleakError as exc:
+            logging.info(f"Failed to read: {uuid}")
+            raise FreshIntelliventError("Failed to read") from exc
 
     async def _write_characteristic(self, uuid: str, data: Union[bytes, bytearray]):
-        if self.is_connected() is False:
-            raise BleakError("Not connected")
-        self._log_data(command="W", uuid=uuid, bytes=data)
-        await self._client.write_gatt_char(
-            char_specifier=characteristics.AUTH, data=data, response=True
-        )
+        if self._client is None:
+            raise FreshIntelliventError("Not connected")
+
+        try:
+            self._log_data(command="W", uuid=uuid, bytes=data)
+            await self._client.write_gatt_char(
+                char_specifier=characteristics.AUTH, data=data, response=True
+            )
+        except asyncio.TimeoutError as exc:
+            logging.info(f"Timeout on write: {uuid}")
+            raise TimeoutError("Timeout on write") from exc
+        except BleakError as exc:
+            logging.info(f"Failed to write: {uuid}")
+            raise FreshIntelliventError("Failed to write") from exc
 
     def _log_data(self, command: str, uuid: str, bytes: bytearray):
         self.logger.info(f"[{command}] {uuid} = {h.to_hex(bytes)}")
 
     async def get_humidity(self):
         value = await self._read_characterisitc(uuid=characteristics.HUMIDITY)
-        return self.parser.humidity_mode_read(value=value)
+        return self.parser.humidity_read(value=value)
 
     async def set_humidity(self, enabled: bool, detection: int, rpm: int):
         value = self.parser.humidity_write(
