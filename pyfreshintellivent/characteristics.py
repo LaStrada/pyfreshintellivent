@@ -1,6 +1,5 @@
 from uuid import UUID
 
-
 DEVICE_NAME = UUID("{b85fa07a-9382-4838-871c-81d045dcc2ff}")
 DEVICE_STATUS = UUID("{528b80e8-c47a-4c0a-bdf1-916a7748f412}")
 
