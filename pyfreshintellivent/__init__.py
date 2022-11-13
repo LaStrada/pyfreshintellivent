@@ -5,6 +5,7 @@ import logging
 from contextlib import AsyncExitStack, asynccontextmanager
 from struct import pack, unpack
 from typing import AsyncIterator, Union
+from uuid import UUID
 
 from bleak import BleakClient
 from bleak.backends.device import BLEDevice
@@ -79,8 +80,7 @@ class FreshIntelliVent:
     async def authenticate(self, authentication_code: Union[bytes, bytearray, str]):
         self.logger.info("Authenticating...")
         await self._write_characteristic(
-            uuid=characteristics.AUTH,
-            data=h.to_bytearray(authentication_code),
+            uuid=characteristics.AUTH, data=h.to_bytearray(authentication_code)
         )
         await asyncio.sleep(2)  # Make sure we're authenticated
         self.logger.info("Authenticated!")
@@ -89,7 +89,7 @@ class FreshIntelliVent:
         code = await self._client.read_gatt_char(char_specifier=characteristics.AUTH)
         return code
 
-    async def _read_characterisitc(self, uuid: str):
+    async def _read_characterisitc(self, uuid: Union[str, UUID]):
         if self._client is None:
             raise FreshIntelliventError("Not connected")
 
@@ -104,7 +104,9 @@ class FreshIntelliVent:
             logging.info(f"Failed to read: {uuid}")
             raise FreshIntelliventError("Failed to read") from exc
 
-    async def _write_characteristic(self, uuid: str, data: Union[bytes, bytearray]):
+    async def _write_characteristic(
+        self, uuid: Union[str, UUID], data: Union[bytes, bytearray]
+    ):
         if self._client is None:
             raise FreshIntelliventError("Not connected")
 
@@ -112,7 +114,7 @@ class FreshIntelliVent:
             self._log_data(command="W", uuid=uuid, bytes=data)
             self.logger.info(f"MSG: {h.to_hex(data)} ({len(data)})")
             await self._client.write_gatt_char(
-                char_specifier=characteristics.AUTH, data=data, response=True
+                char_specifier=uuid, data=data, response=True
             )
         except asyncio.TimeoutError as exc:
             logging.info(f"Timeout on write: {uuid}")
@@ -159,7 +161,10 @@ class FreshIntelliVent:
 
     async def set_constant_speed(self, enabled: bool, rpm: int):
         value = self.parser.constant_speed_write(enabled=enabled, rpm=rpm)
-        await self._write_characteristic(characteristics.CONSTANT_SPEED, value)
+        hex = h.to_hex(value)
+        await self._write_characteristic(
+            characteristics.CONSTANT_SPEED, bytearray.fromhex(hex)
+        )
 
     async def get_timer(self):
         value = await self._read_characterisitc(uuid=characteristics.TIMER)
@@ -266,7 +271,7 @@ class SkyModeParser(object):
         if len(value) != 5:
             raise ValueError(f"Length need to be exactly 5, was {len(value)}.")
 
-        value = unpack("<3BH", value)
+        value = unpack("<?2BH", value)
 
         enabled = bool(value[0])
         minutes = h.validated_time(int(value[2]))
@@ -280,13 +285,13 @@ class SkyModeParser(object):
 
     def airing_write(self, enabled: bool, minutes: int, rpm: int):
         return pack(
-            "<3BH", enabled, 26, h.validated_time(minutes), h.validated_rpm(rpm)
+            "<?2BH", enabled, 26, h.validated_time(minutes), h.validated_rpm(rpm)
         )
 
     def boost_read(self, value: Union[bytes, bytearray]):
         if len(value) != 5:
             raise ValueError(f"Length need to be exactly 5, was {len(value)}.")
-        value = unpack("<B2H", value)
+        value = unpack("<?2H", value)
 
         enabled = bool(value[0])
         rpm = int(value[1])
@@ -295,13 +300,13 @@ class SkyModeParser(object):
         return {"enabled": enabled, "seconds": seconds, "rpm": rpm}
 
     def boost_write(self, enabled: bool, rpm: int, seconds: int):
-        val = pack("<B2H", enabled, h.validated_rpm(rpm), h.validated_time(seconds))
+        val = pack("<?2H", enabled, h.validated_rpm(rpm), h.validated_time(seconds))
         return val
 
     def constant_speed_read(self, value: Union[bytes, bytearray]):
         if len(value) != 3:
             raise ValueError(f"Length need to be exactly 3, was {len(value)}.")
-        value = unpack("<BH", value)
+        value = unpack("<?H", value)
 
         enabled = bool(value[0])
         rpm = int(value[1])
@@ -309,13 +314,13 @@ class SkyModeParser(object):
         return {"enabled": enabled, "rpm": rpm}
 
     def constant_speed_write(self, enabled: bool, rpm: int):
-        return pack("<BH", enabled, h.validated_rpm(rpm))
+        return pack("<?H", enabled, h.validated_rpm(rpm))
 
     def humidity_read(self, value: Union[bytes, bytearray]):
         if len(value) != 4:
             raise ValueError(f"Length need to be exactly 4, was {len(value)}.")
 
-        value = unpack("<BBH", value)
+        value = unpack("<?BH", value)
 
         enabled = bool(value[0])
         detection = int(value[1])
@@ -330,14 +335,14 @@ class SkyModeParser(object):
 
     def humidity_write(self, enabled: bool, detection: int, rpm: int):
         return pack(
-            "<BBH", enabled, h.validated_detection(detection), h.validated_rpm(rpm)
+            "<?BH", enabled, h.validated_detection(detection), h.validated_rpm(rpm)
         )
 
     def light_and_voc_read(self, value: Union[bytes, bytearray]):
         if len(value) != 4:
             raise ValueError(f"Length need to be exactly 4, was {len(value)}.")
 
-        value = unpack("<4B", value)
+        value = unpack("<?B?B", value)
 
         light_enabled = bool(value[0])
         light_detection = int(value[1])
@@ -367,7 +372,7 @@ class SkyModeParser(object):
         voc_detection: int,
     ):
         return pack(
-            "<4b",
+            "<?B?B",
             bool(light_enabled),
             h.validated_detection(light_detection),
             bool(voc_enabled),
@@ -378,7 +383,7 @@ class SkyModeParser(object):
         if len(value) != 2:
             raise ValueError(f"Length need to be exactly 2, was {len(value)}.")
 
-        value = unpack("<2B", value)
+        value = unpack("<?B", value)
 
         enabled = bool(value[0])
         minutes = int(value[1])
@@ -386,16 +391,16 @@ class SkyModeParser(object):
         return {"enabled": enabled, "minutes": minutes}
 
     def pause_write(self, enabled: bool, minutes: int):
-        return pack("<2B", enabled, h.validated_time(minutes))
+        return pack("<?B", enabled, h.validated_time(minutes))
 
     def temporary_speed_write(self, enabled: bool, rpm: int):
-        return pack("<BH", enabled, h.validated_rpm(rpm))
+        return pack("<?H", enabled, h.validated_rpm(rpm))
 
     def timer_read(self, value: Union[bytes, bytearray]):
         if len(value) != 5:
             raise ValueError(f"Length need to be exactly 5, was {len(value)}.")
 
-        value = unpack("<3BH", value)
+        value = unpack("<B?BH", value)
 
         minutes = int(value[0])
         delay_enabled = bool(value[1])
@@ -412,7 +417,7 @@ class SkyModeParser(object):
         self, minutes: int, delay_enabled: bool, delay_minutes: int, rpm: int
     ):
         return pack(
-            "<3BH",
+            "<B?BH",
             minutes,
             delay_enabled,
             delay_minutes,
