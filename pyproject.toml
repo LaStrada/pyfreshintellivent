@@ -6,6 +6,20 @@ authors = ["Ståle Storø Hauknes <walnut-caprice.04@icloud.com>"]
 readme = "README.md"
 repository = "https://github.com/LaStrada/pyfreshintellivent"
 license = "Apache License 2.0"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+requires-python = ">=3.7.0"
+keywords = ["ble", "ventilation", "fresh", "intellivent", "sky"]
+include = [
+    "characteristics.md", "README.md"
+]
 
 [tool.poetry.dependencies]
 python = "^3.7"
