@@ -20,7 +20,6 @@ class FreshIntelliVent:
     def __init__(
         self, address_or_ble_device: Union[BLEDevice, str, None] = None
     ) -> None:
-        skyModeParser.SkyModeParser
         self.logger = logging.getLogger(__name__)
         self.parser = SkyModeParser()
         self.address_or_ble_device = address_or_ble_device
