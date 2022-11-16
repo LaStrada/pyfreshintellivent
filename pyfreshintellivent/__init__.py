@@ -3,8 +3,6 @@ from __future__ import annotations
 import asyncio
 import logging
 from contextlib import AsyncExitStack, asynccontextmanager
-from math import log
-from struct import pack, unpack
 from typing import AsyncIterator, Union
 from uuid import UUID
 
@@ -14,24 +12,15 @@ from bleak.exc import BleakError
 
 from . import characteristics
 from . import helpers as h
-
-
-class FreshIntelliventError(Exception):
-    pass
-
-
-class FreshIntelliventTimeoutError(FreshIntelliventError):
-    pass
-
-
-class FreshIntelliventAuthenticationError(FreshIntelliventError):
-    pass
+from .sensors import SkySensors
+from .skyModeParser import SkyModeParser
 
 
 class FreshIntelliVent:
     def __init__(
         self, address_or_ble_device: Union[BLEDevice, str, None] = None
     ) -> None:
+        skyModeParser.SkyModeParser
         self.logger = logging.getLogger(__name__)
         self.parser = SkyModeParser()
         self.address_or_ble_device = address_or_ble_device
@@ -215,212 +204,13 @@ class FreshIntelliVent:
         return SkySensors(data)
 
 
-class SkySensors(object):
-    def __init__(self, data: Union[bytes, bytearray]):
-        if data is None or len(data) != 15:
-            raise ValueError(f"Length need to be exactly 15, was {len(data)}.")
-
-        values = unpack("<2B2H2B2H3B", data)
-
-        self._values = values
-
-        self.status = bool(values[0])
-        self.mode = values[1]
-
-        self.humidity = round((log(values[2] / 10) * 10), 1)
-        self.temperature_1 = values[3] / 100
-        self.temperature_2 = values[7] / 100
-        self.unknowns = [values[4], values[8], values[9], values[10]]
-        self.authenticated = bool(values[5])
-
-        self.rpm = values[6]
-
-        if self.mode == 0:
-            self.mode_description = "Off"
-        elif self.mode == 6:
-            self.mode_description = "Pause"
-        elif self.mode == 16:
-            self.mode_description = "Constant speed"
-        elif self.mode == 34:
-            self.mode_description = "Light"
-        elif self.mode == 49:
-            self.mode_description = "Humidity"
-        elif self.mode == 52:
-            self.mode_description = "VOC"
-        elif self.mode == 103:
-            self.mode_description = "Boost"
-        else:
-            self.mode_description = "Unknown"
-
-    def as_dict(self):
-        return {
-            "status": self.status,
-            "mode": {
-                "description": self.mode_description,
-                "raw_value": self.mode,
-            },
-            "temperatures": [self.temperature_1, self.temperature_2],
-            "rpm": self.rpm,
-            "humidity": self.humidity,
-            "unknowns": self.unknowns,
-            "authenticated": self.authenticated,
-        }
+class FreshIntelliventError(Exception):
+    pass
 
 
-class SkyModeParser(object):
-    def airing_read(self, value: Union[bytes, bytearray]):
-        if len(value) != 5:
-            raise ValueError(f"Length need to be exactly 5, was {len(value)}.")
+class FreshIntelliventTimeoutError(FreshIntelliventError):
+    pass
 
-        value = unpack("<?2BH", value)
 
-        enabled = bool(value[0])
-        minutes = h.validated_time(int(value[2]))
-        rpm = int(value[3])
-
-        return {
-            "enabled": enabled,
-            "minutes": minutes,
-            "rpm": rpm,
-        }
-
-    def airing_write(self, enabled: bool, minutes: int, rpm: int):
-        return pack(
-            "<?2BH", enabled, 26, h.validated_time(minutes), h.validated_rpm(rpm)
-        )
-
-    def boost_read(self, value: Union[bytes, bytearray]):
-        if len(value) != 5:
-            raise ValueError(f"Length need to be exactly 5, was {len(value)}.")
-        value = unpack("<?2H", value)
-
-        enabled = bool(value[0])
-        rpm = int(value[1])
-        seconds = int(value[2])
-
-        return {"enabled": enabled, "seconds": seconds, "rpm": rpm}
-
-    def boost_write(self, enabled: bool, rpm: int, seconds: int):
-        val = pack("<?2H", enabled, h.validated_rpm(rpm), h.validated_time(seconds))
-        return val
-
-    def constant_speed_read(self, value: Union[bytes, bytearray]):
-        if len(value) != 3:
-            raise ValueError(f"Length need to be exactly 3, was {len(value)}.")
-        value = unpack("<?H", value)
-
-        enabled = bool(value[0])
-        rpm = int(value[1])
-
-        return {"enabled": enabled, "rpm": rpm}
-
-    def constant_speed_write(self, enabled: bool, rpm: int):
-        return pack("<?H", enabled, h.validated_rpm(rpm))
-
-    def humidity_read(self, value: Union[bytes, bytearray]):
-        if len(value) != 4:
-            raise ValueError(f"Length need to be exactly 4, was {len(value)}.")
-
-        value = unpack("<?BH", value)
-
-        enabled = bool(value[0])
-        detection = int(value[1])
-        rpm = int(value[2])
-
-        return {
-            "enabled": enabled,
-            "detection": detection,
-            "detection_description": h.detection_int_as_string(detection),
-            "rpm": rpm,
-        }
-
-    def humidity_write(self, enabled: bool, detection: Union[int, str], rpm: int):
-        return pack(
-            "<?BH", enabled, h.validated_detection(detection), h.validated_rpm(rpm)
-        )
-
-    def light_and_voc_read(self, value: Union[bytes, bytearray]):
-        if len(value) != 4:
-            raise ValueError(f"Length need to be exactly 4, was {len(value)}.")
-
-        value = unpack("<?B?B", value)
-
-        light_enabled = bool(value[0])
-        light_detection = int(value[1])
-        voc_enabled = bool(value[2])
-        voc_detection = int(value[3])
-
-        return {
-            "light": {
-                "enabled": light_enabled,
-                "detection": light_detection,
-                "detection_description": h.detection_int_as_string(
-                    light_detection, False
-                ),
-            },
-            "voc": {
-                "enabled": voc_enabled,
-                "detection": voc_detection,
-                "detection_description": h.detection_int_as_string(voc_detection),
-            },
-        }
-
-    def light_and_voc_write(
-        self,
-        light_enabled: bool,
-        light_detection: int,
-        voc_enabled: bool,
-        voc_detection: int,
-    ):
-        return pack(
-            "<?B?B",
-            bool(light_enabled),
-            h.validated_detection(light_detection),
-            bool(voc_enabled),
-            h.validated_detection(voc_detection),
-        )
-
-    def pause_read(self, value: Union[bytes, bytearray]):
-        if len(value) != 2:
-            raise ValueError(f"Length need to be exactly 2, was {len(value)}.")
-
-        value = unpack("<?B", value)
-
-        enabled = bool(value[0])
-        minutes = int(value[1])
-
-        return {"enabled": enabled, "minutes": minutes}
-
-    def pause_write(self, enabled: bool, minutes: int):
-        return pack("<?B", enabled, h.validated_time(minutes))
-
-    def temporary_speed_write(self, enabled: bool, rpm: int):
-        return pack("<?H", enabled, h.validated_rpm(rpm))
-
-    def timer_read(self, value: Union[bytes, bytearray]):
-        if len(value) != 5:
-            raise ValueError(f"Length need to be exactly 5, was {len(value)}.")
-
-        value = unpack("<B?BH", value)
-
-        minutes = int(value[0])
-        delay_enabled = bool(value[1])
-        delay_minutes = int(value[2])
-        rpm = int(value[3])
-
-        return {
-            "delay": {"enabled": delay_enabled, "minutes": delay_minutes},
-            "minutes": minutes,
-            "rpm": rpm,
-        }
-
-    def timer_write(
-        self, minutes: int, delay_enabled: bool, delay_minutes: int, rpm: int
-    ):
-        return pack(
-            "<B?BH",
-            minutes,
-            delay_enabled,
-            delay_minutes,
-            h.validated_rpm(rpm),
-        )
+class FreshIntelliventAuthenticationError(FreshIntelliventError):
+    pass

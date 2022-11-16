@@ -1,6 +1,6 @@
 import pytest
 
-from pyfreshintellivent import SkyModeParser
+from pyfreshintellivent.skyModeParser import SkyModeParser
 
 parser = SkyModeParser()
 
@@ -8,7 +8,6 @@ parser = SkyModeParser()
 def test_humidity_read_valid():
     valid = bytearray.fromhex("01013905")
     val = parser.humidity_read(value=valid)
-    print(val)
     assert val["enabled"] is True
     assert val["detection"] == 1
     assert val["detection_description"] == "Low"
@@ -16,7 +15,6 @@ def test_humidity_read_valid():
 
     valid = bytearray.fromhex("00030000")
     val = parser.humidity_read(value=valid)
-    print(val)
     assert val["enabled"] is False
     assert val["detection"] == 3
     assert val["detection_description"] == "High"
