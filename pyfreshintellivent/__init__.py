@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from contextlib import AsyncExitStack, asynccontextmanager
+from math import log
 from struct import pack, unpack
 from typing import AsyncIterator, Union
 from uuid import UUID
@@ -226,7 +227,7 @@ class SkySensors(object):
         self.status = bool(values[0])
         self.mode = values[1]
 
-        self.humidity = values[2] / 10
+        self.humidity = round((log(values[2] / 10) * 10), 1)
         self.temperature_1 = values[3] / 100
         self.temperature_2 = values[7] / 100
         self.unknowns = [values[4], values[8], values[9], values[10]]
