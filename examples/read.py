@@ -11,7 +11,7 @@ ADDRESS = (
 
 
 async def main():
-    sky = FreshIntelliVent(ble_address=ADDRESS)
+    sky = FreshIntelliVent(address_or_ble_device=ADDRESS)
     try:
         await sky.connect()
         await sky.authenticate(authentication_code="xxxxxxxx")
