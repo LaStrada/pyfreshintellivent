@@ -1,6 +1,6 @@
 import pytest
 
-from pyfreshintellivent import SkySensors
+from pyfreshintellivent.sensors import SkySensors
 
 
 def test_skysensors_valid():

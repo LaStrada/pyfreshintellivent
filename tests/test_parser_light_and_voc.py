@@ -1,6 +1,6 @@
 import pytest
 
-from pyfreshintellivent import SkyModeParser
+from pyfreshintellivent.skyModeParser import SkyModeParser
 
 parser = SkyModeParser()
 
@@ -8,7 +8,6 @@ parser = SkyModeParser()
 def test_light_and_voc_valid():
     valid = bytearray.fromhex("01010101")
     val = parser.light_and_voc_read(value=valid)
-    print(val)
     assert val["light"] is not None
     assert val["light"]["enabled"] is True
     assert val["light"]["detection"] == 1
@@ -21,7 +20,6 @@ def test_light_and_voc_valid():
 
     valid = bytearray.fromhex("00030003")
     val = parser.light_and_voc_read(value=valid)
-    print(val)
     assert val["light"] is not None
     assert val["light"]["enabled"] is False
     assert val["light"]["detection"] == 3
