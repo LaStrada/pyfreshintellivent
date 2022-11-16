@@ -130,7 +130,7 @@ class FreshIntelliVent:
         value = await self._read_characterisitc(uuid=characteristics.HUMIDITY)
         return self.parser.humidity_read(value=value)
 
-    async def set_humidity(self, enabled: bool, detection: int, rpm: int):
+    async def set_humidity(self, enabled: bool, detection: Union[int, str], rpm: int):
         value = self.parser.humidity_write(
             enabled=enabled, detection=detection, rpm=rpm
         )
@@ -329,11 +329,11 @@ class SkyModeParser(object):
         return {
             "enabled": enabled,
             "detection": detection,
-            "detection_description": self.detection_as_string(detection),
+            "detection_description": self.detection_int_as_string(detection),
             "rpm": rpm,
         }
 
-    def humidity_write(self, enabled: bool, detection: int, rpm: int):
+    def humidity_write(self, enabled: bool, detection: Union[int, str], rpm: int):
         return pack(
             "<?BH", enabled, h.validated_detection(detection), h.validated_rpm(rpm)
         )
@@ -353,14 +353,14 @@ class SkyModeParser(object):
             "light": {
                 "enabled": light_enabled,
                 "detection": light_detection,
-                "detection_description": self.detection_as_string(
+                "detection_description": self.detection_int_as_string(
                     light_detection, False
                 ),
             },
             "voc": {
                 "enabled": voc_enabled,
                 "detection": voc_detection,
-                "detection_description": self.detection_as_string(voc_detection),
+                "detection_description": self.detection_int_as_string(voc_detection),
             },
         }
 
@@ -424,7 +424,7 @@ class SkyModeParser(object):
             h.validated_rpm(rpm),
         )
 
-    def detection_as_string(self, value: int, regular_order: bool = True):
+    def detection_int_as_string(self, value: int, regular_order: bool = True):
         value = h.validated_detection(value)
         if value == 1:
             return "Low" if regular_order else "High"
@@ -434,3 +434,14 @@ class SkyModeParser(object):
             return "High" if regular_order else "Low"
         else:
             return "Unknown"
+
+    def detection_string_as_int(self, value: str, regular_order: bool = True):
+        value = h.validated_detection(value)
+        if value.upper() == h.DETECTION_LOW:
+            return 1 if regular_order else 3
+        elif value.upper() == h.DETECTION_MEDIUM:
+            return 2
+        elif value.upper() == h.DETECTION_HIGH:
+            return 3 if regular_order else 1
+        else:
+            raise ValueError("Invalid detection value")

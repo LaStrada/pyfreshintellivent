@@ -32,14 +32,22 @@ def validated_rpm(value: int):
     else:
         return value
 
+DETECTION_LOW = "LOW"
+DETECTION_MEDIUM = "MEDIUM"
+DETECTION_HIGH = "HIGH"
 
-def validated_detection(value: int):
-    if value < 0:
-        return 0
-    elif value > 3:
-        return 3
+def validated_detection(value: Union[int, str]):
+    if isinstance(value, int):
+        if value < 0:
+            return 0
+        elif value > 3:
+            return 3
+        else:
+            return value
     else:
-        return int(value)
+        if not value.upper() in [DETECTION_LOW, DETECTION_MEDIUM, DETECTION_HIGH]:
+            raise ValueError(f"\"{value}\" is not a valid detection type. Valid types are: {DETECTION_LOW}, {DETECTION_MEDIUM} and {DETECTION_HIGH}.")
+        return value
 
 
 def validated_time(value: int):
