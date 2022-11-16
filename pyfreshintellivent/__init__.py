@@ -329,7 +329,7 @@ class SkyModeParser(object):
         return {
             "enabled": enabled,
             "detection": detection,
-            "detection_description": self.detection_int_as_string(detection),
+            "detection_description": h.detection_int_as_string(detection),
             "rpm": rpm,
         }
 
@@ -353,14 +353,14 @@ class SkyModeParser(object):
             "light": {
                 "enabled": light_enabled,
                 "detection": light_detection,
-                "detection_description": self.detection_int_as_string(
+                "detection_description": h.detection_int_as_string(
                     light_detection, False
                 ),
             },
             "voc": {
                 "enabled": voc_enabled,
                 "detection": voc_detection,
-                "detection_description": self.detection_int_as_string(voc_detection),
+                "detection_description": h.detection_int_as_string(voc_detection),
             },
         }
 
@@ -423,25 +423,3 @@ class SkyModeParser(object):
             delay_minutes,
             h.validated_rpm(rpm),
         )
-
-    def detection_int_as_string(self, value: int, regular_order: bool = True):
-        value = h.validated_detection(value)
-        if value == 1:
-            return "Low" if regular_order else "High"
-        elif value == 2:
-            return "Medium"
-        elif value == 3:
-            return "High" if regular_order else "Low"
-        else:
-            return "Unknown"
-
-    def detection_string_as_int(self, value: str, regular_order: bool = True):
-        value = h.validated_detection(value)
-        if value.upper() == h.DETECTION_LOW:
-            return 1 if regular_order else 3
-        elif value.upper() == h.DETECTION_MEDIUM:
-            return 2
-        elif value.upper() == h.DETECTION_HIGH:
-            return 3 if regular_order else 1
-        else:
-            raise ValueError("Invalid detection value")

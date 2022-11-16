@@ -1,5 +1,9 @@
 from typing import Union
 
+DETECTION_LOW = "LOW"
+DETECTION_MEDIUM = "MEDIUM"
+DETECTION_HIGH = "HIGH"
+
 
 def validated_authentication_code(value: Union[bytes, bytearray, str]):
     if value is None:
@@ -32,9 +36,6 @@ def validated_rpm(value: int):
     else:
         return value
 
-DETECTION_LOW = "LOW"
-DETECTION_MEDIUM = "MEDIUM"
-DETECTION_HIGH = "HIGH"
 
 def validated_detection(value: Union[int, str]):
     if isinstance(value, int):
@@ -46,8 +47,35 @@ def validated_detection(value: Union[int, str]):
             return value
     else:
         if not value.upper() in [DETECTION_LOW, DETECTION_MEDIUM, DETECTION_HIGH]:
-            raise ValueError(f"\"{value}\" is not a valid detection type. Valid types are: {DETECTION_LOW}, {DETECTION_MEDIUM} and {DETECTION_HIGH}.")
+            valid = f"{DETECTION_LOW}, {DETECTION_MEDIUM} and {DETECTION_HIGH}"
+            raise ValueError(
+                f'"{value}" is not a valid detection type. Valid types are: {valid}.'
+            )
         return value
+
+
+def detection_int_as_string(value: int, regular_order: bool = True):
+    value = validated_detection(value)
+    if value == 1:
+        return "Low" if regular_order else "High"
+    elif value == 2:
+        return "Medium"
+    elif value == 3:
+        return "High" if regular_order else "Low"
+    else:
+        return "Unknown"
+
+
+def detection_string_as_int(value: str, regular_order: bool = True):
+    value = validated_detection(value)
+    if value.upper() == DETECTION_LOW:
+        return 1 if regular_order else 3
+    elif value.upper() == DETECTION_MEDIUM:
+        return 2
+    elif value.upper() == DETECTION_HIGH:
+        return 3 if regular_order else 1
+    else:
+        raise ValueError("Invalid detection value")
 
 
 def validated_time(value: int):
