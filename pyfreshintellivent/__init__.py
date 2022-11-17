@@ -16,13 +16,19 @@ from .sensors import SkySensors
 from .skyModeParser import SkyModeParser
 
 
+DEVICE_NAME = "Intellivent SKY"
+UUID_SERVICE = UUID("{0000180a-0000-1000-8000-00805f9b34fb}")
+
+
 class FreshIntelliVent:
     def __init__(
-        self, address_or_ble_device: Union[BLEDevice, str, None] = None
+        self, address: str
     ) -> None:
         self.logger = logging.getLogger(__name__)
         self.parser = SkyModeParser()
-        self.address_or_ble_device = address_or_ble_device
+        self.address = address
+
+        self.state = SkySensors()
 
         self._lock = asyncio.Lock()
         self._client: BleakClient | None = None
@@ -32,18 +38,14 @@ class FreshIntelliVent:
     @asynccontextmanager
     async def connect(
         self,
-        address_or_ble_device: Union[BLEDevice, str, None] = None,
         timeout: float = 20.0,
     ) -> AsyncIterator[FreshIntelliVent]:
-        if address_or_ble_device is not None:
-            self.address_or_ble_device = address_or_ble_device
-
         async with self._lock:
             if not self._client:
                 try:
-                    self.logger.debug(f"Searching for {self.address_or_ble_device}")
+                    self.logger.debug(f"Searching for {self.address}")
                     self._client = await self._client_stack.enter_async_context(
-                        BleakClient(self.address_or_ble_device, timeout=timeout)
+                        BleakClient(self.address, timeout=timeout)
                     )
                 except asyncio.TimeoutError as exc:
                     logging.info("Timeout on connect", exc_info=exc)
@@ -200,7 +202,23 @@ class FreshIntelliVent:
 
     async def get_sensor_data(self):
         data = await self._read_characterisitc(uuid=characteristics.DEVICE_STATUS)
-        return SkySensors(data)
+        self.state.parse_data(data)
+        return state
+    
+    def detection_callback(self, device: BLEDevice, advertisement_data: AdvertisementData):
+        """Handle scanner data."""
+        return
+
+
+def device_filter(device: BLEDevice, advertisement_data: AdvertisementData) -> bool:
+    uuids = advertisement_data.service_uuids
+    if str(UUID_SERVICE) in uuids:
+        return True
+
+    if device.name == DEVICE_NAME:
+        return True
+
+    return False
 
 
 class FreshIntelliventError(Exception):

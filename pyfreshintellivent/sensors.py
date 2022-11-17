@@ -2,9 +2,33 @@ from math import log
 from struct import unpack
 from typing import Union
 
+MODE_OFF = "Off"
+MODE_BOOST = "Boost"
+MODE_CONSTANT_SPEED = "Constant speed"
+MODE_HUMIDITY = "Humidity"
+MODE_LIGHT = "Light"
+MODE_PAUSE = "Pause"
+MODE_VOC = "VOC"
+MODE_UNKNOWN = "Unknown"
+
 
 class SkySensors(object):
-    def __init__(self, data: Union[bytes, bytearray]):
+    def __init__(self):
+        self._values = None
+
+        self.status = None
+        self.mode = None
+        self.mode_description = None
+
+        self.humidity = None
+        self.temperature_1 = None
+        self.temperature_2 = None
+        self.unknowns = None
+        self.authenticated = None
+
+        self.rpm = None
+
+    def parse_data(self, data: Union[bytes, bytearray]):
         if data is None or len(data) != 15:
             raise ValueError(f"Length need to be exactly 15, was {len(data)}.")
 
@@ -24,21 +48,21 @@ class SkySensors(object):
         self.rpm = values[6]
 
         if self.mode == 0:
-            self.mode_description = "Off"
+            self.mode_description = MODE_OFF
         elif self.mode == 6:
-            self.mode_description = "Pause"
+            self.mode_description = MODE_PAUSE
         elif self.mode == 16:
-            self.mode_description = "Constant speed"
+            self.mode_description = MODE_CONSTANT_SPEED
         elif self.mode == 34:
-            self.mode_description = "Light"
+            self.mode_description = MODE_LIGHT
         elif self.mode == 49:
-            self.mode_description = "Humidity"
+            self.mode_description = MODE_HUMIDITY
         elif self.mode == 52:
-            self.mode_description = "VOC"
+            self.mode_description = MODE_VOC
         elif self.mode == 103:
-            self.mode_description = "Boost"
+            self.mode_description = MODE_BOOST
         else:
-            self.mode_description = "Unknown"
+            self.mode_description = MODE_UNKNOWN
 
     def as_dict(self):
         return {
