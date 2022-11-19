@@ -10,15 +10,14 @@ from bleak import BleakClient
 from bleak.backends.device import BLEDevice
 from bleak.exc import BleakError
 
-from . import characteristics, consts, helpers as h
+from . import characteristics, consts
+from . import helpers as h
 from .sensors import SkySensors
 from .skyModeParser import SkyModeParser
 
 
 class FreshIntelliVent:
-    def __init__(
-        self, address: Union(str | None) = None
-    ) -> None:
+    def __init__(self, address: Union(str | None) = None) -> None:
         self.logger = logging.getLogger(__name__)
         self.parser = SkyModeParser()
 
@@ -142,25 +141,28 @@ class FreshIntelliVent:
         fw_version = await self._client.read_gatt_char(
             char_specifier=characteristics.FIRMWARE_VERSION
         )
-        self.fw_version = fw_version.decode("utf-8") 
+        self.fw_version = fw_version.decode("utf-8")
 
         hw_version = await self._client.read_gatt_char(
             char_specifier=characteristics.HARDWARE_VERSION
         )
-        self.hw_version = hw_version.decode("utf-8") 
+        self.hw_version = hw_version.decode("utf-8")
 
         hw_version = await self._client.read_gatt_char(
             char_specifier=characteristics.SOFTWARE_VERSION
         )
-        self.hw_version = hw_version.decode("utf-8") 
+        self.hw_version = hw_version.decode("utf-8")
 
         manufacturer = await self._client.read_gatt_char(
             char_specifier=characteristics.MANUFACTURER_NAME
         )
-        self.manufacturer = manufacturer.decode("utf-8") 
+        self.manufacturer = manufacturer.decode("utf-8")
 
-        # self.logger.debug(
-        print("Device fetched! Manufacturer: {}, name: {}, FW: {}, HW: {}".format(self.manufacturer, self.name, self.fw_version, self.hw_version))
+        self.logger.debug(
+            "Device fetched! Manufacturer: {}, name: {}, FW: {}, HW: {}".format(
+                self.manufacturer, self.name, self.fw_version, self.hw_version
+            )
+        )
 
     async def fetch_humidity(self):
         value = await self._read_characterisitc(uuid=characteristics.HUMIDITY)
@@ -168,7 +170,9 @@ class FreshIntelliVent:
         self.modes["humidity"] = humidity
         return humidity
 
-    async def update_humidity(self, enabled: bool, detection: Union[int, str], rpm: int):
+    async def update_humidity(
+        self, enabled: bool, detection: Union[int, str], rpm: int
+    ):
         value = self.parser.humidity_write(
             enabled=enabled, detection=detection, rpm=rpm
         )

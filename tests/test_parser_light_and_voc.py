@@ -10,25 +10,25 @@ def test_light_and_voc_valid():
     val = parser.light_and_voc_read(value=valid)
     assert val["light"] is not None
     assert val["light"]["enabled"] is True
-    assert val["light"]["detection"] == 1
-    assert val["light"]["detection_description"] == "High"
+    assert val["light"]["detection"] == "Medium"
+    assert val["light"]["detection_raw"] == 1
 
     assert val["voc"] is not None
     assert val["voc"]["enabled"] is True
-    assert val["voc"]["detection"] == 1
-    assert val["voc"]["detection_description"] == "Low"
+    assert val["voc"]["detection"] == "High"
+    assert val["voc"]["detection_raw"] == 1
 
     valid = bytearray.fromhex("00030003")
     val = parser.light_and_voc_read(value=valid)
     assert val["light"] is not None
     assert val["light"]["enabled"] is False
-    assert val["light"]["detection"] == 3
-    assert val["light"]["detection_description"] == "Low"
+    assert val["light"]["detection"] == "High"
+    assert val["light"]["detection_raw"] == 3
 
     assert val["voc"] is not None
     assert val["voc"]["enabled"] is False
-    assert val["voc"]["detection"] == 3
-    assert val["voc"]["detection_description"] == "High"
+    assert val["voc"]["detection"] == "Low"
+    assert val["voc"]["detection_raw"] == 3
 
 
 def test_light_and_voc_invalid_too_short():

@@ -90,14 +90,18 @@ class SkyModeParser(object):
         return {
             "light": {
                 "enabled": light_enabled,
-                "detection": h.detection_int_as_string(light_detection),
+                "detection": h.detection_int_as_string(
+                    value=light_detection, disable_low=True
+                ),
                 "detection_raw": light_detection,
             },
             "voc": {
                 "enabled": voc_enabled,
-                "detection": h.detection_int_as_string(voc_detection, False),
+                "detection": h.detection_int_as_string(
+                    value=voc_detection, regular_order=False
+                ),
                 "detection_raw": voc_detection,
-            }
+            },
         }
 
     def light_and_voc_write(

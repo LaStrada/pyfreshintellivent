@@ -1,8 +1,8 @@
 from typing import Union
 
-DETECTION_LOW = "LOW"
-DETECTION_MEDIUM = "MEDIUM"
-DETECTION_HIGH = "HIGH"
+DETECTION_LOW = "Low"
+DETECTION_MEDIUM = "Medium"
+DETECTION_HIGH = "High"
 
 
 def validated_authentication_code(value: Union[bytes, bytearray, str]):
@@ -46,7 +46,11 @@ def validated_detection(value: Union[int, str]):
         else:
             return value
     else:
-        if not value.upper() in [DETECTION_LOW, DETECTION_MEDIUM, DETECTION_HIGH]:
+        if not value.lower() in [
+            DETECTION_LOW.lower(),
+            DETECTION_MEDIUM.lower(),
+            DETECTION_HIGH.lower(),
+        ]:
             valid = f"{DETECTION_LOW}, {DETECTION_MEDIUM} and {DETECTION_HIGH}"
             raise ValueError(
                 f'"{value}" is not a valid detection type. Valid types are: {valid}.'
@@ -54,7 +58,9 @@ def validated_detection(value: Union[int, str]):
         return value
 
 
-def detection_int_as_string(value: int, regular_order: bool = True, disable_low: bool = False):
+def detection_int_as_string(
+    value: int, regular_order: bool = True, disable_low: bool = False
+):
     value = validated_detection(value)
     if value == 1:
         if disable_low and regular_order is True:
@@ -70,16 +76,18 @@ def detection_int_as_string(value: int, regular_order: bool = True, disable_low:
         return "Unknown"
 
 
-def detection_string_as_int(value: str, regular_order: bool = True, disable_low: bool = False):
+def detection_string_as_int(
+    value: str, regular_order: bool = True, disable_low: bool = False
+):
     value = validated_detection(value)
-    if value.upper() == DETECTION_LOW:
+    if value.lower() == DETECTION_LOW.lower():
         if disable_low:
             return 2
         else:
             return 1 if regular_order else 3
-    elif value.upper() == DETECTION_MEDIUM:
+    elif value.lower() == DETECTION_MEDIUM.lower():
         return 2
-    elif value.upper() == DETECTION_HIGH:
+    elif value.lower() == DETECTION_HIGH.lower():
         return 3 if regular_order else 1
     else:
         raise ValueError("Invalid detection value")
