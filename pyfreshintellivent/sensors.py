@@ -18,11 +18,11 @@ class SkySensors(object):
 
         self.status = None
         self.mode = None
-        self.mode_description = None
+        self.mode_raw = None
 
         self.humidity = None
-        self.temperature_1 = None
-        self.temperature_2 = None
+        self.temperature = None
+        self.temperature_avg = None
         self.unknowns = None
         self.authenticated = None
 
@@ -40,38 +40,37 @@ class SkySensors(object):
         self.mode = values[1]
 
         self.humidity = round((log(values[2] / 10) * 10), 1)
-        self.temperature_1 = values[3] / 100
-        self.temperature_2 = values[7] / 100
+        self.temperature = values[3] / 100
+        self.temperature_avg = values[7] / 100
         self.unknowns = [values[4], values[8], values[9], values[10]]
         self.authenticated = bool(values[5])
 
         self.rpm = values[6]
 
-        if self.mode == 0:
-            self.mode_description = MODE_OFF
-        elif self.mode == 6:
-            self.mode_description = MODE_PAUSE
-        elif self.mode == 16:
-            self.mode_description = MODE_CONSTANT_SPEED
-        elif self.mode == 34:
-            self.mode_description = MODE_LIGHT
-        elif self.mode == 49:
-            self.mode_description = MODE_HUMIDITY
-        elif self.mode == 52:
-            self.mode_description = MODE_VOC
-        elif self.mode == 103:
-            self.mode_description = MODE_BOOST
+        if self.mode_raw == 0:
+            self.mode = MODE_OFF
+        elif self.mode_raw == 6:
+            self.mode = MODE_PAUSE
+        elif self.mode_raw == 16:
+            self.mode = MODE_CONSTANT_SPEED
+        elif self.mode_raw == 34:
+            self.mode = MODE_LIGHT
+        elif self.mode_raw == 49:
+            self.mode = MODE_HUMIDITY
+        elif self.mode_raw == 52:
+            self.mode = MODE_VOC
+        elif self.mode_raw == 103:
+            self.mode = MODE_BOOST
         else:
-            self.mode_description = MODE_UNKNOWN
+            self.mode = MODE_UNKNOWN
 
     def as_dict(self):
         return {
             "status": self.status,
-            "mode": {
-                "description": self.mode_description,
-                "raw_value": self.mode,
-            },
-            "temperatures": [self.temperature_1, self.temperature_2],
+            "mode": self.mode,
+            "mode_raw": self.mode_raw,
+            "temperature": self.temperature,
+            "temperature_avg": self.temperature_avg,
             "rpm": self.rpm,
             "humidity": self.humidity,
             "unknowns": self.unknowns,

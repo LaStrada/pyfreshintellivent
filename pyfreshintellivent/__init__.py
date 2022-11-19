@@ -10,46 +10,59 @@ from bleak import BleakClient
 from bleak.backends.device import BLEDevice
 from bleak.exc import BleakError
 
-from . import characteristics
-from . import helpers as h
+from . import characteristics, consts, helpers as h
 from .sensors import SkySensors
 from .skyModeParser import SkyModeParser
 
 
-DEVICE_NAME = "Intellivent SKY"
-UUID_SERVICE = UUID("{0000180a-0000-1000-8000-00805f9b34fb}")
-
-
 class FreshIntelliVent:
     def __init__(
-        self, address: str
+        self, address: Union(str | None) = None
     ) -> None:
         self.logger = logging.getLogger(__name__)
         self.parser = SkyModeParser()
+
         self.address = address
 
-        self.state = SkySensors()
+        self.sensors = SkySensors()
 
         self._lock = asyncio.Lock()
         self._client: BleakClient | None = None
         self._client_stack = AsyncExitStack()
         self._client_count = 0
 
+        self.hw_version = None
+        self.sw_version = None
+
+        self.name = None
+        self.manufacturer = None
+        self.fw_version = None
+        self.hw_version = None
+        self.sw_version = None
+
     @asynccontextmanager
     async def connect(
         self,
+        address_or_ble_device: Union[BLEDevice, str],
         timeout: float = 20.0,
     ) -> AsyncIterator[FreshIntelliVent]:
+        if isinstance(address_or_ble_device, BLEDevice):
+            self.address = address_or_ble_device.address
+        else:
+            self.address = address_or_ble_device
+
         async with self._lock:
             if not self._client:
                 try:
-                    self.logger.debug(f"Searching for {self.address}")
                     self._client = await self._client_stack.enter_async_context(
-                        BleakClient(self.address, timeout=timeout)
+                        BleakClient(address_or_ble_device, timeout=timeout)
                     )
+                    self.address = self._client.address
+
                 except asyncio.TimeoutError as exc:
                     logging.info("Timeout on connect", exc_info=exc)
                     raise FreshIntelliventTimeoutError("Timeout on connect") from exc
+
                 except BleakError as exc:
                     logging.info("Error on connect", exc_info=exc)
                     raise FreshIntelliventError("Error on connect") from exc
@@ -116,6 +129,39 @@ class FreshIntelliVent:
 
     def _log_data(self, command: str, uuid: str, bytes: Union[bytes, bytearray]):
         self.logger.info(f"[{command}] {uuid} = {h.to_hex(bytes)}")
+
+    async def get_device_information(self):
+        self.logger.debug("Fetching device information")
+
+        name = await self._client.read_gatt_char(
+            char_specifier=characteristics.DEVICE_NAME
+        )
+        self.name = name.decode("utf-8")
+
+        fw_version = await self._client.read_gatt_char(
+            char_specifier=characteristics.FIRMWARE_VERSION
+        )
+        self.fw_version = fw_version.decode("utf-8") 
+
+        hw_version = await self._client.read_gatt_char(
+            char_specifier=characteristics.HARDWARE_VERSION
+        )
+        self.hw_version = hw_version.decode("utf-8") 
+
+        hw_version = await self._client.read_gatt_char(
+            char_specifier=characteristics.SOFTWARE_VERSION
+        )
+        self.hw_version = hw_version.decode("utf-8") 
+
+        manufacturer = await self._client.read_gatt_char(
+            char_specifier=characteristics.MANUFACTURER_NAME
+        )
+        self.manufacturer = manufacturer.decode("utf-8") 
+
+        self.logger.debug(
+            "Device fetched! manufacturer: {}, FW: {}, HW: {}"
+            .format(self.manufacturer, self.fw_version, self.hw_version)
+        )
 
     async def get_humidity(self):
         value = await self._read_characterisitc(uuid=characteristics.HUMIDITY)
@@ -202,20 +248,22 @@ class FreshIntelliVent:
 
     async def get_sensor_data(self):
         data = await self._read_characterisitc(uuid=characteristics.DEVICE_STATUS)
-        self.state.parse_data(data)
-        return state
-    
-    def detection_callback(self, device: BLEDevice, advertisement_data: AdvertisementData):
+        self.sensors.parse_data(data)
+        return self.sensors
+
+    def detection_callback(
+        self, device: BLEDevice, advertisement_data: AdvertisementData
+    ):
         """Handle scanner data."""
         return
 
 
 def device_filter(device: BLEDevice, advertisement_data: AdvertisementData) -> bool:
     uuids = advertisement_data.service_uuids
-    if str(UUID_SERVICE) in uuids:
+    if str(characteristics.UUID_SERVICE) in uuids:
         return True
 
-    if device.name == DEVICE_NAME:
+    if device.name == consts.DEVICE_NAME:
         return True
 
     return False
