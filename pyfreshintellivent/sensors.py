@@ -37,7 +37,7 @@ class SkySensors(object):
         self._values = values
 
         self.status = bool(values[0])
-        self.mode = values[1]
+        self.mode_raw = int(values[1])
 
         self.humidity = round((log(values[2] / 10) * 10), 1)
         self.temperature = values[3] / 100
