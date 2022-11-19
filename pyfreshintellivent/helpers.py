@@ -54,22 +54,29 @@ def validated_detection(value: Union[int, str]):
         return value
 
 
-def detection_int_as_string(value: int, regular_order: bool = True):
+def detection_int_as_string(value: int, regular_order: bool = True, disable_low: bool = False):
     value = validated_detection(value)
     if value == 1:
-        return "Low" if regular_order else "High"
+        if disable_low and regular_order is True:
+            return DETECTION_MEDIUM
+        return DETECTION_LOW if regular_order else DETECTION_HIGH
     elif value == 2:
-        return "Medium"
+        return DETECTION_MEDIUM
     elif value == 3:
-        return "High" if regular_order else "Low"
+        if disable_low and regular_order is False:
+            return 2
+        return DETECTION_HIGH if regular_order else DETECTION_LOW
     else:
         return "Unknown"
 
 
-def detection_string_as_int(value: str, regular_order: bool = True):
+def detection_string_as_int(value: str, regular_order: bool = True, disable_low: bool = False):
     value = validated_detection(value)
     if value.upper() == DETECTION_LOW:
-        return 1 if regular_order else 3
+        if disable_low:
+            return 2
+        else:
+            return 1 if regular_order else 3
     elif value.upper() == DETECTION_MEDIUM:
         return 2
     elif value.upper() == DETECTION_HIGH:

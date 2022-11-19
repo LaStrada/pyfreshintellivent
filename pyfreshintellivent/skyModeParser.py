@@ -66,8 +66,8 @@ class SkyModeParser(object):
 
         return {
             "enabled": enabled,
-            "detection": detection,
-            "detection_description": h.detection_int_as_string(detection),
+            "detection": h.detection_int_as_string(detection),
+            "detection_raw": detection,
             "rpm": rpm,
         }
 
@@ -90,16 +90,14 @@ class SkyModeParser(object):
         return {
             "light": {
                 "enabled": light_enabled,
-                "detection": light_detection,
-                "detection_description": h.detection_int_as_string(
-                    light_detection, False
-                ),
+                "detection": h.detection_int_as_string(light_detection),
+                "detection_raw": light_detection,
             },
             "voc": {
                 "enabled": voc_enabled,
-                "detection": voc_detection,
-                "detection_description": h.detection_int_as_string(voc_detection),
-            },
+                "detection": h.detection_int_as_string(voc_detection, False),
+                "detection_raw": voc_detection,
+            }
         }
 
     def light_and_voc_write(
