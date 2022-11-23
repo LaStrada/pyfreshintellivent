@@ -6,9 +6,7 @@ from . import characteristics, consts
 
 
 async def scan(timeout: float = 20.0) -> BLEDevice | None:
-    return await BleakScanner.find_device_by_filter(
-        device_filter, timeout=timeout
-    )
+    return await BleakScanner.find_device_by_filter(device_filter, timeout=timeout)
 
 
 def device_filter(device: BLEDevice, advertisement_data: AdvertisementData) -> bool:
