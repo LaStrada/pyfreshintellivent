@@ -7,7 +7,7 @@ DETECTION_HIGH = "High"
 
 def validated_authentication_code(value: Union[bytes, bytearray, str]):
     if value is None:
-        raise ValueError("Authentication cannot be empty.")
+        raise ValueError("Authentication code cannot be empty.")
 
     if isinstance(value, str):
         if len(value) != 8:

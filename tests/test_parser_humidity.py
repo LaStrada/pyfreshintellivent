@@ -32,5 +32,5 @@ def test_humidity_read_invalid_too_long():
 
 
 def test_humidity_write_valid():
-    val = parser.humidity_write(enabled=True, detection=1, rpm=1337)
+    val = parser.humidity_write(enabled=True, detection="Low", rpm=1337)
     assert val == bytearray.fromhex("01013905")

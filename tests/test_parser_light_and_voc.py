@@ -45,6 +45,9 @@ def test_light_and_voc_invalid_too_long():
 
 def test_light_and_voc_valid_write():
     val = parser.light_and_voc_write(
-        light_enabled=True, light_detection=2, voc_enabled=True, voc_detection=3
+        light_enabled=True,
+        light_detection="Medium",
+        voc_enabled=True,
+        voc_detection="High",
     )
     assert val == bytearray.fromhex("01020103")

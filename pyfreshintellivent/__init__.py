@@ -10,7 +10,7 @@ from bleak import BleakClient
 from bleak.backends.device import BLEDevice
 from bleak.exc import BleakError
 
-from . import characteristics, consts
+from . import characteristics
 from . import helpers as h
 from .sensors import SkySensors
 from .skyModeParser import SkyModeParser
@@ -86,7 +86,6 @@ class FreshIntelliVent:
         await self._write_characteristic(
             uuid=characteristics.AUTH, data=h.to_bytearray(authentication_code)
         )
-        await asyncio.sleep(2)  # Make sure we're authenticated
         self.logger.info("Authenticated!")
 
     async def fetch_authentication_code(self):
@@ -170,13 +169,17 @@ class FreshIntelliVent:
         self.modes["humidity"] = humidity
         return humidity
 
-    async def update_humidity(
-        self, enabled: bool, detection: Union[int, str], rpm: int
-    ):
+    async def update_humidity(self, enabled: bool, detection: str, rpm: int):
         value = self.parser.humidity_write(
             enabled=enabled, detection=detection, rpm=rpm
         )
         await self._write_characteristic(characteristics.HUMIDITY, value)
+        self.modes["humidity"] = {
+            "enabled": enabled,
+            "detection": detection,
+            "detection_raw": h.detection_string_as_int(detection),
+            "rpm": rpm,
+        }
 
     async def fetch_light_and_voc(self):
         value = await self._read_characterisitc(uuid=characteristics.LIGHT_VOC)
@@ -184,12 +187,12 @@ class FreshIntelliVent:
         self.modes["light_and_voc"] = light_and_voc
         return light_and_voc
 
-    async def set_light_and_voc(
+    async def update_light_and_voc(
         self,
         light_enabled: bool,
-        light_detection: int,
+        light_detection: str,
         voc_enabled: bool,
-        voc_detection: int,
+        voc_detection: str,
     ):
         value = self.parser.light_and_voc_write(
             light_enabled=light_enabled,
@@ -198,6 +201,18 @@ class FreshIntelliVent:
             voc_detection=voc_detection,
         )
         await self._write_characteristic(characteristics.LIGHT_VOC, value)
+        self.modes["light_and_voc"] = {
+            "light": {
+                "enabled": light_enabled,
+                "detection": light_detection,
+                "detection_raw": h.detection_string_as_int(light_detection),
+            },
+            "voc": {
+                "enabled": voc_enabled,
+                "detection": voc_detection,
+                "detection_raw": h.detection_string_as_int(voc_detection),
+            },
+        }
 
     async def fetch_constant_speed(self):
         value = await self._read_characterisitc(uuid=characteristics.CONSTANT_SPEED)
@@ -211,6 +226,7 @@ class FreshIntelliVent:
         await self._write_characteristic(
             characteristics.CONSTANT_SPEED, bytearray.fromhex(hex)
         )
+        self.modes["constant_speed"] = {"enabled": enabled, "rpm": rpm}
 
     async def fetch_timer(self):
         value = await self._read_characterisitc(uuid=characteristics.TIMER)
@@ -228,6 +244,11 @@ class FreshIntelliVent:
             rpm=rpm,
         )
         await self._write_characteristic(characteristics.TIMER, value)
+        self.modes["timer"] = {
+            "delay": {"enabled": delay_enabled, "minutes": delay_minutes},
+            "minutes": minutes,
+            "rpm": rpm,
+        }
 
     async def fetch_airing(self):
         value = await self._read_characterisitc(uuid=characteristics.AIRING)
@@ -238,6 +259,11 @@ class FreshIntelliVent:
     async def update_airing(self, enabled: bool, minutes: int, rpm: int):
         value = self.parser.airing_write(enabled=enabled, minutes=minutes, rpm=rpm)
         await self._write_characteristic(characteristics.AIRING, value)
+        self.modes["airing"] = {
+            "enabled": enabled,
+            "minutes": minutes,
+            "rpm": rpm,
+        }
 
     async def fetch_pause(self):
         value = await self._read_characterisitc(uuid=characteristics.PAUSE)
@@ -246,6 +272,7 @@ class FreshIntelliVent:
     async def set_pause(self, enabled: bool, minutes: int):
         value = self.parser.pause_write(enabled=enabled, minutes=minutes)
         await self._write_characteristic(characteristics.PAUSE, value)
+        self.modes["pause"] = {"enabled": enabled, "minutes": minutes}
 
     async def fetch_boost(self):
         value = await self._read_characterisitc(uuid=characteristics.BOOST)
@@ -254,6 +281,7 @@ class FreshIntelliVent:
     async def update_boost(self, enabled: bool, rpm: int, seconds: int):
         value = self.parser.boost_write(enabled=enabled, rpm=rpm, seconds=seconds)
         await self._write_characteristic(characteristics.BOOST, value)
+        self.modes["boost"] = {"enabled": enabled, "seconds": seconds, "rpm": rpm}
 
     async def update_temporary_speed(self, enabled: bool, rpm: int):
         value = self.parser.temporary_speed_write(enabled=enabled, rpm=rpm)
@@ -263,23 +291,6 @@ class FreshIntelliVent:
         data = await self._read_characterisitc(uuid=characteristics.DEVICE_STATUS)
         self.sensors.parse_data(data)
         return self.sensors
-
-    def detection_callback(
-        self, device: BLEDevice, advertisement_data: AdvertisementData
-    ):
-        """Handle scanner data."""
-        return
-
-
-def device_filter(device: BLEDevice, advertisement_data: AdvertisementData) -> bool:
-    uuids = advertisement_data.service_uuids
-    if str(characteristics.UUID_SERVICE) in uuids:
-        return True
-
-    if device.name == consts.DEVICE_NAME:
-        return True
-
-    return False
 
 
 class FreshIntelliventError(Exception):

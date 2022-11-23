@@ -71,9 +71,9 @@ class SkyModeParser(object):
             "rpm": rpm,
         }
 
-    def humidity_write(self, enabled: bool, detection: Union[int, str], rpm: int):
+    def humidity_write(self, enabled: bool, detection: str, rpm: int):
         return pack(
-            "<?BH", enabled, h.validated_detection(detection), h.validated_rpm(rpm)
+            "<?BH", enabled, h.detection_string_as_int(detection), h.validated_rpm(rpm)
         )
 
     def light_and_voc_read(self, value: Union[bytes, bytearray]):
@@ -107,16 +107,16 @@ class SkyModeParser(object):
     def light_and_voc_write(
         self,
         light_enabled: bool,
-        light_detection: int,
+        light_detection: str,
         voc_enabled: bool,
-        voc_detection: int,
+        voc_detection: str,
     ):
         return pack(
             "<?B?B",
             bool(light_enabled),
-            h.validated_detection(light_detection),
+            h.detection_string_as_int(light_detection),
             bool(voc_enabled),
-            h.validated_detection(voc_detection),
+            h.detection_string_as_int(voc_detection),
         )
 
     def pause_read(self, value: Union[bytes, bytearray]):
