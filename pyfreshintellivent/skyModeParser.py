@@ -66,14 +66,14 @@ class SkyModeParser(object):
 
         return {
             "enabled": enabled,
-            "detection": detection,
-            "detection_description": h.detection_int_as_string(detection),
+            "detection": h.detection_int_as_string(detection),
+            "detection_raw": detection,
             "rpm": rpm,
         }
 
-    def humidity_write(self, enabled: bool, detection: Union[int, str], rpm: int):
+    def humidity_write(self, enabled: bool, detection: str, rpm: int):
         return pack(
-            "<?BH", enabled, h.validated_detection(detection), h.validated_rpm(rpm)
+            "<?BH", enabled, h.detection_string_as_int(detection), h.validated_rpm(rpm)
         )
 
     def light_and_voc_read(self, value: Union[bytes, bytearray]):
@@ -90,31 +90,33 @@ class SkyModeParser(object):
         return {
             "light": {
                 "enabled": light_enabled,
-                "detection": light_detection,
-                "detection_description": h.detection_int_as_string(
-                    light_detection, False
+                "detection": h.detection_int_as_string(
+                    value=light_detection, disable_low=True
                 ),
+                "detection_raw": light_detection,
             },
             "voc": {
                 "enabled": voc_enabled,
-                "detection": voc_detection,
-                "detection_description": h.detection_int_as_string(voc_detection),
+                "detection": h.detection_int_as_string(
+                    value=voc_detection, regular_order=False
+                ),
+                "detection_raw": voc_detection,
             },
         }
 
     def light_and_voc_write(
         self,
         light_enabled: bool,
-        light_detection: int,
+        light_detection: str,
         voc_enabled: bool,
-        voc_detection: int,
+        voc_detection: str,
     ):
         return pack(
             "<?B?B",
             bool(light_enabled),
-            h.validated_detection(light_detection),
+            h.detection_string_as_int(light_detection),
             bool(voc_enabled),
-            h.validated_detection(voc_detection),
+            h.detection_string_as_int(voc_detection),
         )
 
     def pause_read(self, value: Union[bytes, bytearray]):

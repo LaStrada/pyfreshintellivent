@@ -1,13 +1,13 @@
 from typing import Union
 
-DETECTION_LOW = "LOW"
-DETECTION_MEDIUM = "MEDIUM"
-DETECTION_HIGH = "HIGH"
+DETECTION_LOW = "Low"
+DETECTION_MEDIUM = "Medium"
+DETECTION_HIGH = "High"
 
 
 def validated_authentication_code(value: Union[bytes, bytearray, str]):
     if value is None:
-        raise ValueError("Authentication cannot be empty.")
+        raise ValueError("Authentication code cannot be empty.")
 
     if isinstance(value, str):
         if len(value) != 8:
@@ -46,7 +46,11 @@ def validated_detection(value: Union[int, str]):
         else:
             return value
     else:
-        if not value.upper() in [DETECTION_LOW, DETECTION_MEDIUM, DETECTION_HIGH]:
+        if not value.lower() in [
+            DETECTION_LOW.lower(),
+            DETECTION_MEDIUM.lower(),
+            DETECTION_HIGH.lower(),
+        ]:
             valid = f"{DETECTION_LOW}, {DETECTION_MEDIUM} and {DETECTION_HIGH}"
             raise ValueError(
                 f'"{value}" is not a valid detection type. Valid types are: {valid}.'
@@ -54,25 +58,36 @@ def validated_detection(value: Union[int, str]):
         return value
 
 
-def detection_int_as_string(value: int, regular_order: bool = True):
+def detection_int_as_string(
+    value: int, regular_order: bool = True, disable_low: bool = False
+):
     value = validated_detection(value)
     if value == 1:
-        return "Low" if regular_order else "High"
+        if disable_low and regular_order is True:
+            return DETECTION_MEDIUM
+        return DETECTION_LOW if regular_order else DETECTION_HIGH
     elif value == 2:
-        return "Medium"
+        return DETECTION_MEDIUM
     elif value == 3:
-        return "High" if regular_order else "Low"
+        if disable_low and regular_order is False:
+            return 2
+        return DETECTION_HIGH if regular_order else DETECTION_LOW
     else:
         return "Unknown"
 
 
-def detection_string_as_int(value: str, regular_order: bool = True):
+def detection_string_as_int(
+    value: str, regular_order: bool = True, disable_low: bool = False
+):
     value = validated_detection(value)
-    if value.upper() == DETECTION_LOW:
-        return 1 if regular_order else 3
-    elif value.upper() == DETECTION_MEDIUM:
+    if value.lower() == DETECTION_LOW.lower():
+        if disable_low:
+            return 2
+        else:
+            return 1 if regular_order else 3
+    elif value.lower() == DETECTION_MEDIUM.lower():
         return 2
-    elif value.upper() == DETECTION_HIGH:
+    elif value.lower() == DETECTION_HIGH.lower():
         return 3 if regular_order else 1
     else:
         raise ValueError("Invalid detection value")
