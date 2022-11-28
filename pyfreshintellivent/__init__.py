@@ -9,6 +9,7 @@ from uuid import UUID
 from bleak import BleakClient
 from bleak.backends.device import BLEDevice
 from bleak.exc import BleakError
+from bleak_retry_connector import establish_connection
 
 from . import characteristics
 from . import helpers as h
@@ -17,11 +18,9 @@ from .skyModeParser import SkyModeParser
 
 
 class FreshIntelliVent:
-    def __init__(self, address: Union(str | None) = None) -> None:
+    def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
         self.parser = SkyModeParser()
-
-        self.address = address
 
         self.sensors = SkySensors()
         self.modes = {}
@@ -43,31 +42,29 @@ class FreshIntelliVent:
     @asynccontextmanager
     async def connect(
         self,
-        address_or_ble_device: Union[BLEDevice, str],
+        ble_device: BLEDevice,
         timeout: float = 20.0,
     ) -> AsyncIterator[FreshIntelliVent]:
-        if isinstance(address_or_ble_device, BLEDevice):
-            self.address = address_or_ble_device.address
-        else:
-            self.address = address_or_ble_device
-
         async with self._lock:
             if not self._client:
                 try:
                     self._client = await self._client_stack.enter_async_context(
-                        BleakClient(address_or_ble_device, timeout=timeout)
+                        establish_connection(
+                            BleakClient,
+                            ble_device,
+                            ble_device.address
+                        )
                     )
-                    self.address = self._client.address
 
                 except asyncio.TimeoutError as exc:
-                    logging.info("Timeout on connect", exc_info=exc)
+                    logging.warning("Timeout on connect", exc_info=exc)
                     raise FreshIntelliventTimeoutError("Timeout on connect") from exc
 
                 except BleakError as exc:
-                    logging.info("Error on connect", exc_info=exc)
+                    logging.warning("Error on connect", exc_info=exc)
                     raise FreshIntelliventError("Error on connect") from exc
             else:
-                logging.info("Connection reused")
+                logging.debug("Connection reused")
             self._client_count += 1
 
         try:
@@ -269,7 +266,7 @@ class FreshIntelliVent:
         value = await self._read_characterisitc(uuid=characteristics.PAUSE)
         return self.parser.pause_read(value=value)
 
-    async def set_pause(self, enabled: bool, minutes: int):
+    async def update_pause(self, enabled: bool, minutes: int):
         value = self.parser.pause_write(enabled=enabled, minutes=minutes)
         await self._write_characteristic(characteristics.PAUSE, value)
         self.modes["pause"] = {"enabled": enabled, "minutes": minutes}
@@ -298,8 +295,4 @@ class FreshIntelliventError(Exception):
 
 
 class FreshIntelliventTimeoutError(FreshIntelliventError):
-    pass
-
-
-class FreshIntelliventAuthenticationError(FreshIntelliventError):
     pass
