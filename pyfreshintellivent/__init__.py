@@ -50,9 +50,7 @@ class FreshIntelliVent:
                 try:
                     self._client = await self._client_stack.enter_async_context(
                         establish_connection(
-                            BleakClient,
-                            ble_device,
-                            ble_device.address
+                            BleakClient, ble_device, ble_device.address
                         )
                     )
 
