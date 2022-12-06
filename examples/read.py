@@ -1,45 +1,43 @@
 import asyncio
-import platform
+import sys
+from bleak.backends.device import BLEDevice
 
 from pyfreshintellivent import FreshIntelliVent
-
-ADDRESS = (
-    "mac-address"
-    if platform.system() != "Darwin"
-    else "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-)
 
 
 async def main():
     sky = FreshIntelliVent()
+    address = sys.argv[1]
+    authentication_code = sys.argv[2]
+
+    ble_device = BLEDevice(address=address)
+
     try:
-        await sky.connect(address_or_ble_device=ADDRESS)
-        await sky.authenticate(authentication_code="xxxxxxxx")
+        async with sky.connect(ble_device) as client:
+            await client.authenticate(authentication_code=authentication_code)
 
-        sensors = await sky.get_sensor_data()
-        print(f"Status: {sensors.as_dict()}")
+            sensors = await client.fetch_sensor_data()
+            print(f"Status: {sensors.as_dict()}")
 
-        boost = await sky.get_boost()
-        print(f"Boost: {boost}")
+            boost = await client.fetch_boost()
+            print(f"Boost: {boost}")
 
-        constant_speed = await sky.get_constant_speed()
-        print(f"Constant speed: {constant_speed}")
+            constant_speed = await client.fetch_constant_speed()
+            print(f"Constant speed: {constant_speed}")
 
-        humidity = await sky.get_humidity()
-        print(f"Humidity: {humidity}")
+            humidity = await client.fetch_humidity()
+            print(f"Humidity: {humidity}")
 
-        light_and_voc = await sky.get_light_and_voc()
-        print(f"Light and VOC: {light_and_voc}")
+            light_and_voc = await client.fetch_light_and_voc()
+            print(f"Light and VOC: {light_and_voc}")
 
-        pause = await sky.get_pause()
-        print(f"Pause: {pause}")
+            pause = await client.fetch_pause()
+            print(f"Pause: {pause}")
 
-        timer = await sky.get_timer()
-        print(f"Timer: {timer}")
+            timer = await client.fetch_timer()
+            print(f"Timer: {timer}")
     except Exception as e:
         print(e)
-    finally:
-        await sky.disconnect()
 
 
 asyncio.run(main())
