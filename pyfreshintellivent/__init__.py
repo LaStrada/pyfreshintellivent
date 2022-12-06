@@ -9,7 +9,6 @@ from uuid import UUID
 from bleak import BleakClient
 from bleak.backends.device import BLEDevice
 from bleak.exc import BleakError
-from bleak_retry_connector import establish_connection
 
 from . import characteristics
 from . import helpers as h
@@ -50,9 +49,7 @@ class FreshIntelliVent:
             if not self._client:
                 try:
                     self._client = await self._client_stack.enter_async_context(
-                        establish_connection(
-                            BleakClient, ble_device, ble_device.address
-                        )
+                        BleakClient, ble_device, ble_device.address
                     )
 
                 except asyncio.TimeoutError as exc:
