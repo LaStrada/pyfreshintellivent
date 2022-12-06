@@ -1,5 +1,6 @@
 import asyncio
 import sys
+
 from bleak.backends.device import BLEDevice
 
 from pyfreshintellivent import FreshIntelliVent

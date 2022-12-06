@@ -13,8 +13,8 @@ from bleak_retry_connector import establish_connection
 
 from . import characteristics
 from . import helpers as h
-from .sensors import SkySensors
 from .parser import SkyModeParser
+from .sensors import SkySensors
 
 
 class FreshIntelliVent:
