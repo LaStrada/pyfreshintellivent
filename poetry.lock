@@ -59,22 +59,6 @@ pyobjc-framework-CoreBluetooth = {version = ">=8.5.1,<9.0.0", markers = "platfor
 pyobjc-framework-libdispatch = {version = ">=8.5.1,<9.0.0", markers = "platform_system == \"Darwin\""}
 
 [[package]]
-name = "bleak-retry-connector"
-version = "2.8.5"
-description = "A connector for Bleak Clients that handles transient connection failures"
-category = "main"
-optional = false
-python-versions = ">=3.9,<4.0"
-
-[package.dependencies]
-async-timeout = ">=4.0.1"
-bleak = ">=0.19.0"
-dbus-fast = {version = ">=1.14.0", markers = "platform_system == \"Linux\""}
-
-[package.extras]
-docs = ["Sphinx (>=5.0,<6.0)", "myst-parser (>=0.18,<0.19)", "sphinx-rtd-theme (>=1.0,<2.0)"]
-
-[[package]]
 name = "bleak-winrt"
 version = "1.2.0"
 description = "Python WinRT bindings for Bleak"
@@ -325,7 +309,7 @@ python-versions = ">=3.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "7400886544ff9c67eab147abf6e5fffc20da1c271a425502abb968bd939800fb"
+content-hash = "851e3590deceeaf6374004299773c1f50ff4fb1fea3069ff1e62d6a7d218667b"
 
 [metadata.files]
 async-timeout = [
@@ -362,10 +346,6 @@ black = [
 bleak = [
     {file = "bleak-0.19.5-py3-none-any.whl", hash = "sha256:31e92e6754379bb394b8544457c77ce09a8a7dbc5f9adf3119b34576c901ef1e"},
     {file = "bleak-0.19.5.tar.gz", hash = "sha256:87845a96453c58c19031c735444a7b3156800534bcd3f23ba74e119e9ae3cd88"},
-]
-bleak-retry-connector = [
-    {file = "bleak_retry_connector-2.8.5-py3-none-any.whl", hash = "sha256:11d91f8f0e0d893da7c497ecd4fe20b7955002e90fef9ea1e4b4f304d146a141"},
-    {file = "bleak_retry_connector-2.8.5.tar.gz", hash = "sha256:0bedfa4f985359feca18316f73d41c5b809fe06c0577c6c3b279e752a4007c55"},
 ]
 bleak-winrt = [
     {file = "bleak-winrt-1.2.0.tar.gz", hash = "sha256:0577d070251b9354fc6c45ffac57e39341ebb08ead014b1bdbd43e211d2ce1d6"},

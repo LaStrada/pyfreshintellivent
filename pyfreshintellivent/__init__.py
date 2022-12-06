@@ -9,12 +9,11 @@ from uuid import UUID
 from bleak import BleakClient
 from bleak.backends.device import BLEDevice
 from bleak.exc import BleakError
-from bleak_retry_connector import establish_connection
 
 from . import characteristics
 from . import helpers as h
+from .parser import SkyModeParser
 from .sensors import SkySensors
-from .skyModeParser import SkyModeParser
 
 
 class FreshIntelliVent:
@@ -22,6 +21,7 @@ class FreshIntelliVent:
         self.logger = logging.getLogger(__name__)
         self.parser = SkyModeParser()
 
+        self.address = None
         self.sensors = SkySensors()
         self.modes = {}
 
@@ -49,9 +49,7 @@ class FreshIntelliVent:
             if not self._client:
                 try:
                     self._client = await self._client_stack.enter_async_context(
-                        establish_connection(
-                            BleakClient, ble_device, ble_device.address
-                        )
+                        BleakClient, ble_device, ble_device.address
                     )
 
                 except asyncio.TimeoutError as exc:
@@ -61,6 +59,12 @@ class FreshIntelliVent:
                 except BleakError as exc:
                     logging.warning("Error on connect", exc_info=exc)
                     raise FreshIntelliventError("Error on connect") from exc
+                finally:
+                    if self._client is not None:
+                        await self._client.disconnect()
+                        # Ensure the disconnect callback
+                        # has a chance to run before we try to reconnect
+                        await asyncio.sleep(0)
             else:
                 logging.debug("Connection reused")
             self._client_count += 1
@@ -73,7 +77,6 @@ class FreshIntelliVent:
                 self._client_count -= 1
                 if self._client_count == 0:
                     self._client = None
-                    logging.info("Disconnected")
                     await self._client_stack.pop_all().aclose()
 
     async def authenticate(self, authentication_code: Union[bytes, bytearray, str]):
@@ -126,6 +129,8 @@ class FreshIntelliVent:
 
     async def fetch_device_information(self):
         self.logger.debug("Fetching device information")
+
+        self.logger.error(f"Services: {self._client.services}")
 
         name = await self._client.read_gatt_char(
             char_specifier=characteristics.DEVICE_NAME

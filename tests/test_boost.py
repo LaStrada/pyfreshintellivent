@@ -1,6 +1,6 @@
 import pytest
 
-from pyfreshintellivent.skyModeParser import SkyModeParser
+from pyfreshintellivent.parser import SkyModeParser
 
 parser = SkyModeParser()
 
