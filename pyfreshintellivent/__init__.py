@@ -135,6 +135,7 @@ class FreshIntelliVent:
         name = await self._client.read_gatt_char(
             char_specifier=characteristics.DEVICE_NAME
         )
+        name = name.replace("\0", "")
         self.name = name.decode("utf-8")
 
         fw_version = await self._client.read_gatt_char(
