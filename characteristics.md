@@ -53,7 +53,7 @@ b85fa07a-9382-4838-871c-81d045dcc2ff
 ```
 7c4adc01-2f33-11e7-93ae-92361f002671
 ```
-**Format:** BBH
+**Format:** BBH\
 **B:** Off/on (`00`/`01`)\
 **B:** Humidity detection (low: `00`, medium: `01`, high: `02`)\
 **H:** RPM
@@ -67,7 +67,7 @@ On, low humidity detection, 2071 RPM:\
 ```
 7c4adc02-2f33-11e7-93ae-92361f002671
 ```
-**Format:** BBBB
+**Format:** BBBB\
 **B:** Light sensor off/on (`00`/`01`)\
 **B:** Light sensor detection (low: `00`, medium: `01`, high: `02`)\
 **B:** Odour sensor off/on (`00`/`01`)\
@@ -94,7 +94,7 @@ Light detection on, high light detection, odour detection on, high odour detecti
 ```
 7c4adc04-2f33-11e7-93ae-92361f002671
 ```
-**Format:** BBBH
+**Format:** BBBH\
 **B:** Running time in minutes\
 **B:** Delay active (disabled: `00`, enabled: `01`)\
 **B:** Delay start minutes\
@@ -105,7 +105,7 @@ Light detection on, high light detection, odour detection on, high odour detecti
 ```
 7c4adc05-2f33-11e7-93ae-92361f002671
 ```
-**Format:** BBBH
+**Format:** BBBH\
 **B:** Off/on (off: `00`, on: `01`)\
 **B:** ?\
 **B:** Minutes\
@@ -116,7 +116,7 @@ Light detection on, high light detection, odour detection on, high odour detecti
 ```
 7c4adc06-2f33-11e7-93ae-92361f002671
 ```
-**Format:** BB
+**Format:** BB\
 **B:** Off/on (off: `00`, on: `01`)\
 **B:** Minutes
 
@@ -125,7 +125,7 @@ Light detection on, high light detection, odour detection on, high odour detecti
 ```
 7c4adc07-2f33-11e7-93ae-92361f002671
 ```
-**Format:** BH
+**Format:** BH\
 **B:** Off/on (off: `00`, on: `01`)\
 **H:** ROM
 
@@ -134,7 +134,7 @@ Light detection on, high light detection, odour detection on, high odour detecti
 ```
 7c4adc08-2f33-11e7-93ae-92361f002671
 ```
-**Format:** BH
+**Format:** BH\
 **B:** Off/on (off: `00`, on: `01`)\
 **H:** RPM
 
