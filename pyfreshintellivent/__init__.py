@@ -45,6 +45,8 @@ class FreshIntelliVent:
         ble_device: BLEDevice,
         timeout: float = 20.0,
     ) -> AsyncIterator[FreshIntelliVent]:
+        self.address = ble_device
+
         async with self._lock:
             if not self._client:
                 try:
