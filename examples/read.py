@@ -1,17 +1,19 @@
 import asyncio
 import sys
 
-from bleak.backends.device import BLEDevice
+from bleak import BleakScanner
 
-from pyfreshintellivent import FreshIntelliVent, scanner
+from pyfreshintellivent import FreshIntelliVent
 
 
 async def main():
     client = FreshIntelliVent()
     address = sys.argv[1]
-    authentication_code = sys.argv[2]
+    authentication_code = None
+    if len(sys.argv) == 3:
+        sys.argv[2]
 
-    ble_device = await scanner.scan()
+    ble_device = await BleakScanner.find_device_by_address(address)
 
     if ble_device is None:
         print("Couldn't find any devices")
