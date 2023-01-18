@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from contextlib import AsyncExitStack, asynccontextmanager
-from typing import AsyncIterator, Union
+from typing import Union
 from uuid import UUID
 
 from bleak import BleakClient
 from bleak.backends.device import BLEDevice
 from bleak.exc import BleakError
+from bleak_retry_connector import establish_connection
 
 from . import characteristics
 from . import helpers as h
@@ -18,17 +18,13 @@ from .sensors import SkySensors
 
 class FreshIntelliVent:
     def __init__(self) -> None:
-        self.logger = logging.getLogger(__name__)
         self.parser = SkyModeParser()
 
         self.address = None
         self.sensors = SkySensors()
         self.modes = {}
 
-        self._lock = asyncio.Lock()
         self._client: BleakClient | None = None
-        self._client_stack = AsyncExitStack()
-        self._client_count = 0
 
         self.hw_version = None
         self.sw_version = None
@@ -39,52 +35,31 @@ class FreshIntelliVent:
         self.hw_version = None
         self.sw_version = None
 
-    @asynccontextmanager
-    async def connect(
-        self,
-        ble_device: BLEDevice,
-        timeout: float = 20.0,
-    ) -> AsyncIterator[FreshIntelliVent]:
-        async with self._lock:
-            if not self._client:
-                try:
-                    self._client = await self._client_stack.enter_async_context(
-                        BleakClient, ble_device, ble_device.address
-                    )
+    async def connect(self, ble_device: BLEDevice, timeout: float = 30.0):
+        self.address = ble_device.address
 
-                except asyncio.TimeoutError as exc:
-                    logging.warning("Timeout on connect", exc_info=exc)
-                    raise FreshIntelliventTimeoutError("Timeout on connect") from exc
+        self._client = await establish_connection(
+            BleakClient, ble_device, ble_device.address
+        )
+        self._connected = True
 
-                except BleakError as exc:
-                    logging.warning("Error on connect", exc_info=exc)
-                    raise FreshIntelliventError("Error on connect") from exc
-                finally:
-                    if self._client is not None:
-                        await self._client.disconnect()
-                        # Ensure the disconnect callback
-                        # has a chance to run before we try to reconnect
-                        await asyncio.sleep(0)
-            else:
-                logging.debug("Connection reused")
-            self._client_count += 1
+        logging.debug("Connected to {ble_device.address}")
 
-        try:
-            async with self._lock:
-                yield self
-        finally:
-            async with self._lock:
-                self._client_count -= 1
-                if self._client_count == 0:
-                    self._client = None
-                    await self._client_stack.pop_all().aclose()
+    async def disconnect(self):
+        await self._client.disconnect()
+        self._client = None
+        self._connected = False
 
     async def authenticate(self, authentication_code: Union[bytes, bytearray, str]):
-        self.logger.info("Authenticating...")
+        logging.debug("Authenticating...")
+
+        # Need to sleep for 1 sec to be sure the device is ready to authenticate
+        await asyncio.sleep(1)
+
         await self._write_characteristic(
             uuid=characteristics.AUTH, data=h.to_bytearray(authentication_code)
         )
-        self.logger.info("Authenticated!")
+        logging.debug("Authenticated!")
 
     async def fetch_authentication_code(self):
         code = await self._client.read_gatt_char(char_specifier=characteristics.AUTH)
@@ -113,7 +88,7 @@ class FreshIntelliVent:
 
         try:
             self._log_data(command="W", uuid=uuid, bytes=data)
-            self.logger.info(f"MSG: {h.to_hex(data)} ({len(data)})")
+            logging.info(f"MSG: {h.to_hex(data)} ({len(data)})")
             await self._client.write_gatt_char(
                 char_specifier=uuid, data=data, response=True
             )
@@ -125,18 +100,15 @@ class FreshIntelliVent:
             raise FreshIntelliventError("Failed to write") from exc
 
     def _log_data(self, command: str, uuid: str, bytes: Union[bytes, bytearray]):
-        self.logger.info(f"[{command}] {uuid} = {h.to_hex(bytes)}")
+        logging.info(f"[{command}] {uuid} = {h.to_hex(bytes)}")
 
     async def fetch_device_information(self):
-        self.logger.debug("Fetching device information")
-
-        self.logger.error(f"Services: {self._client.services}")
+        logging.debug("Fetching device information")
 
         name = await self._client.read_gatt_char(
             char_specifier=characteristics.DEVICE_NAME
         )
-        name = name.replace("\0", "")
-        self.name = name.decode("utf-8")
+        self.name = name.decode("utf-8").replace("\00", "").replace("\0", "")
 
         fw_version = await self._client.read_gatt_char(
             char_specifier=characteristics.FIRMWARE_VERSION
@@ -158,7 +130,7 @@ class FreshIntelliVent:
         )
         self.manufacturer = manufacturer.decode("utf-8")
 
-        self.logger.debug(
+        logging.debug(
             "Device fetched! Manufacturer: {}, name: {}, FW: {}, HW: {}".format(
                 self.manufacturer, self.name, self.fw_version, self.hw_version
             )

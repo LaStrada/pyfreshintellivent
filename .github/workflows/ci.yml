@@ -28,9 +28,10 @@ jobs:
         uses: wearerequired/lint-action@v2
         with:
           black: true
+          black_auto_fix: false
           flake8: true
+          flake8_auto_fix: false
 
-      - uses: actions/checkout@v3
       - uses: isort/isort-action@v1.0.0
 
   run-tests:
