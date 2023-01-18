@@ -8,13 +8,12 @@ from uuid import UUID
 from bleak import BleakClient
 from bleak.backends.device import BLEDevice
 from bleak.exc import BleakError
+from bleak_retry_connector import establish_connection
 
 from . import characteristics
 from . import helpers as h
 from .parser import SkyModeParser
 from .sensors import SkySensors
-
-from bleak_retry_connector import establish_connection
 
 
 class FreshIntelliVent:
@@ -40,9 +39,7 @@ class FreshIntelliVent:
         self.address = ble_device.address
 
         self._client = await establish_connection(
-            BleakClient,
-            ble_device,
-            ble_device.address
+            BleakClient, ble_device, ble_device.address
         )
         self._connected = True
 
