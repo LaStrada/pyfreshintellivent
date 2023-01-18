@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import sys
 
 from bleak.backends.device import BLEDevice
@@ -56,4 +55,5 @@ async def main():
         print(e)
 
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

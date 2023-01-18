@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import AsyncIterator, Union
+from typing import Union
 from uuid import UUID
 
 from bleak import BleakClient
