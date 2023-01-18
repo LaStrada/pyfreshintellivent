@@ -125,9 +125,10 @@ Light detection on, high light detection, odour detection on, high odour detecti
 ```
 7c4adc07-2f33-11e7-93ae-92361f002671
 ```
-**Format:** BH\
+**Format:** BHH\
 **B:** Off/on (off: `00`, on: `01`)\
-**H:** ROM
+**H:** RPM
+**H:** Seconds
 
 
 ### Temporary RPM
