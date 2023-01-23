@@ -45,7 +45,11 @@ class FreshIntelliVent:
         logging.debug("Connected to {ble_device.address}")
 
     async def disconnect(self):
-        await self._client.disconnect()
+        if self._client is None:
+            logging.debug("Already disconnected")
+        else:
+            await self._client.disconnect()
+            logging.debug("Disconnected")
         self._client = None
         self._connected = False
 
