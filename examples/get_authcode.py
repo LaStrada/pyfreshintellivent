@@ -27,8 +27,12 @@ async def main():
         print("Connected")
 
         code = await client.fetch_authentication_code()
-        print(f"Authentication code: {bytes(code).hex()}")
-        await client.disconnect()
+        if bytes(code).hex() == "00000000":
+            print("Could not fetch authentication code.")
+            print("If this error persists, read how to enable pairing mode (step 1-3):")
+            print("https://github.com/LaStrada/pyfreshintellivent/blob/main/characteristics.md#Authenticate")
+        else:
+            print(f"Authentication code: {bytes(code).hex()}")
     except Exception as e:
         print(e)
     finally:
