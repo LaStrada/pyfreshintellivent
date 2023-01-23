@@ -31,7 +31,7 @@ async def main():
             print("Could not fetch authentication code.")
             print("If this error persists, read how to enable pairing mode (step 1-3):")
             print(
-                "https://github.com/LaStrada/pyfreshintellivent/blob/main/characteristics.md#Authenticate"
+                "https://github.com/LaStrada/pyfreshintellivent/blob/main/characteristics.md#Authenticate"  # noqa: E501
             )
         else:
             print(f"Authentication code: {bytes(code).hex()}")
