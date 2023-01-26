@@ -31,6 +31,7 @@ class FreshIntelliVent:
 
         self.name = None
         self.manufacturer = None
+        self.model = "Intellivent Sky"
         self.fw_version = None
         self.hw_version = None
         self.sw_version = None
