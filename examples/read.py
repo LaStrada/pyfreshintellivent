@@ -7,13 +7,14 @@ from pyfreshintellivent import FreshIntelliVent
 
 
 async def main():
-    client = FreshIntelliVent()
     address = sys.argv[1]
     authentication_code = None
     if len(sys.argv) == 3:
-        sys.argv[2]
+        authentication_code = sys.argv[2]
 
     ble_device = await BleakScanner.find_device_by_address(address)
+
+    client = FreshIntelliVent(ble_device)
 
     if ble_device is None:
         print("Couldn't find any devices")
@@ -21,7 +22,7 @@ async def main():
 
     try:
         print("Connecting...")
-        await client.connect(ble_device)
+        await client.connect()
         print("Connected")
 
         await client.fetch_device_information()
