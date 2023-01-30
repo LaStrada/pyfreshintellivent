@@ -92,7 +92,6 @@ class FreshIntelliVent:
 
         try:
             self._log_data(command="W", uuid=uuid, bytes=data)
-            logging.info(f"MSG: {h.to_hex(data)} ({len(data)})")
             await self._client.write_gatt_char(
                 char_specifier=uuid, data=data, response=True
             )
