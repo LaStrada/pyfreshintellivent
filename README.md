@@ -1,6 +1,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-![Linting](https://github.com/LaStrada/pyfreshintellivent/actions/workflows/linting.yml/badge.svg?branch=main)
-![Tests](https://github.com/LaStrada/pyfreshintellivent/actions/workflows/tests.yml/badge.svg?branch=main)
+![Linting](https://github.com/LaStrada/pyfreshintellivent/actions/workflows/linting.yml/badge.svg)
+![Tests](https://github.com/LaStrada/pyfreshintellivent/actions/workflows/tests.yml/badge.svg)
 
 # pyfreshintellivent
 Python interface for Fresh Intellivent Sky bathroom Fan using Bluetooth Low Energy.
