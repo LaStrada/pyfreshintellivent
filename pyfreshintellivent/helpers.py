@@ -17,10 +17,8 @@ def validated_authentication_code(value: Union[bytes, bytearray, str]):
         bytes = bytearray.fromhex(value)
         return bytes
 
-    elif value == bytearray(b'\x00\x00\x00\x00'):
-        raise ValueError(
-            "Fan was not in pairing mode."
-        )
+    elif value == bytearray(b"\x00\x00\x00\x00"):
+        raise ValueError("Fan was not in pairing mode.")
 
     elif isinstance(value, (bytes, bytearray)):
         if len(value) != 4:
