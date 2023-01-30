@@ -103,7 +103,7 @@ class FreshIntelliVent:
             raise FreshIntelliventError("Failed to write") from exc
 
     def _log_data(self, command: str, uuid: str, bytes: Union[bytes, bytearray]):
-        logging.info(f"[{command}] {uuid} = {h.to_hex(bytes)}")
+        logging.debug(f"[{command}] {uuid} = {h.to_hex(bytes)}")
 
     async def fetch_device_information(self):
         logging.debug("Fetching device information")
