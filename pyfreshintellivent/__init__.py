@@ -17,10 +17,11 @@ from .sensors import SkySensors
 
 
 class FreshIntelliVent:
-    def __init__(self) -> None:
+    def __init__(self, ble_device: BLEDevice) -> None:
         self.parser = SkyModeParser()
 
-        self.address = None
+        self.address = ble_device.address
+        self._ble_device = ble_device
         self.sensors = SkySensors()
         self.modes = {}
 
@@ -36,30 +37,32 @@ class FreshIntelliVent:
         self.hw_version = None
         self.sw_version = None
 
-    async def connect(self, ble_device: BLEDevice, timeout: float = 30.0):
-        self.address = ble_device.address
-
+    async def connect(self, timeout: float = 30.0):
         self._client = await establish_connection(
-            BleakClient, ble_device, ble_device.address
+            BleakClient, self._ble_device, self._ble_device.address
         )
         self._connected = True
 
         logging.debug("Connected to {ble_device.address}")
 
     async def disconnect(self):
-        await self._client.disconnect()
+        if self._client is None:
+            logging.debug("Already disconnected")
+        else:
+            await self._client.disconnect()
+            logging.debug("Disconnected")
         self._client = None
         self._connected = False
 
     async def authenticate(self, authentication_code: Union[bytes, bytearray, str]):
         logging.debug("Authenticating...")
 
-        # Need to sleep for 1 sec to be sure the device is ready to authenticate
-        await asyncio.sleep(1)
-
         await self._write_characteristic(
             uuid=characteristics.AUTH, data=h.to_bytearray(authentication_code)
         )
+
+        await asyncio.sleep(1)
+
         logging.debug("Authenticated!")
 
     async def fetch_authentication_code(self):
