@@ -92,7 +92,6 @@ class FreshIntelliVent:
 
         try:
             self._log_data(command="W", uuid=uuid, bytes=data)
-            logging.info(f"MSG: {h.to_hex(data)} ({len(data)})")
             await self._client.write_gatt_char(
                 char_specifier=uuid, data=data, response=True
             )
@@ -104,7 +103,7 @@ class FreshIntelliVent:
             raise FreshIntelliventError("Failed to write") from exc
 
     def _log_data(self, command: str, uuid: str, bytes: Union[bytes, bytearray]):
-        logging.info(f"[{command}] {uuid} = {h.to_hex(bytes)}")
+        logging.debug(f"[{command}] {uuid} = {h.to_hex(bytes)}")
 
     async def fetch_device_information(self):
         logging.debug("Fetching device information")
