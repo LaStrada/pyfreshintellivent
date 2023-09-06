@@ -6,7 +6,7 @@ MODE_UNKNOWN = "Unknown"
 
 _MODES = {
     0: "Off",
-    6: "Boost",
+    6: "Pause",
     16: "Constant speed",
     34: "Light",
     35: "Timer",
