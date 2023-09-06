@@ -12,7 +12,7 @@ _MODES = {
     35: "Timer",
     49: "Humidity",
     52: "VOC",
-    103: "Boost"
+    103: "Boost",
 }
 
 
@@ -54,7 +54,6 @@ class SkySensors(object):
         self.authenticated = bool(values[5])
 
         self.rpm = values[6]
-
 
     def as_dict(self):
         return {
