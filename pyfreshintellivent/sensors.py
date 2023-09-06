@@ -2,14 +2,18 @@ from math import log
 from struct import unpack
 from typing import Union
 
-MODE_OFF = "Off"
-MODE_BOOST = "Boost"
-MODE_CONSTANT_SPEED = "Constant speed"
-MODE_HUMIDITY = "Humidity"
-MODE_LIGHT = "Light"
-MODE_PAUSE = "Pause"
-MODE_VOC = "VOC"
 MODE_UNKNOWN = "Unknown"
+
+_MODES = {
+    0: "Off",
+    6: "Pause",
+    16: "Constant speed",
+    34: "Light",
+    35: "Timer",
+    49: "Humidity",
+    52: "VOC",
+    103: "Boost",
+}
 
 
 class SkySensors(object):
@@ -38,6 +42,10 @@ class SkySensors(object):
 
         self.status = bool(values[0])
         self.mode_raw = int(values[1])
+        if mode := _MODES.get(self.mode_raw):
+            self.mode = mode
+        else:
+            self.mode = MODE_UNKNOWN
 
         self.humidity = round((log(values[2] / 10) * 10), 1)
         self.temperature = values[3] / 100
@@ -46,23 +54,6 @@ class SkySensors(object):
         self.authenticated = bool(values[5])
 
         self.rpm = values[6]
-
-        if self.mode_raw == 0:
-            self.mode = MODE_OFF
-        elif self.mode_raw == 6:
-            self.mode = MODE_PAUSE
-        elif self.mode_raw == 16:
-            self.mode = MODE_CONSTANT_SPEED
-        elif self.mode_raw == 34:
-            self.mode = MODE_LIGHT
-        elif self.mode_raw == 49:
-            self.mode = MODE_HUMIDITY
-        elif self.mode_raw == 52:
-            self.mode = MODE_VOC
-        elif self.mode_raw == 103:
-            self.mode = MODE_BOOST
-        else:
-            self.mode = MODE_UNKNOWN
 
     def as_dict(self):
         return {

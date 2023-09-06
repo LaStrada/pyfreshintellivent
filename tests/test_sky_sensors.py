@@ -56,6 +56,11 @@ def test_skysensors_modes_known():
     assert sensors.mode_raw == 34
     assert sensors.mode == "Light"
 
+    # Light - 35
+    sensors.parse_data(bytearray.fromhex("002390010000000000000000000000"))
+    assert sensors.mode_raw == 35
+    assert sensors.mode == "Timer"
+
     # Humidity - 49
     sensors.parse_data(bytearray.fromhex("003190010000000000000000000000"))
     assert sensors.mode_raw == 49

@@ -7,6 +7,9 @@ from pyfreshintellivent import FreshIntelliVent
 
 
 async def main():
+    if len(sys.argv) <= 1:
+        print("Please add the address as a parameter.")
+        return
     address = sys.argv[1]
     authentication_code = None
     if len(sys.argv) == 3:
