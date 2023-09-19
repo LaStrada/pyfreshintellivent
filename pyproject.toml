@@ -9,7 +9,6 @@ license = "Apache License 2.0"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
 ]
@@ -19,9 +18,9 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.9"
-bleak = ">=0.19.0"
-bleak-retry-connector = ">=2.1.0"
+python = ">=3.10,<3.13"
+bleak = ">=0.21.1"
+bleak-retry-connector = "^3.2.1"
 
 [tool.poetry.group.dev.dependencies]
 black = ">=22.10.0"
