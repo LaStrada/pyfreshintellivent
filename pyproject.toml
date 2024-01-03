@@ -20,7 +20,7 @@ include = [
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
 bleak = ">=0.21.1"
-bleak-retry-connector = "^3.2.1"
+bleak-retry-connector = "~=3.3.0"
 
 [tool.poetry.group.dev.dependencies]
 black = ">=22.10.0"
