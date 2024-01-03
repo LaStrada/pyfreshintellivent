@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyfreshintellivent"
-version = "0.3.1"
+version = "0.3.2"
 description = "Manage Fresh Intellivent Sky bathroom ventilation fan"
 authors = ["Ståle Storø Hauknes <walnut-caprice.04@icloud.com>"]
 readme = "README.md"
