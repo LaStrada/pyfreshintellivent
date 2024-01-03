@@ -15,6 +15,8 @@ from . import helpers as h
 from .parser import SkyModeParser
 from .sensors import SkySensors
 
+_LOGGER = logging.getLogger(__name__)
+
 
 class FreshIntelliVent:
     def __init__(self, ble_device: BLEDevice) -> None:
@@ -39,31 +41,29 @@ class FreshIntelliVent:
 
     async def connect(self, timeout: float = 30.0):
         self._client = await establish_connection(
-            BleakClient, self._ble_device, self._ble_device.address
+            BleakClient, self._ble_device, self.address
         )
         self._connected = True
 
-        logging.debug("Connected to {ble_device.address}")
+        _LOGGER.debug("Connected to {self.address}")
 
     async def disconnect(self):
         if self._client is None:
-            logging.debug("Already disconnected")
+            _LOGGER.debug("Already disconnected {self.address}}")
         else:
             await self._client.disconnect()
-            logging.debug("Disconnected")
+            _LOGGER.debug("Disconnected ({self.address})")
         self._client = None
         self._connected = False
 
     async def authenticate(self, authentication_code: Union[bytes, bytearray, str]):
-        logging.debug("Authenticating...")
-
         await self._write_characteristic(
             uuid=characteristics.AUTH, data=h.to_bytearray(authentication_code)
         )
 
         await asyncio.sleep(1)
 
-        logging.debug("Authenticated!")
+        _LOGGER.debug("Authenticated!")
 
     async def fetch_authentication_code(self):
         code = await self._client.read_gatt_char(char_specifier=characteristics.AUTH)
@@ -71,24 +71,24 @@ class FreshIntelliVent:
 
     async def _read_characterisitc(self, uuid: Union[str, UUID]):
         if self._client is None:
-            raise FreshIntelliventError("Not connected")
+            raise FreshIntelliventError("Not connected to {self.address}")
 
         try:
             value = await self._client.read_gatt_char(char_specifier=uuid)
             self._log_data(command="R", uuid=uuid, bytes=value)
             return value
         except asyncio.TimeoutError as exc:
-            logging.info(f"Timeout on read: {uuid}")
+            _LOGGER.info(f"Timeout on read: {uuid}")
             raise TimeoutError("Timeout on read") from exc
         except BleakError as exc:
-            logging.info(f"Failed to read: {uuid}")
+            _LOGGER.info(f"Failed to read: {uuid}")
             raise FreshIntelliventError("Failed to read") from exc
 
     async def _write_characteristic(
         self, uuid: Union[str, UUID], data: Union[bytes, bytearray]
     ):
         if self._client is None:
-            raise FreshIntelliventError("Not connected")
+            raise FreshIntelliventError("Not connected to {self.address}")
 
         try:
             self._log_data(command="W", uuid=uuid, bytes=data)
@@ -96,18 +96,16 @@ class FreshIntelliVent:
                 char_specifier=uuid, data=data, response=True
             )
         except asyncio.TimeoutError as exc:
-            logging.info(f"Timeout on write: {uuid}")
+            _LOGGER.info(f"Timeout on write: {uuid}")
             raise TimeoutError("Timeout on write") from exc
         except BleakError as exc:
-            logging.info(f"Failed to write: {uuid}")
+            _LOGGER.info(f"Failed to write: {uuid}")
             raise FreshIntelliventError("Failed to write") from exc
 
     def _log_data(self, command: str, uuid: str, bytes: Union[bytes, bytearray]):
-        logging.debug(f"[{command}] {uuid} = {h.to_hex(bytes)}")
+        _LOGGER.debug(f"[{command}] {uuid} = {h.to_hex(bytes)}")
 
     async def fetch_device_information(self):
-        logging.debug("Fetching device information")
-
         name = await self._client.read_gatt_char(
             char_specifier=characteristics.DEVICE_NAME
         )
@@ -133,9 +131,13 @@ class FreshIntelliVent:
         )
         self.manufacturer = manufacturer.decode("utf-8")
 
-        logging.debug(
-            "Device fetched! Manufacturer: {}, name: {}, FW: {}, HW: {}".format(
-                self.manufacturer, self.name, self.fw_version, self.hw_version
+        _LOGGER.debug(
+            "Device fetched ({}). Manufacturer: {}, name: {}, FW: {}, HW: {}".format(
+                self.address,
+                self.manufacturer,
+                self.name,
+                self.fw_version,
+                self.hw_version,
             )
         )
 
