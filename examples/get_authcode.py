@@ -1,8 +1,8 @@
 import asyncio
+import logging
 import sys
 
 from bleak import BleakScanner
-import logging
 
 from pyfreshintellivent import FreshIntelliVent
 
