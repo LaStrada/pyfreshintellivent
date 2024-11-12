@@ -1,9 +1,12 @@
 import asyncio
+import logging
 import sys
 
 from bleak import BleakScanner
 
 from pyfreshintellivent import FreshIntelliVent
+
+logging.basicConfig(level=logging.INFO)
 
 
 async def main():
@@ -17,48 +20,45 @@ async def main():
 
     ble_device = await BleakScanner.find_device_by_address(address)
 
-    client = FreshIntelliVent(ble_device)
-
     if ble_device is None:
-        print("Couldn't find any devices")
+        logging.warn("Couldn't find the device")
         return
 
+    client = FreshIntelliVent(ble_device)
+
     try:
-        print("Connecting...")
         await client.connect()
-        print("Connected")
 
         await client.fetch_device_information()
 
         if authentication_code is None:
-            print("No authentication code, skipping authentication")
+            logging.info("No authentication code, skipping authentication")
         else:
             await client.authenticate(authentication_code=authentication_code)
-            print("Authenticated")
 
         sensors = await client.fetch_sensor_data()
-        print(f"Status: {sensors.as_dict()}")
+        logging.info(f"Status: {sensors.as_dict()}")
 
         boost = await client.fetch_boost()
-        print(f"Boost: {boost}")
+        logging.info(f"Boost: {boost}")
 
         constant_speed = await client.fetch_constant_speed()
-        print(f"Constant speed: {constant_speed}")
+        logging.info(f"Constant speed: {constant_speed}")
 
         humidity = await client.fetch_humidity()
-        print(f"Humidity: {humidity}")
+        logging.info(f"Humidity: {humidity}")
 
         light_and_voc = await client.fetch_light_and_voc()
-        print(f"Light and VOC: {light_and_voc}")
+        logging.info(f"Light and VOC: {light_and_voc}")
 
         pause = await client.fetch_pause()
-        print(f"Pause: {pause}")
+        logging.info(f"Pause: {pause}")
 
         timer = await client.fetch_timer()
-        print(f"Timer: {timer}")
+        logging.info(f"Timer: {timer}")
     except Exception as e:
         await client.disconnect()
-        print(e)
+        logging.error(e)
 
 
 if __name__ == "__main__":
