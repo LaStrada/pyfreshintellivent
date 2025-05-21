@@ -22,7 +22,7 @@ include = [
 [tool.poetry.dependencies]
 python = ">=3.10,<3.14"
 bleak = ">=0.22.3"
-bleak-retry-connector = ">=3.9.0"
+bleak-retry-connector = ">=3.9.0,<4.0.0"
 
 [tool.poetry.group.dev.dependencies]
 black = ">=22.10.0"

@@ -877,4 +877,4 @@ all = ["winrt-Windows.Foundation.Collections[all] (==2.3.0)", "winrt-Windows.Fou
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.14"
-content-hash = "5e171d207c9e18d8d9da8b6cfa6e2dc5ea4aa19cdaf247c01def8a429c254c46"
+content-hash = "843e2c52b150aca6fada4c1784baa12d0638d3726c9700956a4025b20f988f5d"
