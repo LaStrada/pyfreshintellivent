@@ -47,7 +47,8 @@ class SkySensors(object):
         else:
             self.mode = MODE_UNKNOWN
 
-        self.humidity = round((log(values[2] / 10) * 10), 1)
+        if values[2] != 0:
+            self.humidity = round((log(values[2] / 10) * 10), 1)
         self.temperature = values[3] / 100
         self.temperature_avg = values[7] / 100
         self.unknowns = [values[4], values[8], values[9], values[10]]
