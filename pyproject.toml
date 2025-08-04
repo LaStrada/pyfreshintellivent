@@ -29,12 +29,12 @@ dependencies = [
 repository = "https://github.com/LaStrada/pyfreshintellivent"
 
 [tool.poetry.group.dev.dependencies]
-black = ">=22.10.0"
-flake8 = ">=7.2.0"
+black = ">=25.1.0"
+flake8 = ">=7.3.0"
 
 [tool.poetry.group.test.dependencies]
-pytest = "^8.3.5"
-pytest-asyncio = "^0.26.0"
+pytest = "^8.4.1"
+pytest-asyncio = "^1.1.0"
 
 [tool.isort]
 profile = "black"
