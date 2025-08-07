@@ -6,35 +6,36 @@ authors = [
     {name = "Ståle Storø Hauknes", email = "walnut-caprice.04@icloud.com"},
 ]
 readme = "README.md"
-license = "Apache License 2.0"
+license = "Apache-2.0"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
 keywords = ["ble", "ventilation", "fresh", "intellivent", "sky"]
-include = [
-    "characteristics.md", "README.md"
-]
 requires-python = ">=3.10,<3.14"
 dependencies = [
-    "bleak>=0.22.3",
-    "bleak-retry-connector>=3.9.0,<4.0.0",
+    "bleak>=1.0.0",
+    "bleak-retry-connector>=4.0.0,<5.0.0",
 ]
 
 [project.urls]
 repository = "https://github.com/LaStrada/pyfreshintellivent"
 
+[tool.poetry]
+include = ["characteristics.md"]
+
 [tool.poetry.group.dev.dependencies]
-black = ">=22.10.0"
-flake8 = ">=7.2.0"
+black = ">=25.1.0"
+flake8 = ">=7.3.0"
 
 [tool.poetry.group.test.dependencies]
-pytest = "^8.3.5"
-pytest-asyncio = "^0.26.0"
+pytest = "^8.4.1"
+pytest-asyncio = "^1.1.0"
 
 [tool.isort]
 profile = "black"
