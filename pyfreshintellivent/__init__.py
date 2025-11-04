@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Union
+from typing import Any, Union
 from uuid import UUID
 
 from bleak import BleakClient
@@ -22,28 +22,26 @@ from .sensors import SkySensors
 class FreshIntelliVent:
     """Fresh Intellivent Sky device handler."""
 
+    name: str | None
+    manufacturer: str | None
+    model = "Intellivent Sky"
+    fw_version: str | None
+    hw_version: str | None
+    sw_version: str | None
+    _connected = False
+    _client: BleakClient | None
+    modes: dict[str, Any] = {}
+    sensors = SkySensors()
+
     def __init__(self, ble_device: BLEDevice) -> None:
         self.parser = SkyModeParser()
 
         self.address = ble_device.address
         self._ble_device = ble_device
-        self.sensors = SkySensors()
-        self.modes = {}
 
         self._client: BleakClient | None = None
-        self._connected = False
 
-        self.hw_version = None
-        self.sw_version = None
-
-        self.name = None
-        self.manufacturer = None
-        self.model = "Intellivent Sky"
-        self.fw_version = None
-        self.hw_version = None
-        self.sw_version = None
-
-    async def connect(self, timeout: float = 30.0):  # pylint: disable=unused-argument
+    async def connect(self, timeout: float = 30.0) -> None:  # pylint: disable=unused-argument
         """Connect to the device."""
         self._client = await establish_connection(
             BleakClient, self._ble_device, self._ble_device.address
@@ -52,7 +50,7 @@ class FreshIntelliVent:
 
         logging.debug("Connected to %s", self._ble_device.address)
 
-    async def disconnect(self):
+    async def disconnect(self) -> None:
         """Disconnect from the device."""
         if self._client is None:
             logging.debug("Already disconnected")
@@ -62,24 +60,30 @@ class FreshIntelliVent:
         self._client = None
         self._connected = False
 
-    async def authenticate(self, authentication_code: Union[bytes, bytearray, str]):
+    async def authenticate(
+        self,
+        authentication_code: Union[bytes, bytearray, str]
+    ) -> None:
         """Authenticate with the device."""
         logging.debug("Authenticating...")
 
         await self._write_characteristic(
             uuid=characteristics.AUTH, data=h.to_bytearray(authentication_code)
         )
-
         await asyncio.sleep(1)
-
         logging.debug("Authenticated!")
 
-    async def fetch_authentication_code(self):
+    async def fetch_authentication_code(self) -> Union[bytes, bytearray]:
         """Fetch the authentication code from the device."""
-        code = await self._client.read_gatt_char(char_specifier=characteristics.AUTH)
-        return code
+        if self._client is None:
+            raise FreshIntelliventError("Not connected")
 
-    async def _read_characteristics(self, uuid: Union[str, UUID]):
+        return await self._client.read_gatt_char(char_specifier=characteristics.AUTH)
+
+    async def _read_characteristics(
+        self,
+        uuid: Union[str, UUID]
+    ) -> Union[bytes, bytearray]:
         """Read a characteristic from the device."""
         if self._client is None:
             raise FreshIntelliventError("Not connected")
@@ -97,7 +101,7 @@ class FreshIntelliVent:
 
     async def _write_characteristic(
         self, uuid: Union[str, UUID], data: Union[bytes, bytearray]
-    ):
+    ) -> None:
         if self._client is None:
             raise FreshIntelliventError("Not connected")
 
@@ -113,13 +117,21 @@ class FreshIntelliVent:
             logging.info("Failed to write: %s", uuid)
             raise FreshIntelliventError("Failed to write") from exc
 
-    def _log_data(self, command: str, uuid: str, data: Union[bytes, bytearray]):
+    def _log_data(
+        self,
+        command: str,
+        uuid: Union[UUID, str],
+        data: Union[bytes, bytearray],
+    ) -> None:
         """Log BLE data operations for debugging."""
         logging.debug("[%s] %s = %s", command, uuid, data.hex())
 
-    async def fetch_device_information(self):
+    async def fetch_device_information(self) -> None:
         """Fetch device information from the device."""
         logging.debug("Fetching device information")
+
+        if self._client is None:
+            raise FreshIntelliventError("Not connected")
 
         name = await self._client.read_gatt_char(
             char_specifier=characteristics.DEVICE_NAME
@@ -154,14 +166,19 @@ class FreshIntelliVent:
             self.hw_version,
         )
 
-    async def fetch_humidity(self):
+    async def fetch_humidity(self) -> dict[str, Any]:
         """Fetch humidity from the device."""
         value = await self._read_characteristics(uuid=characteristics.HUMIDITY)
         humidity = self.parser.humidity_read(value=value)
         self.modes["humidity"] = humidity
         return humidity
 
-    async def update_humidity(self, enabled: bool, detection: str, rpm: int):
+    async def update_humidity(
+        self,
+        enabled: bool,
+        detection: str,
+        rpm: int
+    ) -> None:
         """Update humidity settings on the device."""
         value = self.parser.humidity_write(
             enabled=enabled, detection=detection, rpm=rpm
@@ -174,7 +191,7 @@ class FreshIntelliVent:
             "rpm": rpm,
         }
 
-    async def fetch_light_and_voc(self):
+    async def fetch_light_and_voc(self) -> dict[str, Union[bool, int]]:
         """Fetch light and VOC levels from the device."""
         value = await self._read_characteristics(uuid=characteristics.LIGHT_VOC)
         light_and_voc = self.parser.light_and_voc_read(value=value)
@@ -187,7 +204,7 @@ class FreshIntelliVent:
         light_detection: str,
         voc_enabled: bool,
         voc_detection: str,
-    ):
+    ) -> None:
         """Update light and VOC settings on the device."""
         value = self.parser.light_and_voc_write(
             light_enabled=light_enabled,
@@ -209,14 +226,14 @@ class FreshIntelliVent:
             },
         }
 
-    async def fetch_constant_speed(self):
+    async def fetch_constant_speed(self) -> dict[str, Union[bool, int]]:
         """Fetch constant speed settings from the device."""
         value = await self._read_characteristics(uuid=characteristics.CONSTANT_SPEED)
         constant_speed = self.parser.constant_speed_read(value=value)
         self.modes["constant_speed"] = constant_speed
         return constant_speed
 
-    async def update_constant_speed(self, enabled: bool, rpm: int):
+    async def update_constant_speed(self, enabled: bool, rpm: int) -> None:
         """Update constant speed settings on the device."""
         value = self.parser.constant_speed_write(enabled=enabled, rpm=rpm)
         hex_value = value.hex()
@@ -225,7 +242,7 @@ class FreshIntelliVent:
         )
         self.modes["constant_speed"] = {"enabled": enabled, "rpm": rpm}
 
-    async def fetch_timer(self):
+    async def fetch_timer(self) -> dict[str, Union[bool, int]]:
         """Fetch timer settings from the device."""
         value = await self._read_characteristics(uuid=characteristics.TIMER)
         timer = self.parser.timer_read(value=value)
@@ -234,7 +251,7 @@ class FreshIntelliVent:
 
     async def update_timer(
         self, minutes: int, delay_enabled: bool, delay_minutes: int, rpm: int
-    ):
+    ) -> None:
         """Update timer settings on the device."""
         value = self.parser.timer_write(
             minutes=minutes,
@@ -249,14 +266,19 @@ class FreshIntelliVent:
             "rpm": rpm,
         }
 
-    async def fetch_airing(self):
+    async def fetch_airing(self) -> dict[str, Union[bool, int]]:
         """Fetch airing settings from the device."""
         value = await self._read_characteristics(uuid=characteristics.AIRING)
         airing = self.parser.airing_read(value=value)
         self.modes["airing"] = airing
         return airing
 
-    async def update_airing(self, enabled: bool, minutes: int, rpm: int):
+    async def update_airing(
+        self,
+        enabled: bool,
+        minutes: int,
+        rpm: int
+    ) -> None:
         """Update airing settings on the device."""
         value = self.parser.airing_write(enabled=enabled, minutes=minutes, rpm=rpm)
         await self._write_characteristic(characteristics.AIRING, value)
@@ -266,34 +288,34 @@ class FreshIntelliVent:
             "rpm": rpm,
         }
 
-    async def fetch_pause(self):
+    async def fetch_pause(self) -> dict[str, Union[bool, int]]:
         """Fetch pause settings from the device."""
         value = await self._read_characteristics(uuid=characteristics.PAUSE)
         return self.parser.pause_read(value=value)
 
-    async def update_pause(self, enabled: bool, minutes: int):
+    async def update_pause(self, enabled: bool, minutes: int) -> None:
         """Update pause settings on the device."""
         value = self.parser.pause_write(enabled=enabled, minutes=minutes)
         await self._write_characteristic(characteristics.PAUSE, value)
         self.modes["pause"] = {"enabled": enabled, "minutes": minutes}
 
-    async def fetch_boost(self):
+    async def fetch_boost(self) -> dict[str, Union[bool, int]]:
         """Fetch boost settings from the device."""
         value = await self._read_characteristics(uuid=characteristics.BOOST)
         return self.parser.boost_read(value=value)
 
-    async def update_boost(self, enabled: bool, rpm: int, seconds: int):
+    async def update_boost(self, enabled: bool, rpm: int, seconds: int) -> None:
         """Update boost settings on the device."""
         value = self.parser.boost_write(enabled=enabled, rpm=rpm, seconds=seconds)
         await self._write_characteristic(characteristics.BOOST, value)
         self.modes["boost"] = {"enabled": enabled, "seconds": seconds, "rpm": rpm}
 
-    async def update_temporary_speed(self, enabled: bool, rpm: int):
+    async def update_temporary_speed(self, enabled: bool, rpm: int) -> None:
         """Update temporary speed settings on the device."""
         value = self.parser.temporary_speed_write(enabled=enabled, rpm=rpm)
         await self._write_characteristic(characteristics.TEMPORARY_SPEED, value)
 
-    async def fetch_sensor_data(self):
+    async def fetch_sensor_data(self) -> SkySensors:
         """Fetch sensor data from the device."""
         data = await self._read_characteristics(uuid=characteristics.DEVICE_STATUS)
         self.sensors.parse_data(data)

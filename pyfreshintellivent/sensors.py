@@ -2,7 +2,7 @@
 
 from math import log
 from struct import unpack
-from typing import Union
+from typing import Any, Union
 
 MODE_UNKNOWN = "Unknown"
 
@@ -21,29 +21,22 @@ _MODES = {
 class SkySensors:  # pylint: disable=too-many-instance-attributes
     """Sensor data container for Fresh Intellivent Sky devices."""
 
-    def __init__(self):
-        self._values = None
+    mode: Union[str, None]
+    mode_raw: Union[int, None]
+    status: Union[bool, None]
+    humidity: Union[float, None]
+    temperature: Union[float, None]
+    temperature_avg: Union[float, None]
+    unknowns: Union[list[int], None]
+    authenticated: Union[bool, None]
+    rpm: Union[int, None]
 
-        self.status = None
-        self.mode = None
-        self.mode_raw = None
-
-        self.humidity = None
-        self.temperature = None
-        self.temperature_avg = None
-        self.unknowns = None
-        self.authenticated = None
-
-        self.rpm = None
-
-    def parse_data(self, data: Union[bytes, bytearray]):
+    def parse_data(self, data: Union[bytes, bytearray]) -> None:
         """Parse raw sensor data from the device."""
         if data is None or len(data) != 15:
             raise ValueError(f"Length need to be exactly 15, was {len(data)}.")
 
         values = unpack("<2B2H2B2H3B", data)
-
-        self._values = values
 
         self.status = bool(values[0])
         self.mode_raw = int(values[1])
@@ -61,7 +54,9 @@ class SkySensors:  # pylint: disable=too-many-instance-attributes
 
         self.rpm = values[6]
 
-    def as_dict(self):
+    def as_dict(
+        self
+    ) -> dict[str, Any]:
         """Return sensor data as a dictionary."""
         return {
             "status": self.status,
