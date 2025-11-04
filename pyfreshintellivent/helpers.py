@@ -49,7 +49,7 @@ def validated_detection(value: Union[int, str]):
         else:
             return value
     else:
-        if not value.lower() in [
+        if value.lower() not in [
             DETECTION_LOW.lower(),
             DETECTION_MEDIUM.lower(),
             DETECTION_HIGH.lower(),
