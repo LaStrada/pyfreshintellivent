@@ -1,21 +1,26 @@
 [project]
 name = "pyfreshintellivent"
 version = "0.3.4"
-description = "Manage Fresh Intellivent Sky bathroom ventilation fan"
+description = "Modern, type-safe Python interface for Fresh Intellivent Sky bathroom ventilation fan"
 authors = [
     {name = "Ståle Storø Hauknes", email = "walnut-caprice.04@icloud.com"},
 ]
 readme = "README.md"
 license = "Apache-2.0"
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Home Automation",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
 ]
-keywords = ["ble", "ventilation", "fresh", "intellivent", "sky"]
-requires-python = ">=3.12"
+keywords = ["ble", "bluetooth", "ventilation", "fresh", "intellivent", "sky", "home-automation"]
+requires-python = ">=3.11"
 dependencies = [
     "bleak>=1.0.0",
     "bleak-retry-connector>=4.4.3",

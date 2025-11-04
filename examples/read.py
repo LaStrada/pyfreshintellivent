@@ -1,36 +1,75 @@
-"""Example showing the new API for Fresh Intellivent Sky."""
+"""Example: Read all data from Fresh Intellivent Sky device.
+
+This example demonstrates the modern v2.0 API with:
+- Automatic connection management (no manual connect/disconnect)
+- Fully typed data models (complete IDE autocomplete)
+- Automatic retry on transient failures
+- Proper error handling
+
+Usage:
+    python read.py
+
+Requirements:
+    - Fresh Intellivent Sky device nearby
+    - Device name must be "Intellivent SKY" (or modify the code)
+    - Optional: Authentication code if device is protected
+"""
 
 import asyncio
 import logging
+import sys
 
 from bleak import BleakScanner
 
-from pyfreshintellivent import FreshIntelliventBluetoothDeviceData
+from pyfreshintellivent import (
+    FreshIntelliventBluetoothDeviceData,
+    FreshIntelliventError,
+    DisconnectedError,
+    AuthenticationError,
+)
 
+# Optional: Enable debug logging
+# logging.basicConfig(level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
 
 
 async def main():
     """Scan for device and read all data using the new API."""
-    print("Scanning for Fresh Intellivent Sky devices...")
+    print("🔍 Scanning for Fresh Intellivent Sky devices...")
+    print("   (This may take up to 10 seconds)\n")
     
-    # Scan for devices
+    # Scan for devices by name
     device = await BleakScanner.find_device_by_name("Intellivent SKY", timeout=10.0)
     
     if device is None:
-        print("No device found!")
-        return
+        print("❌ No device found!")
+        print("\nTroubleshooting:")
+        print("  - Is the device powered on?")
+        print("  - Is Bluetooth enabled?")
+        print("  - Is the device within range (< 10 meters)?")
+        return 1
     
-    print(f"Found device: {device.name} ({device.address})")
+    print(f"✅ Found: {device.name} ({device.address})\n")
     
-    # Create parser with optional authentication
-    # If your device requires authentication, provide the code:
-    # parser = FreshIntelliventBluetoothDeviceData(authentication_code="your_code_here")
+    # Create parser
+    # For protected devices, add: authentication_code="your_code_here"
     parser = FreshIntelliventBluetoothDeviceData()
     
-    # Connect, read all data, and disconnect automatically
-    # The connection is properly managed and always closed
-    fresh_device = await parser.update_device(device)
+    # Read all data (connection automatically managed!)
+    print("📡 Reading device data...")
+    
+    try:
+        fresh_device = await parser.update_device(device)
+        print("✅ Successfully read all device data!\n")
+    except DisconnectedError:
+        print("❌ Device disconnected unexpectedly")
+        return 1
+    except AuthenticationError:
+        print("❌ Authentication failed (device may require auth code)")
+        return 1
+    except FreshIntelliventError as e:
+        print(f"❌ Error: {e}")
+        return 1
     
     # Display results
     print(f"\nDevice Information:")
