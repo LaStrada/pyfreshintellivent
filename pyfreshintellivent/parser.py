@@ -1,11 +1,16 @@
+"""Parser for Fresh Intellivent Sky mode settings."""
+
 from struct import pack, unpack
 from typing import Union
 
 from . import helpers as h
 
 
-class SkyModeParser(object):
+class SkyModeParser:
+    """Parser for Fresh Intellivent Sky mode settings."""
+
     def airing_read(self, value: Union[bytes, bytearray]):
+        """Parse airing mode settings from the device."""
         if len(value) != 5:
             raise ValueError(f"Length need to be exactly 5, was {len(value)}.")
 
@@ -22,11 +27,13 @@ class SkyModeParser(object):
         }
 
     def airing_write(self, enabled: bool, minutes: int, rpm: int):
+        """Write airing mode settings to the device."""
         return pack(
             "<?2BH", enabled, 26, h.validated_time(minutes), h.validated_rpm(rpm)
         )
 
     def boost_read(self, value: Union[bytes, bytearray]):
+        """Parse boost mode settings from the device."""
         if len(value) != 5:
             raise ValueError(f"Length need to be exactly 5, was {len(value)}.")
         value = unpack("<?2H", value)
@@ -38,10 +45,12 @@ class SkyModeParser(object):
         return {"enabled": enabled, "seconds": seconds, "rpm": rpm}
 
     def boost_write(self, enabled: bool, rpm: int, seconds: int):
+        """Write boost mode settings to the device."""
         val = pack("<?2H", enabled, h.validated_rpm(rpm), h.validated_time(seconds))
         return val
 
     def constant_speed_read(self, value: Union[bytes, bytearray]):
+        """Parse constant speed settings from the device."""
         if len(value) != 3:
             raise ValueError(f"Length need to be exactly 3, was {len(value)}.")
         value = unpack("<?H", value)
@@ -52,9 +61,11 @@ class SkyModeParser(object):
         return {"enabled": enabled, "rpm": rpm}
 
     def constant_speed_write(self, enabled: bool, rpm: int):
+        """Write constant speed settings to the device."""
         return pack("<?H", enabled, h.validated_rpm(rpm))
 
     def humidity_read(self, value: Union[bytes, bytearray]):
+        """Parse humidity mode settings from the device."""
         if len(value) != 4:
             raise ValueError(f"Length need to be exactly 4, was {len(value)}.")
 
@@ -72,11 +83,13 @@ class SkyModeParser(object):
         }
 
     def humidity_write(self, enabled: bool, detection: str, rpm: int):
+        """Write humidity mode settings to the device."""
         return pack(
             "<?BH", enabled, h.detection_string_as_int(detection), h.validated_rpm(rpm)
         )
 
     def light_and_voc_read(self, value: Union[bytes, bytearray]):
+        """Parse light and VOC mode settings from the device."""
         if len(value) != 4:
             raise ValueError(f"Length need to be exactly 4, was {len(value)}.")
 
@@ -111,6 +124,7 @@ class SkyModeParser(object):
         voc_enabled: bool,
         voc_detection: str,
     ):
+        """Write light and VOC mode settings to the device."""
         return pack(
             "<?B?B",
             bool(light_enabled),
@@ -120,6 +134,7 @@ class SkyModeParser(object):
         )
 
     def pause_read(self, value: Union[bytes, bytearray]):
+        """Parse pause mode settings from the device."""
         if len(value) != 2:
             raise ValueError(f"Length need to be exactly 2, was {len(value)}.")
 
@@ -131,12 +146,15 @@ class SkyModeParser(object):
         return {"enabled": enabled, "minutes": minutes}
 
     def pause_write(self, enabled: bool, minutes: int):
+        """Write pause mode settings to the device."""
         return pack("<?B", enabled, h.validated_time(minutes))
 
     def temporary_speed_write(self, enabled: bool, rpm: int):
+        """Write temporary speed settings to the device."""
         return pack("<?H", enabled, h.validated_rpm(rpm))
 
     def timer_read(self, value: Union[bytes, bytearray]):
+        """Parse timer mode settings from the device."""
         if len(value) != 5:
             raise ValueError(f"Length need to be exactly 5, was {len(value)}.")
 
@@ -156,6 +174,7 @@ class SkyModeParser(object):
     def timer_write(
         self, minutes: int, delay_enabled: bool, delay_minutes: int, rpm: int
     ):
+        """Write timer mode settings to the device."""
         return pack(
             "<B?BH",
             minutes,

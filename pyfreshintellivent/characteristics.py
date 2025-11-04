@@ -1,3 +1,5 @@
+"""BLE characteristic UUIDs for Fresh Intellivent Sky devices."""
+
 from uuid import UUID
 
 UUID_SERVICE = UUID("{0000180a-0000-1000-8000-00805f9b34fb}")

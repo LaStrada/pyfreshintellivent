@@ -1,3 +1,5 @@
+"""Sensor data parsing for Fresh Intellivent Sky devices."""
+
 from math import log
 from struct import unpack
 from typing import Union
@@ -16,7 +18,9 @@ _MODES = {
 }
 
 
-class SkySensors(object):
+class SkySensors:
+    """Sensor data container for Fresh Intellivent Sky devices."""
+
     def __init__(self):
         self._values = None
 
@@ -33,6 +37,7 @@ class SkySensors(object):
         self.rpm = None
 
     def parse_data(self, data: Union[bytes, bytearray]):
+        """Parse raw sensor data from the device."""
         if data is None or len(data) != 15:
             raise ValueError(f"Length need to be exactly 15, was {len(data)}.")
 
@@ -57,6 +62,7 @@ class SkySensors(object):
         self.rpm = values[6]
 
     def as_dict(self):
+        """Return sensor data as a dictionary."""
         return {
             "status": self.status,
             "mode": self.mode,

@@ -1,3 +1,5 @@
+"""Helper functions for Fresh Intellivent Sky devices."""
+
 from typing import Union
 
 DETECTION_LOW = "Low"
@@ -6,6 +8,7 @@ DETECTION_HIGH = "High"
 
 
 def validated_authentication_code(value: Union[bytes, bytearray, str]):
+    """Validate authentication code input."""
     if value is None:
         raise ValueError("Authentication code cannot be empty.")
 
@@ -32,6 +35,7 @@ def validated_authentication_code(value: Union[bytes, bytearray, str]):
 
 
 def validated_rpm(value: int):
+    """Validate RPM input."""
     if value < 800:
         return 800
     elif value > 2400:
@@ -41,6 +45,7 @@ def validated_rpm(value: int):
 
 
 def validated_detection(value: Union[int, str]):
+    """Validate detection input."""
     if isinstance(value, int):
         if value < 0:
             return 0
@@ -64,6 +69,7 @@ def validated_detection(value: Union[int, str]):
 def detection_int_as_string(
     value: int, regular_order: bool = True, disable_low: bool = False
 ):
+    """Convert detection integer to string representation."""
     value = validated_detection(value)
     if value == 1:
         if disable_low and regular_order is True:
@@ -82,6 +88,7 @@ def detection_int_as_string(
 def detection_string_as_int(
     value: str, regular_order: bool = True, disable_low: bool = False
 ):
+    """Convert detection string to integer representation."""
     value = validated_detection(value)
     if value.lower() == DETECTION_LOW.lower():
         if disable_low:
@@ -97,6 +104,7 @@ def detection_string_as_int(
 
 
 def validated_time(value: int):
+    """Validate time input."""
     if value < 0:
         return 0
     else:
@@ -104,6 +112,7 @@ def validated_time(value: int):
 
 
 def to_hex(value: Union[bytes, bytearray, str]):
+    """Convert a value to its hexadecimal representation."""
     if isinstance(value, str):
         bytearray.fromhex(value)
         return value
@@ -111,6 +120,7 @@ def to_hex(value: Union[bytes, bytearray, str]):
 
 
 def to_bytearray(value: Union[bytes, bytearray, str]):
+    """Convert a value to bytearray."""
     if isinstance(value, (bytes, bytearray)):
         return value
     elif isinstance(value, str):
