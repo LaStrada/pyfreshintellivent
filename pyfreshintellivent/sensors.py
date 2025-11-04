@@ -54,9 +54,7 @@ class SkySensors:  # pylint: disable=too-many-instance-attributes
 
         self.rpm = values[6]
 
-    def as_dict(
-        self
-    ) -> dict[str, Any]:
+    def as_dict(self) -> dict[str, Any]:
         """Return sensor data as a dictionary."""
         return {
             "status": self.status,

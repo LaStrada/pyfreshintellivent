@@ -49,23 +49,25 @@ def validated_detection(value: Union[int, str]) -> int:
         if value > 3:
             return 3
         return value
-    if value.casefold() not in [
-        DETECTION_LOW.casefold(),
-        DETECTION_MEDIUM.casefold(),
-        DETECTION_HIGH.casefold(),
-    ]:
-        valid = f"{DETECTION_LOW}, {DETECTION_MEDIUM} and {DETECTION_HIGH}"
-        raise ValueError(
-            f'"{value}" is not a valid detection type. Valid types are: {valid}.'
-        )
-    return int(value)
+    if value.lower() == DETECTION_LOW.lower():
+        return 1
+    if value.lower() == DETECTION_MEDIUM.lower():
+        return 2
+    if value.lower() == DETECTION_HIGH.lower():
+        return 3
+    valid = f"{DETECTION_LOW}, {DETECTION_MEDIUM} and {DETECTION_HIGH}"
+    raise ValueError(
+        f'"{value}" is not a valid detection type. Valid types are: {valid}.'
+    )
 
 
 def detection_int_as_string(
     value: int, regular_order: bool = True, disable_low: bool = False
 ) -> str:
     """Convert detection integer to string representation."""
-    value = validated_detection(value)
+    validated_value = validated_detection(value)
+    assert isinstance(validated_value, int)
+    value = validated_value
     if value == 1:
         if disable_low and regular_order is True:
             return DETECTION_MEDIUM

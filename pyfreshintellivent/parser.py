@@ -10,8 +10,7 @@ class SkyModeParser:
     """Parser for Fresh Intellivent Sky mode settings."""
 
     def airing_read(
-        self,
-        value: Union[bytes, bytearray]
+        self, value: Union[bytes, bytearray]
     ) -> dict[str, Union[bool, int]]:
         """Parse airing mode settings from the device."""
         if len(value) != 5:
@@ -53,8 +52,7 @@ class SkyModeParser:
         return val
 
     def constant_speed_read(
-        self,
-        value: Union[bytes, bytearray]
+        self, value: Union[bytes, bytearray]
     ) -> dict[str, Union[bool, int]]:
         """Parse constant speed settings from the device."""
         if len(value) != 3:
@@ -71,8 +69,7 @@ class SkyModeParser:
         return pack("<?H", enabled, h.validated_rpm(rpm))
 
     def humidity_read(
-        self,
-        value: Union[bytes, bytearray]
+        self, value: Union[bytes, bytearray]
     ) -> dict[str, Union[bool, int, str]]:
         """Parse humidity mode settings from the device."""
         if len(value) != 4:
@@ -97,10 +94,7 @@ class SkyModeParser:
             "<?BH", enabled, h.detection_string_as_int(detection), h.validated_rpm(rpm)
         )
 
-    def light_and_voc_read(
-        self,
-        value: Union[bytes, bytearray]
-    ) -> dict[str, Any]:
+    def light_and_voc_read(self, value: Union[bytes, bytearray]) -> dict[str, Any]:
         """Parse light and VOC mode settings from the device."""
         if len(value) != 4:
             raise ValueError(f"Length need to be exactly 4, was {len(value)}.")
@@ -178,10 +172,7 @@ class SkyModeParser:
         rpm = int(unpacked[3])
 
         return {
-            "delay": {
-                "enabled": delay_enabled,
-                "minutes": delay_minutes
-            },
+            "delay": {"enabled": delay_enabled, "minutes": delay_minutes},
             "minutes": minutes,
             "rpm": rpm,
         }

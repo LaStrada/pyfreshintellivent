@@ -41,7 +41,9 @@ class FreshIntelliVent:
 
         self._client: BleakClient | None = None
 
-    async def connect(self, timeout: float = 30.0) -> None:  # pylint: disable=unused-argument
+    async def connect(
+        self, timeout: float = 30.0  # pylint: disable=unused-argument
+    ) -> None:
         """Connect to the device."""
         self._client = await establish_connection(
             BleakClient, self._ble_device, self._ble_device.address
@@ -61,8 +63,7 @@ class FreshIntelliVent:
         self._connected = False
 
     async def authenticate(
-        self,
-        authentication_code: Union[bytes, bytearray, str]
+        self, authentication_code: Union[bytes, bytearray, str]
     ) -> None:
         """Authenticate with the device."""
         logging.debug("Authenticating...")
@@ -81,8 +82,7 @@ class FreshIntelliVent:
         return await self._client.read_gatt_char(char_specifier=characteristics.AUTH)
 
     async def _read_characteristics(
-        self,
-        uuid: Union[str, UUID]
+        self, uuid: Union[str, UUID]
     ) -> Union[bytes, bytearray]:
         """Read a characteristic from the device."""
         if self._client is None:
@@ -173,12 +173,7 @@ class FreshIntelliVent:
         self.modes["humidity"] = humidity
         return humidity
 
-    async def update_humidity(
-        self,
-        enabled: bool,
-        detection: str,
-        rpm: int
-    ) -> None:
+    async def update_humidity(self, enabled: bool, detection: str, rpm: int) -> None:
         """Update humidity settings on the device."""
         value = self.parser.humidity_write(
             enabled=enabled, detection=detection, rpm=rpm
@@ -273,12 +268,7 @@ class FreshIntelliVent:
         self.modes["airing"] = airing
         return airing
 
-    async def update_airing(
-        self,
-        enabled: bool,
-        minutes: int,
-        rpm: int
-    ) -> None:
+    async def update_airing(self, enabled: bool, minutes: int, rpm: int) -> None:
         """Update airing settings on the device."""
         value = self.parser.airing_write(enabled=enabled, minutes=minutes, rpm=rpm)
         await self._write_characteristic(characteristics.AIRING, value)
