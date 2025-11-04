@@ -14,7 +14,20 @@ from bleak.exc import BleakError
 from bleak_retry_connector import BleakClientWithServiceCache, establish_connection
 
 from . import characteristics
-from .consts import DEFAULT_MAX_UPDATE_ATTEMPTS, DEVICE_MODEL, UPDATE_TIMEOUT
+from .consts import (
+    DEFAULT_MAX_UPDATE_ATTEMPTS,
+    DEVICE_MODEL,
+    KEY_DELAY,
+    KEY_DETECTION,
+    KEY_DETECTION_RAW,
+    KEY_ENABLED,
+    KEY_LIGHT,
+    KEY_MINUTES,
+    KEY_RPM,
+    KEY_SECONDS,
+    KEY_VOC,
+    UPDATE_TIMEOUT,
+)
 from .models import (
     AiringMode,
     BoostMode,
@@ -251,10 +264,10 @@ class FreshIntelliventBluetoothDeviceData:
             data = await client.read_gatt_char(characteristics.HUMIDITY)
             parsed = self.parser.humidity_read(data)
             device.modes.humidity = HumidityMode(
-                enabled=bool(parsed["enabled"]),
-                detection=str(parsed["detection"]),
-                detection_raw=int(parsed["detection_raw"]),
-                rpm=int(parsed["rpm"]),
+                enabled=bool(parsed[KEY_ENABLED]),
+                detection=str(parsed[KEY_DETECTION]),
+                detection_raw=int(parsed[KEY_DETECTION_RAW]),
+                rpm=int(parsed[KEY_RPM]),
             )
         except BleakError as err:
             self.logger.debug("Could not read humidity mode: %s", err)
@@ -263,18 +276,18 @@ class FreshIntelliventBluetoothDeviceData:
         try:
             data = await client.read_gatt_char(characteristics.LIGHT_VOC)
             parsed = self.parser.light_and_voc_read(data)
-            light_data = parsed["light"]
-            voc_data = parsed["voc"]
+            light_data = parsed[KEY_LIGHT]
+            voc_data = parsed[KEY_VOC]
             device.modes.light_and_voc = LightAndVocMode(
                 light=LightSettings(
-                    enabled=bool(light_data["enabled"]),  # type: ignore
-                    detection=str(light_data["detection"]),  # type: ignore
-                    detection_raw=int(light_data["detection_raw"]),  # type: ignore
+                    enabled=bool(light_data[KEY_ENABLED]),  # type: ignore
+                    detection=str(light_data[KEY_DETECTION]),  # type: ignore
+                    detection_raw=int(light_data[KEY_DETECTION_RAW]),  # type: ignore
                 ),
                 voc=VocSettings(
-                    enabled=bool(voc_data["enabled"]),  # type: ignore
-                    detection=str(voc_data["detection"]),  # type: ignore
-                    detection_raw=int(voc_data["detection_raw"]),  # type: ignore
+                    enabled=bool(voc_data[KEY_ENABLED]),  # type: ignore
+                    detection=str(voc_data[KEY_DETECTION]),  # type: ignore
+                    detection_raw=int(voc_data[KEY_DETECTION_RAW]),  # type: ignore
                 ),
             )
         except BleakError as err:
@@ -285,8 +298,8 @@ class FreshIntelliventBluetoothDeviceData:
             data = await client.read_gatt_char(characteristics.CONSTANT_SPEED)
             parsed = self.parser.constant_speed_read(data)  # type: ignore[assignment]
             device.modes.constant_speed = ConstantSpeedMode(
-                enabled=bool(parsed["enabled"]),
-                rpm=int(parsed["rpm"]),
+                enabled=bool(parsed[KEY_ENABLED]),
+                rpm=int(parsed[KEY_RPM]),
             )
         except BleakError as err:
             self.logger.debug("Could not read constant speed mode: %s", err)
@@ -295,14 +308,14 @@ class FreshIntelliventBluetoothDeviceData:
         try:
             data = await client.read_gatt_char(characteristics.TIMER)
             parsed = self.parser.timer_read(data)
-            delay_data = parsed["delay"]
+            delay_data = parsed[KEY_DELAY]
             device.modes.timer = TimerMode(
                 delay=DelaySettings(
-                    enabled=bool(delay_data["enabled"]),  # type: ignore
-                    minutes=int(delay_data["minutes"]),  # type: ignore
+                    enabled=bool(delay_data[KEY_ENABLED]),  # type: ignore
+                    minutes=int(delay_data[KEY_MINUTES]),  # type: ignore
                 ),
-                minutes=int(parsed["minutes"]),
-                rpm=int(parsed["rpm"]),
+                minutes=int(parsed[KEY_MINUTES]),
+                rpm=int(parsed[KEY_RPM]),
             )
         except BleakError as err:
             self.logger.debug("Could not read timer mode: %s", err)
@@ -312,9 +325,9 @@ class FreshIntelliventBluetoothDeviceData:
             data = await client.read_gatt_char(characteristics.AIRING)
             parsed = self.parser.airing_read(data)  # type: ignore[assignment]
             device.modes.airing = AiringMode(
-                enabled=bool(parsed["enabled"]),
-                minutes=int(parsed["minutes"]),
-                rpm=int(parsed["rpm"]),
+                enabled=bool(parsed[KEY_ENABLED]),
+                minutes=int(parsed[KEY_MINUTES]),
+                rpm=int(parsed[KEY_RPM]),
             )
         except BleakError as err:
             self.logger.debug("Could not read airing mode: %s", err)
@@ -324,8 +337,8 @@ class FreshIntelliventBluetoothDeviceData:
             data = await client.read_gatt_char(characteristics.PAUSE)
             parsed = self.parser.pause_read(data)  # type: ignore[assignment]
             device.modes.pause = PauseMode(
-                enabled=bool(parsed["enabled"]),
-                minutes=int(parsed["minutes"]),
+                enabled=bool(parsed[KEY_ENABLED]),
+                minutes=int(parsed[KEY_MINUTES]),
             )
         except BleakError as err:
             self.logger.debug("Could not read pause mode: %s", err)
@@ -335,9 +348,9 @@ class FreshIntelliventBluetoothDeviceData:
             data = await client.read_gatt_char(characteristics.BOOST)
             parsed = self.parser.boost_read(data)  # type: ignore[assignment]
             device.modes.boost = BoostMode(
-                enabled=bool(parsed["enabled"]),
-                seconds=int(parsed["seconds"]),
-                rpm=int(parsed["rpm"]),
+                enabled=bool(parsed[KEY_ENABLED]),
+                seconds=int(parsed[KEY_SECONDS]),
+                rpm=int(parsed[KEY_RPM]),
             )
         except BleakError as err:
             self.logger.debug("Could not read boost mode: %s", err)
