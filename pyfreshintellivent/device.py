@@ -90,16 +90,19 @@ class FreshIntelliventBluetoothDeviceData:
         self,
         logger: logging.Logger | None = None,
         max_attempts: int = DEFAULT_MAX_UPDATE_ATTEMPTS,
+        authentication_code: bytes | bytearray | str | None = None,
     ) -> None:
         """Initialize the parser.
 
         Args:
             logger: Optional logger instance
             max_attempts: Maximum number of connection retry attempts
+            authentication_code: Optional authentication code for protected devices
         """
         self.logger = logger or logging.getLogger(__name__)
         self.max_attempts = max_attempts
         self.parser = SkyModeParser()
+        self.authentication_code = authentication_code
 
     def _handle_disconnect(
         self, disconnect_future: asyncio.Future[bool], client: BleakClient
@@ -173,6 +176,10 @@ class FreshIntelliventBluetoothDeviceData:
                 ),
                 asyncio.timeout(UPDATE_TIMEOUT),
             ):
+                # Authenticate if code provided
+                if self.authentication_code:
+                    await self._authenticate(client)
+
                 # Read device information
                 await self._get_device_info(client, device)
 
@@ -194,6 +201,30 @@ class FreshIntelliventBluetoothDeviceData:
             await client.disconnect()
 
         return device
+
+    async def _authenticate(self, client: BleakClient) -> None:
+        """Authenticate with the device using the provided authentication code."""
+        if not self.authentication_code:
+            return
+
+        try:
+            from . import helpers as h
+            
+            # Convert authentication code to bytearray
+            auth_data = h.to_bytearray(self.authentication_code)
+            
+            # Write authentication code
+            await client.write_gatt_char(
+                characteristics.AUTH, auth_data, response=True
+            )
+            
+            # Wait for authentication to process
+            await asyncio.sleep(1)
+            
+            self.logger.debug("Authentication successful")
+        except BleakError as err:
+            self.logger.error("Authentication failed: %s", err)
+            raise AuthenticationError(f"Failed to authenticate: {err}") from err
 
     async def _get_device_info(
         self, client: BleakClient, device: FreshIntelliventDevice
