@@ -18,6 +18,7 @@ from .parser import SkyModeParser
 from .sensors import SkySensors
 
 
+# pylint: disable=too-many-instance-attributes,too-many-public-methods
 class FreshIntelliVent:
     """Fresh Intellivent Sky device handler."""
 
@@ -30,6 +31,7 @@ class FreshIntelliVent:
         self.modes = {}
 
         self._client: BleakClient | None = None
+        self._connected = False
 
         self.hw_version = None
         self.sw_version = None
@@ -41,14 +43,14 @@ class FreshIntelliVent:
         self.hw_version = None
         self.sw_version = None
 
-    async def connect(self, timeout: float = 30.0):
+    async def connect(self, timeout: float = 30.0):  # pylint: disable=unused-argument
         """Connect to the device."""
         self._client = await establish_connection(
             BleakClient, self._ble_device, self._ble_device.address
         )
         self._connected = True
 
-        logging.debug("Connected to {ble_device.address}")
+        logging.debug("Connected to %s", self._ble_device.address)
 
     async def disconnect(self):
         """Disconnect from the device."""
@@ -84,13 +86,13 @@ class FreshIntelliVent:
 
         try:
             value = await self._client.read_gatt_char(char_specifier=uuid)
-            self._log_data(command="R", uuid=uuid, bytes=value)
+            self._log_data(command="R", uuid=uuid, data=value)
             return value
         except asyncio.TimeoutError as exc:
-            logging.info(f"Timeout on read: {uuid}")
+            logging.info("Timeout on read: %s", uuid)
             raise TimeoutError("Timeout on read") from exc
         except BleakError as exc:
-            logging.info(f"Failed to read: {uuid}")
+            logging.info("Failed to read: %s", uuid)
             raise FreshIntelliventError("Failed to read") from exc
 
     async def _write_characteristic(
@@ -100,20 +102,20 @@ class FreshIntelliVent:
             raise FreshIntelliventError("Not connected")
 
         try:
-            self._log_data(command="W", uuid=uuid, bytes=data)
+            self._log_data(command="W", uuid=uuid, data=data)
             await self._client.write_gatt_char(
                 char_specifier=uuid, data=data, response=True
             )
         except asyncio.TimeoutError as exc:
-            logging.info(f"Timeout on write: {uuid}")
+            logging.info("Timeout on write: %s", uuid)
             raise TimeoutError("Timeout on write") from exc
         except BleakError as exc:
-            logging.info(f"Failed to write: {uuid}")
+            logging.info("Failed to write: %s", uuid)
             raise FreshIntelliventError("Failed to write") from exc
 
-    def _log_data(self, command: str, uuid: str, bytes: Union[bytes, bytearray]):
+    def _log_data(self, command: str, uuid: str, data: Union[bytes, bytearray]):
         """Log BLE data operations for debugging."""
-        logging.debug(f"[{command}] {uuid} = {h.to_hex(bytes)}")
+        logging.debug("[%s] %s = %s", command, uuid, data.hex())
 
     async def fetch_device_information(self):
         """Fetch device information from the device."""
@@ -145,9 +147,8 @@ class FreshIntelliVent:
         self.manufacturer = manufacturer.decode("utf-8")
 
         logging.debug(
-            "Device fetched! Manufacturer: {}, name: {}, FW: {}, HW: {}".format(
-                self.manufacturer, self.name, self.fw_version, self.hw_version
-            )
+            "Device fetched! Manufacturer: %s, name: %s, FW: %s, HW: %s",
+            self.manufacturer, self.name, self.fw_version, self.hw_version
         )
 
     async def fetch_humidity(self):
@@ -215,9 +216,9 @@ class FreshIntelliVent:
     async def update_constant_speed(self, enabled: bool, rpm: int):
         """Update constant speed settings on the device."""
         value = self.parser.constant_speed_write(enabled=enabled, rpm=rpm)
-        hex = h.to_hex(value)
+        hex_value = value.hex()
         await self._write_characteristic(
-            characteristics.CONSTANT_SPEED, bytearray.fromhex(hex)
+            characteristics.CONSTANT_SPEED, bytearray.fromhex(hex_value)
         )
         self.modes["constant_speed"] = {"enabled": enabled, "rpm": rpm}
 
@@ -298,9 +299,7 @@ class FreshIntelliVent:
 
 class FreshIntelliventError(Exception):
     """Base exception for Fresh Intellivent errors."""
-    pass
 
 
 class FreshIntelliventTimeoutError(FreshIntelliventError):
     """Timeout exception for Fresh Intellivent errors."""
-    pass

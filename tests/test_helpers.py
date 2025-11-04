@@ -1,7 +1,6 @@
 import pytest
 
 from pyfreshintellivent.helpers import (
-    to_hex,
     validated_authentication_code,
     validated_detection,
     validated_rpm,
@@ -44,11 +43,3 @@ def test_time():
     assert validated_time(0) == 0
     assert validated_time(100) == 100
     assert validated_time(-1) == 0
-
-
-def test_to_hex():
-    assert to_hex("00") == "00"
-    assert to_hex(bytearray([0, 0])) == "0000"
-    assert to_hex(bytearray([0, 11])) == "000b"
-    assert to_hex(bytearray([1])) == "01"
-    assert to_hex(bytearray([255])) == "ff"

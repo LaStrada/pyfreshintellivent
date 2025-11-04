@@ -18,7 +18,7 @@ _MODES = {
 }
 
 
-class SkySensors:
+class SkySensors:  # pylint: disable=too-many-instance-attributes
     """Sensor data container for Fresh Intellivent Sky devices."""
 
     def __init__(self):
