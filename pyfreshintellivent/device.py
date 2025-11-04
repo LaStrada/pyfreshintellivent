@@ -15,7 +15,20 @@ from bleak_retry_connector import BleakClientWithServiceCache, establish_connect
 
 from . import characteristics
 from .consts import DEFAULT_MAX_UPDATE_ATTEMPTS, DEVICE_MODEL, UPDATE_TIMEOUT
-from .models import DeviceModes, SensorData
+from .models import (
+    AiringMode,
+    BoostMode,
+    ConstantSpeedMode,
+    DelaySettings,
+    DeviceModes,
+    HumidityMode,
+    LightAndVocMode,
+    LightSettings,
+    PauseMode,
+    SensorData,
+    TimerMode,
+    VocSettings,
+)
 from .parser import SkyModeParser
 from .sensors import SkySensors
 
@@ -153,6 +166,9 @@ class FreshIntelliventBluetoothDeviceData:
                 # Read sensor data
                 await self._get_sensor_data(client, device)
 
+                # Read mode settings
+                await self._get_mode_settings(client, device)
+
         except BleakError as err:
             if "not found" in str(err):
                 # Clear the char cache since a char is likely missing
@@ -225,3 +241,103 @@ class FreshIntelliventBluetoothDeviceData:
             )
         except BleakError as err:
             self.logger.debug("Could not read sensor data: %s", err)
+
+    async def _get_mode_settings(
+        self, client: BleakClient, device: FreshIntelliventDevice
+    ) -> None:
+        """Read all mode settings from the device."""
+        # Read humidity mode
+        try:
+            data = await client.read_gatt_char(characteristics.HUMIDITY)
+            parsed = self.parser.humidity_read(data)
+            device.modes.humidity = HumidityMode(
+                enabled=bool(parsed["enabled"]),
+                detection=str(parsed["detection"]),
+                detection_raw=int(parsed["detection_raw"]),
+                rpm=int(parsed["rpm"]),
+            )
+        except BleakError as err:
+            self.logger.debug("Could not read humidity mode: %s", err)
+
+        # Read light and VOC mode
+        try:
+            data = await client.read_gatt_char(characteristics.LIGHT_VOC)
+            parsed = self.parser.light_and_voc_read(data)
+            light_data = parsed["light"]
+            voc_data = parsed["voc"]
+            device.modes.light_and_voc = LightAndVocMode(
+                light=LightSettings(
+                    enabled=bool(light_data["enabled"]),  # type: ignore
+                    detection=str(light_data["detection"]),  # type: ignore
+                    detection_raw=int(light_data["detection_raw"]),  # type: ignore
+                ),
+                voc=VocSettings(
+                    enabled=bool(voc_data["enabled"]),  # type: ignore
+                    detection=str(voc_data["detection"]),  # type: ignore
+                    detection_raw=int(voc_data["detection_raw"]),  # type: ignore
+                ),
+            )
+        except BleakError as err:
+            self.logger.debug("Could not read light and VOC mode: %s", err)
+
+        # Read constant speed mode
+        try:
+            data = await client.read_gatt_char(characteristics.CONSTANT_SPEED)
+            parsed = self.parser.constant_speed_read(data)  # type: ignore[assignment]
+            device.modes.constant_speed = ConstantSpeedMode(
+                enabled=bool(parsed["enabled"]),
+                rpm=int(parsed["rpm"]),
+            )
+        except BleakError as err:
+            self.logger.debug("Could not read constant speed mode: %s", err)
+
+        # Read timer mode
+        try:
+            data = await client.read_gatt_char(characteristics.TIMER)
+            parsed = self.parser.timer_read(data)
+            delay_data = parsed["delay"]
+            device.modes.timer = TimerMode(
+                delay=DelaySettings(
+                    enabled=bool(delay_data["enabled"]),  # type: ignore
+                    minutes=int(delay_data["minutes"]),  # type: ignore
+                ),
+                minutes=int(parsed["minutes"]),
+                rpm=int(parsed["rpm"]),
+            )
+        except BleakError as err:
+            self.logger.debug("Could not read timer mode: %s", err)
+
+        # Read airing mode
+        try:
+            data = await client.read_gatt_char(characteristics.AIRING)
+            parsed = self.parser.airing_read(data)  # type: ignore[assignment]
+            device.modes.airing = AiringMode(
+                enabled=bool(parsed["enabled"]),
+                minutes=int(parsed["minutes"]),
+                rpm=int(parsed["rpm"]),
+            )
+        except BleakError as err:
+            self.logger.debug("Could not read airing mode: %s", err)
+
+        # Read pause mode
+        try:
+            data = await client.read_gatt_char(characteristics.PAUSE)
+            parsed = self.parser.pause_read(data)  # type: ignore[assignment]
+            device.modes.pause = PauseMode(
+                enabled=bool(parsed["enabled"]),
+                minutes=int(parsed["minutes"]),
+            )
+        except BleakError as err:
+            self.logger.debug("Could not read pause mode: %s", err)
+
+        # Read boost mode
+        try:
+            data = await client.read_gatt_char(characteristics.BOOST)
+            parsed = self.parser.boost_read(data)  # type: ignore[assignment]
+            device.modes.boost = BoostMode(
+                enabled=bool(parsed["enabled"]),
+                seconds=int(parsed["seconds"]),
+                rpm=int(parsed["rpm"]),
+            )
+        except BleakError as err:
+            self.logger.debug("Could not read boost mode: %s", err)
