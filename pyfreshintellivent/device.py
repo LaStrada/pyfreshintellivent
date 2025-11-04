@@ -6,7 +6,6 @@ import asyncio
 import dataclasses
 import logging
 from functools import partial
-from typing import Any
 
 from async_interrupt import interrupt
 from bleak import BleakClient
@@ -16,6 +15,7 @@ from bleak_retry_connector import BleakClientWithServiceCache, establish_connect
 
 from . import characteristics
 from .consts import DEFAULT_MAX_UPDATE_ATTEMPTS, DEVICE_MODEL, UPDATE_TIMEOUT
+from .models import DeviceModes, SensorData
 from .parser import SkyModeParser
 from .sensors import SkySensors
 
@@ -53,10 +53,8 @@ class FreshIntelliventDevice:  # pylint: disable=too-few-public-methods,too-many
     hw_version: str | None = None
     sw_version: str | None = None
     fw_version: str | None = None
-    sensors: dict[str, float | int | str | None] = dataclasses.field(
-        default_factory=dict
-    )
-    modes: dict[str, Any] = dataclasses.field(default_factory=dict)
+    sensors: SensorData = dataclasses.field(default_factory=SensorData)
+    modes: DeviceModes = dataclasses.field(default_factory=DeviceModes)
 
 
 class FreshIntelliventBluetoothDeviceData:
@@ -213,7 +211,17 @@ class FreshIntelliventBluetoothDeviceData:
             sensors = SkySensors()
             sensors.parse_data(data)
 
-            # Convert sensors to dict for the device model
-            device.sensors = sensors.as_dict()
+            # Convert to typed model
+            device.sensors = SensorData(
+                status=sensors.status,
+                mode=sensors.mode,
+                mode_raw=sensors.mode_raw,
+                temperature=sensors.temperature,
+                temperature_avg=sensors.temperature_avg,
+                rpm=sensors.rpm,
+                humidity=sensors.humidity,
+                authenticated=sensors.authenticated,
+                unknowns=sensors.unknowns,
+            )
         except BleakError as err:
             self.logger.debug("Could not read sensor data: %s", err)

@@ -23,14 +23,46 @@ from .device import (
     FreshIntelliventTimeoutError,
     UnsupportedDeviceError,
 )
+from .models import (
+    AiringMode,
+    BoostMode,
+    ConstantSpeedMode,
+    DelaySettings,
+    DeviceModes,
+    HumidityMode,
+    LightAndVocMode,
+    LightSettings,
+    PauseMode,
+    SensorData,
+    TimerMode,
+    VocSettings,
+)
 from .parser import SkyModeParser
 from .sensors import SkySensors
 
 # Re-export for backward compatibility and convenience
 __all__ = [
+    # Old API
     "FreshIntelliVent",
+    "SkySensors",
+    "SkyModeParser",
+    # New API
     "FreshIntelliventBluetoothDeviceData",
     "FreshIntelliventDevice",
+    # Typed Models
+    "SensorData",
+    "DeviceModes",
+    "HumidityMode",
+    "LightAndVocMode",
+    "LightSettings",
+    "VocSettings",
+    "ConstantSpeedMode",
+    "TimerMode",
+    "DelaySettings",
+    "AiringMode",
+    "PauseMode",
+    "BoostMode",
+    # Exceptions
     "FreshIntelliventError",
     "DisconnectedError",
     "AuthenticationError",
