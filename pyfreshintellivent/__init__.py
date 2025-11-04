@@ -148,7 +148,10 @@ class FreshIntelliVent:
 
         logging.debug(
             "Device fetched! Manufacturer: %s, name: %s, FW: %s, HW: %s",
-            self.manufacturer, self.name, self.fw_version, self.hw_version
+            self.manufacturer,
+            self.name,
+            self.fw_version,
+            self.hw_version,
         )
 
     async def fetch_humidity(self):
