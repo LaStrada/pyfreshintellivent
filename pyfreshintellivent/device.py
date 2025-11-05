@@ -44,7 +44,7 @@ from .models import (
     VocSettings,
 )
 from .parser import SkyModeParser
-from .sensors import SkySensors
+
 
 
 # Exception classes
@@ -265,21 +265,7 @@ class FreshIntelliventBluetoothDeviceData:
         """Read sensor data from the device."""
         try:
             data = await client.read_gatt_char(characteristics.DEVICE_STATUS)
-            sensors = SkySensors()
-            sensors.parse_data(data)
-
-            # Convert to typed model
-            device.sensors = SensorData(
-                status=sensors.status,
-                mode=sensors.mode,
-                mode_raw=sensors.mode_raw,
-                temperature=sensors.temperature,
-                temperature_avg=sensors.temperature_avg,
-                rpm=sensors.rpm,
-                humidity=sensors.humidity,
-                authenticated=sensors.authenticated,
-                unknowns=sensors.unknowns,
-            )
+            device.sensors = SensorData.from_bytes(data)
         except BleakError as err:
             self.logger.debug("Could not read sensor data: %s", err)
 

@@ -32,7 +32,6 @@ from .models import (
     VocSettings,
 )
 from .parser import SkyModeParser
-from .sensors import SkySensors
 
 # Public API
 __all__ = [
@@ -59,6 +58,5 @@ __all__ = [
     "UnsupportedDeviceError",
     "FreshIntelliventTimeoutError",
     # Internal (exported for advanced usage)
-    "SkySensors",
     "SkyModeParser",
 ]
