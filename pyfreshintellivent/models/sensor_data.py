@@ -5,7 +5,6 @@ from __future__ import annotations
 import dataclasses
 from math import log
 from struct import unpack
-from typing import Any
 
 MODE_UNKNOWN = "Unknown"
 
@@ -79,7 +78,3 @@ class SensorData:
             authenticated=authenticated,
             unknowns=unknowns,
         )
-
-    def as_dict(self) -> dict[str, Any]:
-        """Convert to dict for backward compatibility."""
-        return dataclasses.asdict(self)

@@ -229,3 +229,15 @@ class TestBoost:
     def test_write_valid(self):
         val = parser.boost_write(enabled=True, seconds=600, rpm=2400)
         assert val == bytearray.fromhex("0160095802")
+
+
+# Temporary speed mode tests
+class TestTemporarySpeed:
+    """Test temporary speed mode writing."""
+
+    def test_write_valid(self):
+        val = parser.temporary_speed_write(enabled=True, rpm=800)
+        assert val == bytearray.fromhex("012003")
+
+        val = parser.temporary_speed_write(enabled=False, rpm=1200)
+        assert val == bytearray.fromhex("00B004")

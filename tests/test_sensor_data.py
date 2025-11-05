@@ -4,7 +4,6 @@ from pyfreshintellivent.models import SensorData
 
 
 def test_sensordata_valid():
-    # TODO: Add humidity tests
     sensors = SensorData.from_bytes(bytearray.fromhex("00009001CE090000E8033C0A000000"))
     assert sensors.status is False
     assert sensors.temperature == 25.1
@@ -22,15 +21,22 @@ def test_sensordata_valid():
     assert sensors.mode_raw == 0
 
 
-def test_sensordata_dict():
-    sensors = SensorData.from_bytes(bytearray.fromhex("00009001CE090000E8033C0A000000"))
-    sensor_dict = sensors.as_dict()
-    assert sensor_dict["status"] is False
-    assert sensor_dict["temperature"] == 25.1
-    assert sensor_dict["rpm"] == 1000
-    assert sensor_dict["authenticated"] is False
-    assert sensor_dict["mode"] == "Off"
-    assert sensor_dict["mode_raw"] == 0
+def test_sensordata_with_humidity():
+    """Test SensorData with humidity value (non-zero)."""
+    # Create data with humidity value 0x03E8 (1000) which should give log(100)*10
+    # Format: status, mode, humidity(2), temp(2), unknown(1), auth(1), rpm(2), temp_avg(2), unknown(3)
+    sensors = SensorData.from_bytes(bytearray.fromhex("0100E8030000000000000000000000"))
+    assert sensors.humidity is not None
+    assert sensors.humidity == 46.1  # round(log(1000/10) * 10, 1)
+
+def test_sensordata_without_humidity():
+    """Test SensorData without humidity (zero value)."""
+    # Create data with humidity value 0x0000 (15 bytes total)
+    sensors = SensorData.from_bytes(bytearray.fromhex("010000000000000000000000000000"))
+    assert sensors.humidity is None
+
+
+
 
 
 def test_sensordata_modes_known():

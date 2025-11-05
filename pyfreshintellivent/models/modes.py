@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import Any
 
 
 @dataclasses.dataclass
@@ -15,10 +14,6 @@ class HumidityMode:
     detection_raw: int
     rpm: int
 
-    def as_dict(self) -> dict[str, Any]:
-        """Convert to dict for backward compatibility."""
-        return dataclasses.asdict(self)
-
 
 @dataclasses.dataclass
 class LightSettings:
@@ -27,10 +22,6 @@ class LightSettings:
     enabled: bool
     detection: str
     detection_raw: int
-
-    def as_dict(self) -> dict[str, Any]:
-        """Convert to dict for backward compatibility."""
-        return dataclasses.asdict(self)
 
 
 @dataclasses.dataclass
@@ -41,10 +32,6 @@ class VocSettings:
     detection: str
     detection_raw: int
 
-    def as_dict(self) -> dict[str, Any]:
-        """Convert to dict for backward compatibility."""
-        return dataclasses.asdict(self)
-
 
 @dataclasses.dataclass
 class LightAndVocMode:
@@ -52,13 +39,6 @@ class LightAndVocMode:
 
     light: LightSettings
     voc: VocSettings
-
-    def as_dict(self) -> dict[str, Any]:
-        """Convert to dict for backward compatibility."""
-        return {
-            "light": self.light.as_dict(),
-            "voc": self.voc.as_dict(),
-        }
 
 
 @dataclasses.dataclass
@@ -68,10 +48,6 @@ class ConstantSpeedMode:
     enabled: bool
     rpm: int
 
-    def as_dict(self) -> dict[str, Any]:
-        """Convert to dict for backward compatibility."""
-        return dataclasses.asdict(self)
-
 
 @dataclasses.dataclass
 class DelaySettings:
@@ -79,10 +55,6 @@ class DelaySettings:
 
     enabled: bool
     minutes: int
-
-    def as_dict(self) -> dict[str, Any]:
-        """Convert to dict for backward compatibility."""
-        return dataclasses.asdict(self)
 
 
 @dataclasses.dataclass
@@ -93,14 +65,6 @@ class TimerMode:
     minutes: int
     rpm: int
 
-    def as_dict(self) -> dict[str, Any]:
-        """Convert to dict for backward compatibility."""
-        return {
-            "delay": self.delay.as_dict(),
-            "minutes": self.minutes,
-            "rpm": self.rpm,
-        }
-
 
 @dataclasses.dataclass
 class AiringMode:
@@ -110,10 +74,6 @@ class AiringMode:
     minutes: int
     rpm: int
 
-    def as_dict(self) -> dict[str, Any]:
-        """Convert to dict for backward compatibility."""
-        return dataclasses.asdict(self)
-
 
 @dataclasses.dataclass
 class PauseMode:
@@ -121,10 +81,6 @@ class PauseMode:
 
     enabled: bool
     minutes: int
-
-    def as_dict(self) -> dict[str, Any]:
-        """Convert to dict for backward compatibility."""
-        return dataclasses.asdict(self)
 
 
 @dataclasses.dataclass
@@ -134,10 +90,6 @@ class BoostMode:
     enabled: bool
     seconds: int
     rpm: int
-
-    def as_dict(self) -> dict[str, Any]:
-        """Convert to dict for backward compatibility."""
-        return dataclasses.asdict(self)
 
 
 @dataclasses.dataclass
@@ -151,22 +103,3 @@ class DeviceModes:
     airing: AiringMode | None = None
     pause: PauseMode | None = None
     boost: BoostMode | None = None
-
-    def as_dict(self) -> dict[str, Any]:
-        """Convert to dict for backward compatibility."""
-        result = {}
-        if self.humidity:
-            result["humidity"] = self.humidity.as_dict()
-        if self.light_and_voc:
-            result["light_and_voc"] = self.light_and_voc.as_dict()
-        if self.constant_speed:
-            result["constant_speed"] = self.constant_speed.as_dict()
-        if self.timer:
-            result["timer"] = self.timer.as_dict()
-        if self.airing:
-            result["airing"] = self.airing.as_dict()
-        if self.pause:
-            result["pause"] = self.pause.as_dict()
-        if self.boost:
-            result["boost"] = self.boost.as_dict()
-        return result

@@ -1,7 +1,5 @@
 """Tests for typed data models."""
 
-import pytest
-
 from pyfreshintellivent.models import (
     DEVICE_MODEL,
     MANUFACTURER,
@@ -66,11 +64,6 @@ def test_sensor_data():
     assert sensor.rpm == 1200
     assert sensor.mode == "Humidity"
 
-    # Test as_dict
-    sensor_dict = sensor.as_dict()
-    assert sensor_dict["temperature"] == 22.5
-    assert isinstance(sensor_dict, dict)
-
 
 def test_humidity_mode():
     """Test HumidityMode model."""
@@ -79,9 +72,6 @@ def test_humidity_mode():
     assert mode.enabled is True
     assert mode.detection == "Medium"
     assert mode.rpm == 1500
-
-    mode_dict = mode.as_dict()
-    assert mode_dict["enabled"] is True
 
 
 def test_light_and_voc_mode():
@@ -92,11 +82,6 @@ def test_light_and_voc_mode():
 
     assert mode.light.enabled is True
     assert mode.voc.enabled is False
-
-    mode_dict = mode.as_dict()
-    assert "light" in mode_dict
-    assert "voc" in mode_dict
-    assert mode_dict["light"]["detection"] == "High"
 
 
 def test_constant_speed_mode():
@@ -116,9 +101,6 @@ def test_timer_mode():
     assert mode.delay.minutes == 10
     assert mode.minutes == 30
     assert mode.rpm == 2000
-
-    mode_dict = mode.as_dict()
-    assert mode_dict["delay"]["minutes"] == 10
 
 
 def test_airing_mode():
@@ -155,24 +137,5 @@ def test_device_modes():
     assert modes.humidity.rpm == 1000
     assert modes.boost is None
 
-    # Test as_dict
-    modes_dict = modes.as_dict()
-    assert "humidity" in modes_dict
-    assert "boost" not in modes_dict
 
 
-def test_device_modes_as_dict_all_modes():
-    """Test DeviceModes as_dict with all modes set."""
-    modes = DeviceModes(
-        humidity=HumidityMode(enabled=True, detection="Low", detection_raw=1, rpm=1000),
-        constant_speed=ConstantSpeedMode(enabled=False, rpm=1200),
-        pause=PauseMode(enabled=False, minutes=0),
-        boost=BoostMode(enabled=False, seconds=0, rpm=2400),
-    )
-
-    modes_dict = modes.as_dict()
-    assert "humidity" in modes_dict
-    assert "constant_speed" in modes_dict
-    assert "pause" in modes_dict
-    assert "boost" in modes_dict
-    assert "timer" not in modes_dict  # Not set
