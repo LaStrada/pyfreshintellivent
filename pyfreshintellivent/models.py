@@ -6,6 +6,7 @@ import dataclasses
 from typing import Any
 
 
+#  pylint: disable=too-many-instance-attributes
 @dataclasses.dataclass
 class SensorData:
     """Sensor readings from the device."""

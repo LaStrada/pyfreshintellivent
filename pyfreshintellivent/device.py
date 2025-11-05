@@ -28,6 +28,7 @@ from .consts import (
     KEY_VOC,
     UPDATE_TIMEOUT,
 )
+from . import helpers as h
 from .models import (
     AiringMode,
     BoostMode,
@@ -178,16 +179,16 @@ class FreshIntelliventBluetoothDeviceData:
             ):
                 # Authenticate if code provided
                 if self.authentication_code:
-                    await self._authenticate(client)
+                    await self.authenticate(client)
 
                 # Read device information
-                await self._get_device_info(client, device)
+                await self.get_device_info(client, device)
 
                 # Read sensor data
-                await self._get_sensor_data(client, device)
+                await self.get_sensor_data(client, device)
 
                 # Read mode settings
-                await self._get_mode_settings(client, device)
+                await self.get_mode_settings(client, device)
 
         except BleakError as err:
             if "not found" in str(err):
@@ -202,31 +203,27 @@ class FreshIntelliventBluetoothDeviceData:
 
         return device
 
-    async def _authenticate(self, client: BleakClient) -> None:
+    async def authenticate(self, client: BleakClient) -> None:
         """Authenticate with the device using the provided authentication code."""
         if not self.authentication_code:
             return
 
         try:
-            from . import helpers as h
-            
             # Convert authentication code to bytearray
             auth_data = h.to_bytearray(self.authentication_code)
-            
+
             # Write authentication code
-            await client.write_gatt_char(
-                characteristics.AUTH, auth_data, response=True
-            )
-            
+            await client.write_gatt_char(characteristics.AUTH, auth_data, response=True)
+
             # Wait for authentication to process
             await asyncio.sleep(1)
-            
+
             self.logger.debug("Authentication successful")
         except BleakError as err:
             self.logger.error("Authentication failed: %s", err)
             raise AuthenticationError(f"Failed to authenticate: {err}") from err
 
-    async def _get_device_info(
+    async def get_device_info(
         self, client: BleakClient, device: FreshIntelliventDevice
     ) -> None:
         """Read device information characteristics."""
@@ -262,7 +259,7 @@ class FreshIntelliventBluetoothDeviceData:
         except BleakError:
             self.logger.debug("Could not read manufacturer name")
 
-    async def _get_sensor_data(
+    async def get_sensor_data(
         self, client: BleakClient, device: FreshIntelliventDevice
     ) -> None:
         """Read sensor data from the device."""
@@ -286,7 +283,7 @@ class FreshIntelliventBluetoothDeviceData:
         except BleakError as err:
             self.logger.debug("Could not read sensor data: %s", err)
 
-    async def _get_mode_settings(
+    async def get_mode_settings(
         self, client: BleakClient, device: FreshIntelliventDevice
     ) -> None:
         """Read all mode settings from the device."""
