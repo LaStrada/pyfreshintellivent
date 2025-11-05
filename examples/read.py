@@ -75,11 +75,11 @@ async def main():
     print(f"\nDevice Information:")
     print(f"  Name: {fresh_device.name}")
     print(f"  Address: {fresh_device.address}")
-    print(f"  Model: {fresh_device.model}")
-    print(f"  Manufacturer: {fresh_device.manufacturer}")
-    print(f"  Firmware: {fresh_device.fw_version}")
-    print(f"  Hardware: {fresh_device.hw_version}")
-    print(f"  Software: {fresh_device.sw_version}")
+    print(f"  Model: {fresh_device.info.model}")
+    print(f"  Manufacturer: {fresh_device.info.manufacturer}")
+    print(f"  Firmware: {fresh_device.info.fw_version}")
+    print(f"  Hardware: {fresh_device.info.hw_version}")
+    print(f"  Software: {fresh_device.info.sw_version}")
     
     print(f"\nSensor Data:")
     # Now fully typed! IDE autocomplete works

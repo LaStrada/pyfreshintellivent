@@ -219,25 +219,25 @@ class FreshIntelliventBluetoothDeviceData:
 
         try:
             fw_bytes = await client.read_gatt_char(characteristics.FIRMWARE_VERSION)
-            device.fw_version = fw_bytes.decode("utf-8")
+            device.info.fw_version = fw_bytes.decode("utf-8")
         except BleakError:
             self.logger.debug("Could not read firmware version")
 
         try:
             hw_bytes = await client.read_gatt_char(characteristics.HARDWARE_VERSION)
-            device.hw_version = hw_bytes.decode("utf-8")
+            device.info.hw_version = hw_bytes.decode("utf-8")
         except BleakError:
             self.logger.debug("Could not read hardware version")
 
         try:
             sw_bytes = await client.read_gatt_char(characteristics.SOFTWARE_VERSION)
-            device.sw_version = sw_bytes.decode("utf-8")
+            device.info.sw_version = sw_bytes.decode("utf-8")
         except BleakError:
             self.logger.debug("Could not read software version")
 
         try:
             mfr_bytes = await client.read_gatt_char(characteristics.MANUFACTURER_NAME)
-            device.manufacturer = mfr_bytes.decode("utf-8")
+            device.info.manufacturer = mfr_bytes.decode("utf-8")
         except BleakError:
             self.logger.debug("Could not read manufacturer name")
 

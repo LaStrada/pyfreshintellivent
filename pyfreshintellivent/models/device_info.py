@@ -8,6 +8,18 @@ from .modes import DeviceModes
 from .sensor_data import SensorData
 
 DEVICE_MODEL = "Intellivent Sky"
+MANUFACTURER = "Fresh"
+
+
+@dataclasses.dataclass
+class DeviceInfo:
+    """Static device information (manufacturer, model, versions)."""
+
+    manufacturer: str = MANUFACTURER
+    model: str = DEVICE_MODEL
+    hw_version: str | None = None
+    sw_version: str | None = None
+    fw_version: str | None = None
 
 
 @dataclasses.dataclass
@@ -16,10 +28,6 @@ class FreshIntelliventDevice:
 
     name: str | None = None
     address: str | None = None
-    manufacturer: str | None = None
-    model: str = DEVICE_MODEL
-    hw_version: str | None = None
-    sw_version: str | None = None
-    fw_version: str | None = None
+    info: DeviceInfo = dataclasses.field(default_factory=DeviceInfo)
     sensors: SensorData = dataclasses.field(default_factory=SensorData)
     modes: DeviceModes = dataclasses.field(default_factory=DeviceModes)

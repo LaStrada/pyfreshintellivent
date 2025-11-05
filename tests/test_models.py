@@ -3,11 +3,15 @@
 import pytest
 
 from pyfreshintellivent.models import (
+    DEVICE_MODEL,
+    MANUFACTURER,
     AiringMode,
     BoostMode,
     ConstantSpeedMode,
     DelaySettings,
+    DeviceInfo,
     DeviceModes,
+    FreshIntelliventDevice,
     HumidityMode,
     LightAndVocMode,
     LightSettings,
@@ -16,6 +20,32 @@ from pyfreshintellivent.models import (
     TimerMode,
     VocSettings,
 )
+
+
+def test_device_info():
+    """Test DeviceInfo model."""
+    info = DeviceInfo()
+    assert info.manufacturer == MANUFACTURER
+    assert info.model == DEVICE_MODEL
+    assert info.hw_version is None
+    assert info.sw_version is None
+    assert info.fw_version is None
+
+    info = DeviceInfo(hw_version="1.0", sw_version="2.0", fw_version="3.0")
+    assert info.hw_version == "1.0"
+    assert info.sw_version == "2.0"
+    assert info.fw_version == "3.0"
+
+
+def test_fresh_intellivent_device():
+    """Test FreshIntelliventDevice model."""
+    device = FreshIntelliventDevice(name="Test Device", address="AA:BB:CC:DD:EE:FF")
+    assert device.name == "Test Device"
+    assert device.address == "AA:BB:CC:DD:EE:FF"
+    assert isinstance(device.info, DeviceInfo)
+    assert device.info.manufacturer == MANUFACTURER
+    assert isinstance(device.sensors, SensorData)
+    assert isinstance(device.modes, DeviceModes)
 
 
 def test_sensor_data():

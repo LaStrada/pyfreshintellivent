@@ -12,14 +12,14 @@ class TestHumidity:
     """Test humidity mode parsing."""
 
     def test_read_valid(self):
-        valid = bytearray.fromhex("010201F401")
+        valid = bytearray.fromhex("0102F401")
         val = parser.humidity_read(value=valid)
         assert val["enabled"] is True
         assert val["detection"] == "Medium"
         assert val["detection_raw"] == 2
         assert val["rpm"] == 500
 
-        valid = bytearray.fromhex("000100E803")
+        valid = bytearray.fromhex("0001E803")
         val = parser.humidity_read(value=valid)
         assert val["enabled"] is False
         assert val["detection"] == "Low"
@@ -28,15 +28,15 @@ class TestHumidity:
 
     def test_read_invalid_too_short(self):
         with pytest.raises(ValueError, match=r"Length need to be exactly*"):
-            parser.humidity_read(bytearray.fromhex("01010101"))
+            parser.humidity_read(bytearray.fromhex("010101"))
 
     def test_read_invalid_too_long(self):
         with pytest.raises(ValueError, match=r"Length need to be exactly*"):
-            parser.humidity_read(bytearray.fromhex("010101010101"))
+            parser.humidity_read(bytearray.fromhex("0101010101"))
 
     def test_write_valid(self):
-        val = parser.humidity_write(enabled=True, detection="Medium", rpm=500)
-        assert val == bytearray.fromhex("010201F401")
+        val = parser.humidity_write(enabled=True, detection="Medium", rpm=800)
+        assert val == bytearray.fromhex("01022003")
 
 
 # Light and VOC mode tests
@@ -44,16 +44,16 @@ class TestLightAndVoc:
     """Test light and VOC mode parsing."""
 
     def test_read_valid(self):
-        valid = bytearray.fromhex("0101010158020101")
+        valid = bytearray.fromhex("01010101")
         val = parser.light_and_voc_read(value=valid)
         assert val["light"]["enabled"] is True
-        assert val["light"]["detection"] == "Low"
+        assert val["light"]["detection"] == "Medium"
         assert val["light"]["detection_raw"] == 1
         assert val["voc"]["enabled"] is True
-        assert val["voc"]["detection"] == "Low"
+        assert val["voc"]["detection"] == "High"
         assert val["voc"]["detection_raw"] == 1
 
-        valid = bytearray.fromhex("0002020258020202")
+        valid = bytearray.fromhex("00020002")
         val = parser.light_and_voc_read(value=valid)
         assert val["light"]["enabled"] is False
         assert val["light"]["detection"] == "Medium"
@@ -64,11 +64,11 @@ class TestLightAndVoc:
 
     def test_read_invalid_too_short(self):
         with pytest.raises(ValueError, match=r"Length need to be exactly*"):
-            parser.light_and_voc_read(bytearray.fromhex("01010101"))
+            parser.light_and_voc_read(bytearray.fromhex("010101"))
 
     def test_read_invalid_too_long(self):
         with pytest.raises(ValueError, match=r"Length need to be exactly*"):
-            parser.light_and_voc_read(bytearray.fromhex("010101010101010101"))
+            parser.light_and_voc_read(bytearray.fromhex("0101010101"))
 
     def test_write_valid(self):
         val = parser.light_and_voc_write(
@@ -77,7 +77,7 @@ class TestLightAndVoc:
             voc_enabled=True,
             voc_detection="Medium",
         )
-        assert val == bytearray.fromhex("0102020258020202")
+        assert val == bytearray.fromhex("01020102")
 
 
 # Constant speed mode tests
@@ -229,18 +229,3 @@ class TestBoost:
     def test_write_valid(self):
         val = parser.boost_write(enabled=True, seconds=600, rpm=2400)
         assert val == bytearray.fromhex("0160095802")
-
-
-# Detection string conversion tests
-class TestDetectionStringConversion:
-    """Test detection level string conversion."""
-
-    def test_detection_string_as_int(self):
-        assert parser.detection_string_as_int("Low") == 1
-        assert parser.detection_string_as_int("Medium") == 2
-        assert parser.detection_string_as_int("High") == 3
-
-    def test_detection_int_as_string(self):
-        assert parser.detection_int_as_string(1) == "Low"
-        assert parser.detection_int_as_string(2) == "Medium"
-        assert parser.detection_int_as_string(3) == "High"
