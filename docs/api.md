@@ -341,8 +341,7 @@ Raised when device disconnects unexpectedly during operation.
 **Common causes:**
 - Device went out of range
 - Device was powered off
-- Battery died
-- Interference
+- Connection interference
 
 **Usage:**
 ```python
