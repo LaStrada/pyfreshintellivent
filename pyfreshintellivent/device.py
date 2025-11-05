@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import dataclasses
 import logging
 from functools import partial
 
@@ -16,7 +15,6 @@ from bleak_retry_connector import BleakClientWithServiceCache, establish_connect
 from . import characteristics
 from .consts import (
     DEFAULT_MAX_UPDATE_ATTEMPTS,
-    DEVICE_MODEL,
     KEY_DELAY,
     KEY_DETECTION,
     KEY_DETECTION_RAW,
@@ -34,7 +32,7 @@ from .models import (
     BoostMode,
     ConstantSpeedMode,
     DelaySettings,
-    DeviceModes,
+    FreshIntelliventDevice,
     HumidityMode,
     LightAndVocMode,
     LightSettings,
@@ -44,7 +42,6 @@ from .models import (
     VocSettings,
 )
 from .parser import SkyModeParser
-
 
 
 # Exception classes
@@ -68,22 +65,7 @@ class FreshIntelliventTimeoutError(FreshIntelliventError):
     """Timeout exception for Fresh Intellivent errors."""
 
 
-# Device data model
-@dataclasses.dataclass
-class FreshIntelliventDevice:  # pylint: disable=too-few-public-methods,too-many-instance-attributes
-    """Representation of a Fresh Intellivent device."""
-
-    name: str | None = None
-    address: str | None = None
-    manufacturer: str | None = None
-    model: str = DEVICE_MODEL
-    hw_version: str | None = None
-    sw_version: str | None = None
-    fw_version: str | None = None
-    sensors: SensorData = dataclasses.field(default_factory=SensorData)
-    modes: DeviceModes = dataclasses.field(default_factory=DeviceModes)
-
-
+# Device data parser
 class FreshIntelliventBluetoothDeviceData:
     """Data parser for Fresh Intellivent Sky devices with proper connection handling."""
 
