@@ -13,6 +13,7 @@ from bleak.exc import BleakError
 from bleak_retry_connector import BleakClientWithServiceCache, establish_connection
 
 from . import characteristics
+from . import helpers as h
 from .consts import (
     DEFAULT_MAX_UPDATE_ATTEMPTS,
     KEY_DELAY,
@@ -26,7 +27,6 @@ from .consts import (
     KEY_VOC,
     UPDATE_TIMEOUT,
 )
-from . import helpers as h
 from .models import (
     AiringMode,
     BoostMode,
