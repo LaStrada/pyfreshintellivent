@@ -145,6 +145,14 @@ class TestFreshIntelliventBluetoothDeviceData:
             assert mock_sleep.await_count == 2
 
     @pytest.mark.asyncio
+    async def test_update_device_with_zero_attempts_raises(self, ble_device):
+        """Guard against misconfiguration of max_attempts."""
+        parser = FreshIntelliventBluetoothDeviceData(max_attempts=0)
+
+        with pytest.raises(RuntimeError):
+            await parser.update_device(ble_device)
+
+    @pytest.mark.asyncio
     async def test_update_device_retry_on_bleak_error(self, ble_device):
         """Test that update_device retries on BleakError."""
         parser = FreshIntelliventBluetoothDeviceData(max_attempts=2)
@@ -288,6 +296,33 @@ class TestDeviceDataReading:
         assert device.info.hw_version is None
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize("failure_index", [1, 2, 3, 4])
+    async def test_get_device_info_raises_on_not_found_when_requested(
+        self, mock_client, failure_index
+    ):
+        """Ensure raise_on_not_found propagates BleakError for each field."""
+        parser = FreshIntelliventBluetoothDeviceData()
+        device = FreshIntelliventDevice(address="AA:BB:CC:DD:EE:FF")
+
+        values = [
+            b"FreshSky",  # Device name
+            b"3.0",  # FW version
+            b"1.0",  # HW version
+            b"2.0",  # SW version
+            b"Manufacturer",  # Manufacturer
+        ]
+        side_effect = [
+            BleakError("not found") if idx == failure_index else val
+            for idx, val in enumerate(values)
+        ]
+        mock_client.read_gatt_char.side_effect = side_effect
+
+        with pytest.raises(BleakError):
+            await parser.get_device_info(
+                mock_client, device, raise_on_not_found=True
+            )
+
+    @pytest.mark.asyncio
     async def test_get_sensor_data(self, mock_client):
         """Test reading sensor data."""
         parser = FreshIntelliventBluetoothDeviceData()
@@ -318,6 +353,23 @@ class TestDeviceDataReading:
 
         # Sensors should remain at default values
         assert device.sensors is not None
+
+    @pytest.mark.asyncio
+    async def test_get_sensor_data_raises_on_not_found_when_requested(
+        self, mock_client
+    ):
+        """Ensure raise_on_not_found propagates BleakError for sensors."""
+        parser = FreshIntelliventBluetoothDeviceData()
+        device = FreshIntelliventDevice(address="AA:BB:CC:DD:EE:FF")
+
+        mock_client.read_gatt_char.side_effect = BleakError(
+            "characteristic not found"
+        )
+
+        with pytest.raises(BleakError):
+            await parser.get_sensor_data(
+                mock_client, device, raise_on_not_found=True
+            )
 
 
 class TestUpdateDeviceInternal:
@@ -407,6 +459,55 @@ class TestUpdateDeviceInternal:
 
             mock_client.clear_cache.assert_called_once()
             mock_client.disconnect.assert_called()
+
+    @pytest.mark.asyncio
+    async def test_update_device_clears_cache_on_not_found_real_flow(
+        self, ble_device
+    ):
+        """Integration-style check that not-found errors clear cache."""
+        parser = FreshIntelliventBluetoothDeviceData()
+
+        with patch(
+            "pyfreshintellivent.device.establish_connection"
+        ) as mock_establish:
+            mock_client = AsyncMock()
+            mock_client.address = "AA:BB:CC:DD:EE:FF"
+            mock_client.clear_cache = AsyncMock()
+            mock_client.disconnect = AsyncMock()
+            mock_client.read_gatt_char.side_effect = BleakError("not found")
+            mock_establish.return_value = mock_client
+
+            with pytest.raises(BleakError):
+                await parser._update_device(ble_device)
+
+            mock_client.clear_cache.assert_awaited_once()
+            mock_client.disconnect.assert_awaited()
+
+    @pytest.mark.asyncio
+    async def test_update_device_does_not_clear_cache_on_other_bleak_error(
+        self, ble_device
+    ):
+        """Ensure non 'not found' BleakError does not trigger cache clear."""
+        parser = FreshIntelliventBluetoothDeviceData()
+
+        with patch(
+            "pyfreshintellivent.device.establish_connection"
+        ) as mock_establish, patch.object(
+            parser, "get_device_info"
+        ) as mock_info:
+            mock_client = AsyncMock()
+            mock_client.address = "AA:BB:CC:DD:EE:FF"
+            mock_client.clear_cache = AsyncMock()
+            mock_client.disconnect = AsyncMock()
+            mock_establish.return_value = mock_client
+
+            mock_info.side_effect = BleakError("some other failure")
+
+            with pytest.raises(BleakError):
+                await parser._update_device(ble_device)
+
+            mock_client.clear_cache.assert_not_awaited()
+            mock_client.disconnect.assert_awaited()
 
     @pytest.mark.asyncio
     async def test_update_device_disconnects_on_unsupported_device(self, ble_device):
@@ -715,3 +816,81 @@ class TestGetModeSettings:
         assert device.modes.airing is None
         assert device.modes.pause is None
         assert device.modes.boost is None
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "side_effects",
+        [
+            pytest.param([BleakError("not found")], id="humidity"),
+            pytest.param(
+                [
+                    bytearray.fromhex("0102F401"),
+                    BleakError("not found"),
+                ],
+                id="light_voc",
+            ),
+            pytest.param(
+                [
+                    bytearray.fromhex("0102F401"),
+                    bytearray.fromhex("01010101"),
+                    BleakError("not found"),
+                ],
+                id="constant_speed",
+            ),
+            pytest.param(
+                [
+                    bytearray.fromhex("0102F401"),
+                    bytearray.fromhex("01010101"),
+                    bytearray.fromhex("013905"),
+                    BleakError("not found"),
+                ],
+                id="timer",
+            ),
+            pytest.param(
+                [
+                    bytearray.fromhex("0102F401"),
+                    bytearray.fromhex("01010101"),
+                    bytearray.fromhex("013905"),
+                    bytearray.fromhex("050102E803"),
+                    BleakError("not found"),
+                ],
+                id="airing",
+            ),
+            pytest.param(
+                [
+                    bytearray.fromhex("0102F401"),
+                    bytearray.fromhex("01010101"),
+                    bytearray.fromhex("013905"),
+                    bytearray.fromhex("050102E803"),
+                    bytearray.fromhex("01261EE803"),
+                    BleakError("not found"),
+                ],
+                id="pause",
+            ),
+            pytest.param(
+                [
+                    bytearray.fromhex("0102F401"),
+                    bytearray.fromhex("01010101"),
+                    bytearray.fromhex("013905"),
+                    bytearray.fromhex("050102E803"),
+                    bytearray.fromhex("01261EE803"),
+                    bytearray.fromhex("010A"),
+                    BleakError("not found"),
+                ],
+                id="boost",
+            ),
+        ],
+    )
+    async def test_get_mode_settings_raises_on_not_found_when_requested(
+        self, mock_client, side_effects
+    ):
+        """Ensure raise_on_not_found triggers errors for each mode."""
+        parser = FreshIntelliventBluetoothDeviceData()
+        device = FreshIntelliventDevice(address="AA:BB:CC:DD:EE:FF")
+
+        mock_client.read_gatt_char.side_effect = side_effects
+
+        with pytest.raises(BleakError):
+            await parser.get_mode_settings(
+                mock_client, device, raise_on_not_found=True
+            )
