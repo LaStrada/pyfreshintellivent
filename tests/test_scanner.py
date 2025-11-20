@@ -46,7 +46,7 @@ async def test_scan_uses_filter_and_timeout():
     ) as mock_find:
         mock_find.return_value = fake_device
 
-        result = await scanner.scan(timeout=12.3)
+        result = await scanner.scan(timeout=10.0)
 
         assert result is fake_device
-        mock_find.assert_awaited_once_with(scanner.device_filter, timeout=12.3)
+        mock_find.assert_awaited_once_with(scanner.device_filter, timeout=10.0)
