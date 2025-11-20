@@ -128,7 +128,9 @@ class TestFreshIntelliventBluetoothDeviceData:
         """Test that update_device retries on disconnect."""
         parser = FreshIntelliventBluetoothDeviceData(max_attempts=3)
 
-        with patch.object(parser, "_update_device") as mock_update:
+        with patch.object(parser, "_update_device") as mock_update, patch(
+            "pyfreshintellivent.device.asyncio.sleep", new_callable=AsyncMock
+        ) as mock_sleep:
             # Fail twice, succeed on third attempt
             mock_update.side_effect = [
                 DisconnectedError("test1"),
@@ -140,13 +142,16 @@ class TestFreshIntelliventBluetoothDeviceData:
 
             assert isinstance(result, FreshIntelliventDevice)
             assert mock_update.call_count == 3
+            assert mock_sleep.await_count == 2
 
     @pytest.mark.asyncio
     async def test_update_device_retry_on_bleak_error(self, ble_device):
         """Test that update_device retries on BleakError."""
         parser = FreshIntelliventBluetoothDeviceData(max_attempts=2)
 
-        with patch.object(parser, "_update_device") as mock_update:
+        with patch.object(parser, "_update_device") as mock_update, patch(
+            "pyfreshintellivent.device.asyncio.sleep", new_callable=AsyncMock
+        ) as mock_sleep:
             # Fail once, succeed on second attempt
             mock_update.side_effect = [
                 BleakError("test"),
@@ -157,32 +162,57 @@ class TestFreshIntelliventBluetoothDeviceData:
 
             assert isinstance(result, FreshIntelliventDevice)
             assert mock_update.call_count == 2
+            mock_sleep.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_update_device_fails_after_max_attempts_disconnect(self, ble_device):
         """Test that update_device fails after max attempts on disconnect."""
         parser = FreshIntelliventBluetoothDeviceData(max_attempts=2)
 
-        with patch.object(parser, "_update_device") as mock_update:
+        with patch.object(parser, "_update_device") as mock_update, patch(
+            "pyfreshintellivent.device.asyncio.sleep", new_callable=AsyncMock
+        ) as mock_sleep:
             mock_update.side_effect = DisconnectedError("test")
 
             with pytest.raises(DisconnectedError):
                 await parser.update_device(ble_device)
 
             assert mock_update.call_count == 2
+            mock_sleep.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_update_device_fails_after_max_attempts_bleak_error(self, ble_device):
         """Test that update_device fails after max attempts on BleakError."""
         parser = FreshIntelliventBluetoothDeviceData(max_attempts=2)
 
-        with patch.object(parser, "_update_device") as mock_update:
+        with patch.object(parser, "_update_device") as mock_update, patch(
+            "pyfreshintellivent.device.asyncio.sleep", new_callable=AsyncMock
+        ) as mock_sleep:
             mock_update.side_effect = BleakError("test")
 
             with pytest.raises(BleakError):
                 await parser.update_device(ble_device)
 
             assert mock_update.call_count == 2
+            mock_sleep.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_update_device_retry_on_timeout(self, ble_device):
+        """Test that update_device retries on timeout errors."""
+        parser = FreshIntelliventBluetoothDeviceData(max_attempts=2)
+
+        with patch.object(parser, "_update_device") as mock_update, patch(
+            "pyfreshintellivent.device.asyncio.sleep", new_callable=AsyncMock
+        ) as mock_sleep:
+            mock_update.side_effect = [
+                FreshIntelliventTimeoutError("timed out"),
+                FreshIntelliventDevice(address="AA:BB:CC:DD:EE:FF"),
+            ]
+
+            result = await parser.update_device(ble_device)
+
+            assert isinstance(result, FreshIntelliventDevice)
+            mock_sleep.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_authenticate_without_code(self, mock_client):
@@ -426,6 +456,46 @@ class TestUpdateDeviceInternal:
 
             # Should still disconnect
             mock_client.disconnect.assert_called()
+
+    @pytest.mark.asyncio
+    async def test_update_device_connection_timeout(self, ble_device):
+        """Test that connection timeout raises FreshIntelliventTimeoutError."""
+        parser = FreshIntelliventBluetoothDeviceData()
+
+        with patch(
+            "pyfreshintellivent.device.establish_connection",
+            AsyncMock(side_effect=asyncio.TimeoutError()),
+        ):
+            with pytest.raises(FreshIntelliventTimeoutError):
+                await parser._update_device(ble_device)
+
+    @pytest.mark.asyncio
+    async def test_update_device_operation_timeout(self, ble_device):
+        """Test that update timeout raises FreshIntelliventTimeoutError."""
+        parser = FreshIntelliventBluetoothDeviceData()
+
+        with patch(
+            "pyfreshintellivent.device.establish_connection"
+        ) as mock_establish, patch.object(
+            parser, "get_device_info"
+        ) as mock_info, patch.object(
+            parser, "get_sensor_data"
+        ) as mock_sensor, patch.object(
+            parser, "get_mode_settings"
+        ) as mock_modes:
+
+            mock_client = AsyncMock()
+            mock_client.address = "AA:BB:CC:DD:EE:FF"
+            mock_client.disconnect = AsyncMock()
+            mock_establish.return_value = mock_client
+            mock_info.side_effect = asyncio.TimeoutError()
+
+            with pytest.raises(FreshIntelliventTimeoutError):
+                await parser._update_device(ble_device)
+
+            mock_sensor.assert_not_called()
+            mock_modes.assert_not_called()
+            mock_client.disconnect.assert_awaited()
 
 
 class TestGetModeSettings:
