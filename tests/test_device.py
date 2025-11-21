@@ -128,9 +128,12 @@ class TestFreshIntelliventBluetoothDeviceData:
         """Test that update_device retries on disconnect."""
         parser = FreshIntelliventBluetoothDeviceData(max_attempts=3)
 
-        with patch.object(parser, "_update_device") as mock_update, patch(
-            "pyfreshintellivent.device.asyncio.sleep", new_callable=AsyncMock
-        ) as mock_sleep:
+        with (
+            patch.object(parser, "_update_device") as mock_update,
+            patch(
+                "pyfreshintellivent.device.asyncio.sleep", new_callable=AsyncMock
+            ) as mock_sleep,
+        ):
             # Fail twice, succeed on third attempt
             mock_update.side_effect = [
                 DisconnectedError("test1"),
@@ -157,9 +160,12 @@ class TestFreshIntelliventBluetoothDeviceData:
         """Test that update_device retries on BleakError."""
         parser = FreshIntelliventBluetoothDeviceData(max_attempts=2)
 
-        with patch.object(parser, "_update_device") as mock_update, patch(
-            "pyfreshintellivent.device.asyncio.sleep", new_callable=AsyncMock
-        ) as mock_sleep:
+        with (
+            patch.object(parser, "_update_device") as mock_update,
+            patch(
+                "pyfreshintellivent.device.asyncio.sleep", new_callable=AsyncMock
+            ) as mock_sleep,
+        ):
             # Fail once, succeed on second attempt
             mock_update.side_effect = [
                 BleakError("test"),
@@ -177,9 +183,12 @@ class TestFreshIntelliventBluetoothDeviceData:
         """Test that update_device fails after max attempts on disconnect."""
         parser = FreshIntelliventBluetoothDeviceData(max_attempts=2)
 
-        with patch.object(parser, "_update_device") as mock_update, patch(
-            "pyfreshintellivent.device.asyncio.sleep", new_callable=AsyncMock
-        ) as mock_sleep:
+        with (
+            patch.object(parser, "_update_device") as mock_update,
+            patch(
+                "pyfreshintellivent.device.asyncio.sleep", new_callable=AsyncMock
+            ) as mock_sleep,
+        ):
             mock_update.side_effect = DisconnectedError("test")
 
             with pytest.raises(DisconnectedError):
@@ -193,9 +202,12 @@ class TestFreshIntelliventBluetoothDeviceData:
         """Test that update_device fails after max attempts on BleakError."""
         parser = FreshIntelliventBluetoothDeviceData(max_attempts=2)
 
-        with patch.object(parser, "_update_device") as mock_update, patch(
-            "pyfreshintellivent.device.asyncio.sleep", new_callable=AsyncMock
-        ) as mock_sleep:
+        with (
+            patch.object(parser, "_update_device") as mock_update,
+            patch(
+                "pyfreshintellivent.device.asyncio.sleep", new_callable=AsyncMock
+            ) as mock_sleep,
+        ):
             mock_update.side_effect = BleakError("test")
 
             with pytest.raises(BleakError):
@@ -209,9 +221,12 @@ class TestFreshIntelliventBluetoothDeviceData:
         """Test that update_device retries on timeout errors."""
         parser = FreshIntelliventBluetoothDeviceData(max_attempts=2)
 
-        with patch.object(parser, "_update_device") as mock_update, patch(
-            "pyfreshintellivent.device.asyncio.sleep", new_callable=AsyncMock
-        ) as mock_sleep:
+        with (
+            patch.object(parser, "_update_device") as mock_update,
+            patch(
+                "pyfreshintellivent.device.asyncio.sleep", new_callable=AsyncMock
+            ) as mock_sleep,
+        ):
             mock_update.side_effect = [
                 FreshIntelliventTimeoutError("timed out"),
                 FreshIntelliventDevice(address="AA:BB:CC:DD:EE:FF"),
@@ -318,9 +333,7 @@ class TestDeviceDataReading:
         mock_client.read_gatt_char.side_effect = side_effect
 
         with pytest.raises(BleakError):
-            await parser.get_device_info(
-                mock_client, device, raise_on_not_found=True
-            )
+            await parser.get_device_info(mock_client, device, raise_on_not_found=True)
 
     @pytest.mark.asyncio
     async def test_get_sensor_data(self, mock_client):
@@ -362,14 +375,10 @@ class TestDeviceDataReading:
         parser = FreshIntelliventBluetoothDeviceData()
         device = FreshIntelliventDevice(address="AA:BB:CC:DD:EE:FF")
 
-        mock_client.read_gatt_char.side_effect = BleakError(
-            "characteristic not found"
-        )
+        mock_client.read_gatt_char.side_effect = BleakError("characteristic not found")
 
         with pytest.raises(BleakError):
-            await parser.get_sensor_data(
-                mock_client, device, raise_on_not_found=True
-            )
+            await parser.get_sensor_data(mock_client, device, raise_on_not_found=True)
 
 
 class TestUpdateDeviceInternal:
@@ -380,15 +389,12 @@ class TestUpdateDeviceInternal:
         """Test successful device update through _update_device."""
         parser = FreshIntelliventBluetoothDeviceData()
 
-        with patch(
-            "pyfreshintellivent.device.establish_connection"
-        ) as mock_establish, patch.object(
-            parser, "get_device_info"
-        ) as mock_info, patch.object(
-            parser, "get_sensor_data"
-        ) as mock_sensor, patch.object(
-            parser, "get_mode_settings"
-        ) as mock_modes:
+        with (
+            patch("pyfreshintellivent.device.establish_connection") as mock_establish,
+            patch.object(parser, "get_device_info") as mock_info,
+            patch.object(parser, "get_sensor_data") as mock_sensor,
+            patch.object(parser, "get_mode_settings") as mock_modes,
+        ):
 
             mock_client = AsyncMock()
             mock_client.address = "AA:BB:CC:DD:EE:FF"
@@ -409,17 +415,13 @@ class TestUpdateDeviceInternal:
         """Test device update with authentication."""
         parser = FreshIntelliventBluetoothDeviceData(authentication_code="1234")
 
-        with patch(
-            "pyfreshintellivent.device.establish_connection"
-        ) as mock_establish, patch.object(
-            parser, "authenticate"
-        ) as mock_auth, patch.object(
-            parser, "get_device_info"
-        ) as mock_info, patch.object(
-            parser, "get_sensor_data"
-        ) as mock_sensor, patch.object(
-            parser, "get_mode_settings"
-        ) as mock_modes:
+        with (
+            patch("pyfreshintellivent.device.establish_connection") as mock_establish,
+            patch.object(parser, "authenticate") as mock_auth,
+            patch.object(parser, "get_device_info") as mock_info,
+            patch.object(parser, "get_sensor_data") as mock_sensor,
+            patch.object(parser, "get_mode_settings") as mock_modes,
+        ):
 
             mock_client = AsyncMock()
             mock_client.address = "AA:BB:CC:DD:EE:FF"
@@ -439,11 +441,10 @@ class TestUpdateDeviceInternal:
         """Test that characteristic cache is cleared on not found error."""
         parser = FreshIntelliventBluetoothDeviceData()
 
-        with patch(
-            "pyfreshintellivent.device.establish_connection"
-        ) as mock_establish, patch.object(
-            parser, "get_device_info"
-        ) as mock_info:
+        with (
+            patch("pyfreshintellivent.device.establish_connection") as mock_establish,
+            patch.object(parser, "get_device_info") as mock_info,
+        ):
 
             mock_client = AsyncMock()
             mock_client.address = "AA:BB:CC:DD:EE:FF"
@@ -461,15 +462,11 @@ class TestUpdateDeviceInternal:
             mock_client.disconnect.assert_called()
 
     @pytest.mark.asyncio
-    async def test_update_device_clears_cache_on_not_found_real_flow(
-        self, ble_device
-    ):
+    async def test_update_device_clears_cache_on_not_found_real_flow(self, ble_device):
         """Integration-style check that not-found errors clear cache."""
         parser = FreshIntelliventBluetoothDeviceData()
 
-        with patch(
-            "pyfreshintellivent.device.establish_connection"
-        ) as mock_establish:
+        with patch("pyfreshintellivent.device.establish_connection") as mock_establish:
             mock_client = AsyncMock()
             mock_client.address = "AA:BB:CC:DD:EE:FF"
             mock_client.clear_cache = AsyncMock()
@@ -490,11 +487,10 @@ class TestUpdateDeviceInternal:
         """Ensure non 'not found' BleakError does not trigger cache clear."""
         parser = FreshIntelliventBluetoothDeviceData()
 
-        with patch(
-            "pyfreshintellivent.device.establish_connection"
-        ) as mock_establish, patch.object(
-            parser, "get_device_info"
-        ) as mock_info:
+        with (
+            patch("pyfreshintellivent.device.establish_connection") as mock_establish,
+            patch.object(parser, "get_device_info") as mock_info,
+        ):
             mock_client = AsyncMock()
             mock_client.address = "AA:BB:CC:DD:EE:FF"
             mock_client.clear_cache = AsyncMock()
@@ -514,11 +510,10 @@ class TestUpdateDeviceInternal:
         """Test that device is disconnected on unsupported device error."""
         parser = FreshIntelliventBluetoothDeviceData()
 
-        with patch(
-            "pyfreshintellivent.device.establish_connection"
-        ) as mock_establish, patch.object(
-            parser, "get_device_info"
-        ) as mock_info:
+        with (
+            patch("pyfreshintellivent.device.establish_connection") as mock_establish,
+            patch.object(parser, "get_device_info") as mock_info,
+        ):
 
             mock_client = AsyncMock()
             mock_client.address = "AA:BB:CC:DD:EE:FF"
@@ -538,11 +533,10 @@ class TestUpdateDeviceInternal:
         """Test that device is always disconnected even on error."""
         parser = FreshIntelliventBluetoothDeviceData()
 
-        with patch(
-            "pyfreshintellivent.device.establish_connection"
-        ) as mock_establish, patch.object(
-            parser, "get_device_info"
-        ) as mock_info:
+        with (
+            patch("pyfreshintellivent.device.establish_connection") as mock_establish,
+            patch.object(parser, "get_device_info") as mock_info,
+        ):
 
             mock_client = AsyncMock()
             mock_client.address = "AA:BB:CC:DD:EE:FF"
@@ -575,15 +569,12 @@ class TestUpdateDeviceInternal:
         """Test that update timeout raises FreshIntelliventTimeoutError."""
         parser = FreshIntelliventBluetoothDeviceData()
 
-        with patch(
-            "pyfreshintellivent.device.establish_connection"
-        ) as mock_establish, patch.object(
-            parser, "get_device_info"
-        ) as mock_info, patch.object(
-            parser, "get_sensor_data"
-        ) as mock_sensor, patch.object(
-            parser, "get_mode_settings"
-        ) as mock_modes:
+        with (
+            patch("pyfreshintellivent.device.establish_connection") as mock_establish,
+            patch.object(parser, "get_device_info") as mock_info,
+            patch.object(parser, "get_sensor_data") as mock_sensor,
+            patch.object(parser, "get_mode_settings") as mock_modes,
+        ):
 
             mock_client = AsyncMock()
             mock_client.address = "AA:BB:CC:DD:EE:FF"
@@ -597,6 +588,74 @@ class TestUpdateDeviceInternal:
             mock_sensor.assert_not_called()
             mock_modes.assert_not_called()
             mock_client.disconnect.assert_awaited()
+
+    @pytest.mark.asyncio
+    async def test_update_device_recovers_after_disconnect_mid_read(self, ble_device):
+        """Ensure a mid-cycle disconnect triggers retry and returns consistent data."""
+        parser = FreshIntelliventBluetoothDeviceData(max_attempts=2)
+
+        # First client drops during sensor read
+        first_client = AsyncMock()
+        first_client.address = "AA:BB:CC:DD:EE:F0"
+        first_client.disconnect = AsyncMock()
+        read_calls = {"count": 0}
+
+        async def flaky_read(_):
+            idx = read_calls["count"]
+            read_calls["count"] += 1
+            if idx == 0:
+                return b"FreshSky"
+            if idx == 1:
+                return b"3.0"
+            if idx == 2:
+                return b"1.0"
+            if idx == 3:
+                return b"2.0"
+            if idx == 4:
+                return b"Manufacturer"
+            if idx == 5:
+                raise DisconnectedError("sensor read dropped")
+            return b""
+
+        first_client.read_gatt_char.side_effect = flaky_read
+
+        # Second client completes the full read sequence
+        second_client = AsyncMock()
+        second_client.address = "AA:BB:CC:DD:EE:F1"
+        second_client.disconnect = AsyncMock()
+        read_sequence = [
+            b"FreshSky",
+            b"3.0",
+            b"1.0",
+            b"2.0",
+            b"Manufacturer",
+            bytearray.fromhex("01003702E60Abd01D204040B001c00"),  # sensor data
+            bytearray.fromhex("0102F401"),  # humidity
+            bytearray.fromhex("01010101"),  # light/voc
+            bytearray.fromhex("013905"),  # constant speed
+            bytearray.fromhex("050102E803"),  # timer
+            bytearray.fromhex("01261EE803"),  # airing
+            bytearray.fromhex("010A"),  # pause
+            bytearray.fromhex("0160095802"),  # boost
+        ]
+
+        async def full_read(_):
+            return read_sequence.pop(0)
+
+        second_client.read_gatt_char.side_effect = full_read
+
+        with patch(
+            "pyfreshintellivent.device.establish_connection",
+            side_effect=[first_client, second_client],
+        ):
+            device = await parser.update_device(ble_device)
+
+        # Retries should have used both connections and returned a fully-populated device
+        first_client.disconnect.assert_awaited()
+        second_client.disconnect.assert_awaited()
+        assert device.name == "FreshSky"
+        assert device.sensors.rpm == 1234
+        assert device.modes.constant_speed.rpm == 1337
 
 
 class TestGetModeSettings:
@@ -891,6 +950,4 @@ class TestGetModeSettings:
         mock_client.read_gatt_char.side_effect = side_effects
 
         with pytest.raises(BleakError):
-            await parser.get_mode_settings(
-                mock_client, device, raise_on_not_found=True
-            )
+            await parser.get_mode_settings(mock_client, device, raise_on_not_found=True)
