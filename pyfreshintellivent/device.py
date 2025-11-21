@@ -174,14 +174,10 @@ class FreshIntelliventBluetoothDeviceData:
                         await self.authenticate(client)
 
                     # Read device information
-                    await self.get_device_info(
-                        client, device, raise_on_not_found=True
-                    )
+                    await self.get_device_info(client, device, raise_on_not_found=True)
 
                     # Read sensor data
-                    await self.get_sensor_data(
-                        client, device, raise_on_not_found=True
-                    )
+                    await self.get_sensor_data(client, device, raise_on_not_found=True)
 
                     # Read mode settings
                     await self.get_mode_settings(
