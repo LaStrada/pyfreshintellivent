@@ -62,6 +62,11 @@ asyncio.run(main())
 - **[API Reference](docs/api.md)** - Complete API documentation
 - **[Examples](examples/)** - Working code examples
 
+### Examples
+
+- `python examples/scan.py` — quick one-shot scan that prints the first matching device (10s timeout).
+- `python examples/read.py [--address AA:BB:CC:DD:EE:FF] [--auth CODE]` — read all data; accepts an optional BLE address/UUID to skip the picker and an optional auth code for protected devices.
+
 ## 🔐 Authentication
 
 For devices that require authentication:
