@@ -92,9 +92,8 @@ def detection_string_as_int(
         return 1 if regular_order else 3
     if value.casefold() == DETECTION_MEDIUM.casefold():
         return 2
-    if value.casefold() == DETECTION_HIGH.casefold():
-        return 3 if regular_order else 1
-    raise ValueError("Invalid detection value")
+    # Must be HIGH if validated
+    return 3 if regular_order else 1
 
 
 def validated_time(value: int) -> int:
