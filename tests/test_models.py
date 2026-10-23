@@ -136,6 +136,3 @@ def test_device_modes():
     assert modes.humidity is not None
     assert modes.humidity.rpm == 1000
     assert modes.boost is None
-
-
-

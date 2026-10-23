@@ -9,27 +9,24 @@ DETECTION_HIGH = "High"
 
 def validated_authentication_code(value: Union[bytes, bytearray, str]) -> bytearray:
     """Validate authentication code input."""
-    if value is None:
-        raise ValueError("Authentication code cannot be empty.")
-
     if isinstance(value, str):
         if len(value) != 8:
             raise ValueError(
-                f"Authentication code need to be 8 characters, was {len(value)}."
+                "Authentication code must contain exactly 8 hexadecimal characters"
             )
-        return bytearray.fromhex(value)
-
-    if value == bytearray(b"\x00\x00\x00\x00"):
-        raise ValueError("Fan was not in pairing mode.")
-
-    if isinstance(value, (bytes, bytearray)):
-        if len(value) != 4:
-            raise ValueError(
-                f"Authentication code need to be 4 bytes, was {len(value)}."
-            )
-        return bytearray(value)
-
-    raise TypeError("Wrong type, expected bytes, bytearray or str.")
+        try:
+            data = bytearray.fromhex(value)
+        except ValueError:
+            raise ValueError("Authentication code must be hexadecimal") from None
+    elif isinstance(value, (bytes, bytearray)):
+        data = bytearray(value)
+    else:
+        raise TypeError("Authentication code must be bytes, bytearray or str")
+    if len(data) != 4:
+        raise ValueError("Authentication code must contain exactly 4 bytes")
+    if not any(data):
+        raise ValueError("Fan was not in pairing mode")
+    return data
 
 
 def validated_rpm(value: int) -> int:

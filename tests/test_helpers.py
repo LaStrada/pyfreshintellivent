@@ -16,7 +16,8 @@ from pyfreshintellivent.helpers import (
 def test_auth_code():
     """Test authentication code validation."""
     # Valid string input
-    assert validated_authentication_code("00000000") == bytearray([0, 0, 0, 0])
+    with pytest.raises(ValueError):
+        validated_authentication_code("00000000")
     assert validated_authentication_code("01020304") == bytearray([1, 2, 3, 4])
 
     # Valid bytes/bytearray input
@@ -26,14 +27,20 @@ def test_auth_code():
     )
 
     # None input
-    with pytest.raises(ValueError, match="Authentication code cannot be empty"):
+    with pytest.raises(TypeError, match="Authentication code must be bytes"):
         validated_authentication_code(None)
 
     # Wrong string length
-    with pytest.raises(ValueError, match="Authentication code need to be 8 characters"):
+    with pytest.raises(
+        ValueError,
+        match="Authentication code must contain exactly 8 hexadecimal characters",
+    ):
         validated_authentication_code("aa")
 
-    with pytest.raises(ValueError, match="Authentication code need to be 8 characters"):
+    with pytest.raises(
+        ValueError,
+        match="Authentication code must contain exactly 8 hexadecimal characters",
+    ):
         validated_authentication_code("aaaaaaaaaa")
 
     # Pairing mode check (all zeros)
@@ -41,14 +48,20 @@ def test_auth_code():
         validated_authentication_code(bytearray(b"\x00\x00\x00\x00"))
 
     # Wrong bytes length
-    with pytest.raises(ValueError, match="Authentication code need to be 4 bytes"):
+    with pytest.raises(
+        ValueError, match="Authentication code must contain exactly 4 bytes"
+    ):
         validated_authentication_code(b"\x01\x02")
 
-    with pytest.raises(ValueError, match="Authentication code need to be 4 bytes"):
+    with pytest.raises(
+        ValueError, match="Authentication code must contain exactly 4 bytes"
+    ):
         validated_authentication_code(b"\x01\x02\x03\x04\x05")
 
     # Wrong type
-    with pytest.raises(TypeError, match="Wrong type, expected bytes, bytearray or str"):
+    with pytest.raises(
+        TypeError, match="Authentication code must be bytes, bytearray or str"
+    ):
         validated_authentication_code(12345)
 
 

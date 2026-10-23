@@ -29,14 +29,12 @@ def test_sensordata_with_humidity():
     assert sensors.humidity is not None
     assert sensors.humidity == 46.1  # round(log(1000/10) * 10, 1)
 
+
 def test_sensordata_without_humidity():
     """Test SensorData without humidity (zero value)."""
     # Create data with humidity value 0x0000 (15 bytes total)
     sensors = SensorData.from_bytes(bytearray.fromhex("010000000000000000000000000000"))
     assert sensors.humidity is None
-
-
-
 
 
 def test_sensordata_modes_known():

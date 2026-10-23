@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from functools import partial
+from uuid import UUID
 
 from async_interrupt import interrupt
 from bleak import BleakClient
@@ -14,6 +15,7 @@ from bleak_retry_connector import BleakClientWithServiceCache, establish_connect
 
 from . import characteristics
 from . import helpers as h
+from .connection import ClientWithCleanup, disconnect
 from .consts import (
     DEFAULT_MAX_UPDATE_ATTEMPTS,
     KEY_DELAY,
@@ -26,6 +28,14 @@ from .consts import (
     KEY_SECONDS,
     KEY_VOC,
     UPDATE_TIMEOUT,
+)
+from .exceptions import (
+    AuthenticationError,
+    ConnectionCleanupError,
+    DisconnectedError,
+    FreshIntelliventError,
+    FreshIntelliventTimeoutError,
+    UnsupportedDeviceError,
 )
 from .models import (
     AiringMode,
@@ -43,26 +53,16 @@ from .models import (
 )
 from .parser import SkyModeParser
 
-
-# Exception classes
-class FreshIntelliventError(Exception):
-    """Base exception for Fresh Intellivent errors."""
-
-
-class DisconnectedError(FreshIntelliventError):
-    """Device disconnected unexpectedly."""
-
-
-class AuthenticationError(FreshIntelliventError):
-    """Authentication failed."""
-
-
-class UnsupportedDeviceError(FreshIntelliventError):
-    """Device is not supported."""
-
-
-class FreshIntelliventTimeoutError(FreshIntelliventError):
-    """Timeout exception for Fresh Intellivent errors."""
+__all__ = [
+    "AuthenticationError",
+    "ConnectionCleanupError",
+    "DisconnectedError",
+    "FreshIntelliventBluetoothDeviceData",
+    "FreshIntelliventDevice",
+    "FreshIntelliventError",
+    "FreshIntelliventTimeoutError",
+    "UnsupportedDeviceError",
+]
 
 
 # Device data parser
@@ -82,6 +82,15 @@ class FreshIntelliventBluetoothDeviceData:
             max_attempts: Maximum number of connection retry attempts
             authentication_code: Optional authentication code for protected devices
         """
+        if (
+            isinstance(max_attempts, bool)
+            or not isinstance(max_attempts, int)
+            or max_attempts < 1
+        ):
+            raise ValueError("max_attempts must be a positive integer")
+        if authentication_code is not None:
+            h.validated_authentication_code(authentication_code)
+        self._update_lock = asyncio.Lock()
         self.logger = logger or logging.getLogger(__name__)
         self.max_attempts = max_attempts
         self.parser = SkyModeParser()
@@ -113,16 +122,20 @@ class FreshIntelliventBluetoothDeviceData:
             BleakError: If connection or communication fails after retries
             UnsupportedDeviceError: If device is not supported
         """
-        retryable = (DisconnectedError, FreshIntelliventTimeoutError, BleakError)
-        for attempt in range(self.max_attempts):
-            try:
-                return await self._update_device(ble_device)
-            except retryable as err:
-                is_final_attempt = attempt == self.max_attempts - 1
-                if is_final_attempt:
-                    raise
-                await self._sleep_before_retry(ble_device, attempt, err)
-        raise RuntimeError("Should not reach this point")
+        async with self._update_lock:
+            attempt = 0
+            while True:
+                try:
+                    return await self._update_device(ble_device)
+                except (
+                    DisconnectedError,
+                    FreshIntelliventTimeoutError,
+                    BleakError,
+                ) as err:
+                    if attempt + 1 == self.max_attempts:
+                        raise
+                    await self._sleep_before_retry(ble_device, attempt, err)
+                    attempt += 1
 
     async def _sleep_before_retry(
         self, ble_device: BLEDevice, attempt: int, err: Exception
@@ -148,7 +161,7 @@ class FreshIntelliventBluetoothDeviceData:
         try:
             async with asyncio.timeout(UPDATE_TIMEOUT):
                 client: BleakClientWithServiceCache = await establish_connection(
-                    BleakClientWithServiceCache,
+                    ClientWithCleanup,
                     ble_device,
                     ble_device.address,
                     disconnected_callback=partial(
@@ -159,44 +172,64 @@ class FreshIntelliventBluetoothDeviceData:
             raise FreshIntelliventTimeoutError(
                 f"Timed out connecting to {ble_device.address}"
             ) from err
-        else:
-            try:
-                async with (
-                    interrupt(
-                        disconnect_future,
-                        DisconnectedError,
-                        f"Disconnected from {client.address}",
-                    ),
-                    asyncio.timeout(UPDATE_TIMEOUT),
-                ):
-                    # Authenticate if code provided
-                    if self.authentication_code:
-                        await self.authenticate(client)
+        primary_error: BaseException | None = None
+        try:
+            async with (
+                interrupt(
+                    disconnect_future,
+                    DisconnectedError,
+                    f"Disconnected from {client.address}",
+                ),
+                asyncio.timeout(UPDATE_TIMEOUT),
+            ):
+                # Authenticate if code provided
+                if self.authentication_code:
+                    await self.authenticate(client)
 
-                    # Read device information
-                    await self.get_device_info(client, device, raise_on_not_found=True)
+                # Read device information
+                await self.get_device_info(client, device, raise_on_not_found=True)
 
-                    # Read sensor data
-                    await self.get_sensor_data(client, device, raise_on_not_found=True)
+                # Read sensor data
+                await self.get_sensor_data(client, device, raise_on_not_found=True)
 
-                    # Read mode settings
-                    await self.get_mode_settings(
-                        client, device, raise_on_not_found=True
-                    )
+                # Read mode settings
+                await self.get_mode_settings(client, device, raise_on_not_found=True)
 
-            except asyncio.TimeoutError as err:
+        except BaseException as err:
+            primary_error = err
+            if isinstance(err, TimeoutError):
                 raise FreshIntelliventTimeoutError(
                     f"Timed out updating device {ble_device.address}"
                 ) from err
-            except BleakError as err:
-                if "not found" in str(err):
-                    # Clear the char cache since a char is likely missing
-                    await client.clear_cache()
-                raise
-            except UnsupportedDeviceError:
-                raise
-            finally:
-                await client.disconnect()
+            if isinstance(err, BleakError) and "not found" in str(err):
+                try:
+                    async with asyncio.timeout(UPDATE_TIMEOUT):
+                        await client.clear_cache()
+                # Backend errors must not replace the original failed read.
+                # pylint: disable-next=broad-exception-caught
+                except Exception as cache_error:
+                    self.logger.debug(
+                        "Cache cleanup failed (%s)", type(cache_error).__name__
+                    )
+            raise
+        finally:
+            try:
+                await disconnect(client)
+            except Exception as cleanup_error:  # pylint: disable=broad-exception-caught
+                if primary_error is None:
+                    raise ConnectionCleanupError(
+                        "Failed to disconnect after update"
+                    ) from cleanup_error
+                if isinstance(
+                    primary_error, (BleakError, DisconnectedError, TimeoutError)
+                ):
+                    raise ConnectionCleanupError(
+                        "Failed to disconnect after failed read"
+                    ) from primary_error
+                self.logger.warning(
+                    "Disconnect after failed update failed (%s)",
+                    type(cleanup_error).__name__,
+                )
 
         return device
 
@@ -207,7 +240,7 @@ class FreshIntelliventBluetoothDeviceData:
 
         try:
             # Convert authentication code to bytearray
-            auth_data = h.to_bytearray(self.authentication_code)
+            auth_data = h.validated_authentication_code(self.authentication_code)
 
             # Write authentication code
             await client.write_gatt_char(characteristics.AUTH, auth_data, response=True)
@@ -215,10 +248,23 @@ class FreshIntelliventBluetoothDeviceData:
             # Wait for authentication to process
             await asyncio.sleep(1)
 
-            self.logger.debug("Authentication successful")
+            self.logger.debug("Authentication write completed")
         except BleakError as err:
-            self.logger.error("Authentication failed: %s", err)
-            raise AuthenticationError(f"Failed to authenticate: {err}") from err
+            raise AuthenticationError("Authentication write failed") from err
+
+    async def _read_characteristic(
+        self, client: BleakClient, characteristic: UUID, strict: bool
+    ) -> bytearray | None:
+        """Read a characteristic, optionally allowing incomplete diagnostic reads."""
+        try:
+            return await client.read_gatt_char(characteristic)
+        except BleakError as err:
+            if strict:
+                raise
+            self.logger.debug(
+                "Could not read %s (%s)", characteristic, type(err).__name__
+            )
+            return None
 
     async def get_device_info(
         self,
@@ -226,53 +272,23 @@ class FreshIntelliventBluetoothDeviceData:
         device: FreshIntelliventDevice,
         raise_on_not_found: bool = False,
     ) -> None:
-        """Read device information characteristics."""
-        try:
-            name_bytes = await client.read_gatt_char(characteristics.DEVICE_NAME)
-            self.logger.debug("RAW DATA - DEVICE_NAME: %s", name_bytes.hex())
-            device.name = (
-                name_bytes.decode("utf-8").replace("\00", "").replace("\0", "")
+        """Read device metadata; strict snapshots propagate every transport error."""
+        data = await self._read_characteristic(
+            client, characteristics.DEVICE_NAME, raise_on_not_found
+        )
+        if data is not None:
+            device.name = data.decode("utf-8").rstrip("\0")
+        for field, characteristic in (
+            ("fw_version", characteristics.FIRMWARE_VERSION),
+            ("hw_version", characteristics.HARDWARE_VERSION),
+            ("sw_version", characteristics.SOFTWARE_VERSION),
+            ("manufacturer", characteristics.MANUFACTURER_NAME),
+        ):
+            data = await self._read_characteristic(
+                client, characteristic, raise_on_not_found
             )
-        except BleakError as err:
-            if raise_on_not_found and "not found" in str(err):
-                raise
-            self.logger.debug("Could not read device name")
-
-        try:
-            fw_bytes = await client.read_gatt_char(characteristics.FIRMWARE_VERSION)
-            self.logger.debug("RAW DATA - FIRMWARE_VERSION: %s", fw_bytes.hex())
-            device.info.fw_version = fw_bytes.decode("utf-8")
-        except BleakError as err:
-            if raise_on_not_found and "not found" in str(err):
-                raise
-            self.logger.debug("Could not read firmware version")
-
-        try:
-            hw_bytes = await client.read_gatt_char(characteristics.HARDWARE_VERSION)
-            self.logger.debug("RAW DATA - HARDWARE_VERSION: %s", hw_bytes.hex())
-            device.info.hw_version = hw_bytes.decode("utf-8")
-        except BleakError as err:
-            if raise_on_not_found and "not found" in str(err):
-                raise
-            self.logger.debug("Could not read hardware version")
-
-        try:
-            sw_bytes = await client.read_gatt_char(characteristics.SOFTWARE_VERSION)
-            self.logger.debug("RAW DATA - SOFTWARE_VERSION: %s", sw_bytes.hex())
-            device.info.sw_version = sw_bytes.decode("utf-8")
-        except BleakError as err:
-            if raise_on_not_found and "not found" in str(err):
-                raise
-            self.logger.debug("Could not read software version")
-
-        try:
-            mfr_bytes = await client.read_gatt_char(characteristics.MANUFACTURER_NAME)
-            self.logger.debug("RAW DATA - MANUFACTURER_NAME: %s", mfr_bytes.hex())
-            device.info.manufacturer = mfr_bytes.decode("utf-8")
-        except BleakError as err:
-            if raise_on_not_found and "not found" in str(err):
-                raise
-            self.logger.debug("Could not read manufacturer name")
+            if data is not None:
+                setattr(device.info, field, data.decode("utf-8").rstrip("\0"))
 
     async def get_sensor_data(
         self,
@@ -280,15 +296,12 @@ class FreshIntelliventBluetoothDeviceData:
         device: FreshIntelliventDevice,
         raise_on_not_found: bool = False,
     ) -> None:
-        """Read sensor data from the device."""
-        try:
-            data = await client.read_gatt_char(characteristics.DEVICE_STATUS)
-            self.logger.debug("RAW DATA - DEVICE_STATUS: %s", data.hex())
+        """Read status, propagating all transport errors for strict snapshots."""
+        data = await self._read_characteristic(
+            client, characteristics.DEVICE_STATUS, raise_on_not_found
+        )
+        if data is not None:
             device.sensors = SensorData.from_bytes(data)
-        except BleakError as err:
-            if raise_on_not_found and "not found" in str(err):
-                raise
-            self.logger.debug("Could not read sensor data: %s", err)
 
     async def get_mode_settings(
         self,
@@ -297,10 +310,10 @@ class FreshIntelliventBluetoothDeviceData:
         raise_on_not_found: bool = False,
     ) -> None:
         """Read all mode settings from the device."""
-        # Read humidity mode
-        try:
-            data = await client.read_gatt_char(characteristics.HUMIDITY)
-            self.logger.debug("RAW DATA - HUMIDITY: %s", data.hex())
+        data = await self._read_characteristic(
+            client, characteristics.HUMIDITY, raise_on_not_found
+        )
+        if data is not None:
             parsed = self.parser.humidity_read(data)
             device.modes.humidity = HumidityMode(
                 enabled=bool(parsed[KEY_ENABLED]),
@@ -308,15 +321,11 @@ class FreshIntelliventBluetoothDeviceData:
                 detection_raw=int(parsed[KEY_DETECTION_RAW]),
                 rpm=int(parsed[KEY_RPM]),
             )
-        except BleakError as err:
-            if raise_on_not_found and "not found" in str(err):
-                raise
-            self.logger.debug("Could not read humidity mode: %s", err)
 
-        # Read light and VOC mode
-        try:
-            data = await client.read_gatt_char(characteristics.LIGHT_VOC)
-            self.logger.debug("RAW DATA - LIGHT_VOC: %s", data.hex())
+        data = await self._read_characteristic(
+            client, characteristics.LIGHT_VOC, raise_on_not_found
+        )
+        if data is not None:
             parsed = self.parser.light_and_voc_read(data)
             light_data = parsed[KEY_LIGHT]
             voc_data = parsed[KEY_VOC]
@@ -332,29 +341,21 @@ class FreshIntelliventBluetoothDeviceData:
                     detection_raw=int(voc_data[KEY_DETECTION_RAW]),  # type: ignore
                 ),
             )
-        except BleakError as err:
-            if raise_on_not_found and "not found" in str(err):
-                raise
-            self.logger.debug("Could not read light and VOC mode: %s", err)
 
-        # Read constant speed mode
-        try:
-            data = await client.read_gatt_char(characteristics.CONSTANT_SPEED)
-            self.logger.debug("RAW DATA - CONSTANT_SPEED: %s", data.hex())
+        data = await self._read_characteristic(
+            client, characteristics.CONSTANT_SPEED, raise_on_not_found
+        )
+        if data is not None:
             parsed = self.parser.constant_speed_read(data)  # type: ignore[assignment]
             device.modes.constant_speed = ConstantSpeedMode(
                 enabled=bool(parsed[KEY_ENABLED]),
                 rpm=int(parsed[KEY_RPM]),
             )
-        except BleakError as err:
-            if raise_on_not_found and "not found" in str(err):
-                raise
-            self.logger.debug("Could not read constant speed mode: %s", err)
 
-        # Read timer mode
-        try:
-            data = await client.read_gatt_char(characteristics.TIMER)
-            self.logger.debug("RAW DATA - TIMER: %s", data.hex())
+        data = await self._read_characteristic(
+            client, characteristics.TIMER, raise_on_not_found
+        )
+        if data is not None:
             parsed = self.parser.timer_read(data)
             delay_data = parsed[KEY_DELAY]
             device.modes.timer = TimerMode(
@@ -365,51 +366,35 @@ class FreshIntelliventBluetoothDeviceData:
                 minutes=int(parsed[KEY_MINUTES]),
                 rpm=int(parsed[KEY_RPM]),
             )
-        except BleakError as err:
-            if raise_on_not_found and "not found" in str(err):
-                raise
-            self.logger.debug("Could not read timer mode: %s", err)
 
-        # Read airing mode
-        try:
-            data = await client.read_gatt_char(characteristics.AIRING)
-            self.logger.debug("RAW DATA - AIRING: %s", data.hex())
+        data = await self._read_characteristic(
+            client, characteristics.AIRING, raise_on_not_found
+        )
+        if data is not None:
             parsed = self.parser.airing_read(data)  # type: ignore[assignment]
             device.modes.airing = AiringMode(
                 enabled=bool(parsed[KEY_ENABLED]),
                 minutes=int(parsed[KEY_MINUTES]),
                 rpm=int(parsed[KEY_RPM]),
             )
-        except BleakError as err:
-            if raise_on_not_found and "not found" in str(err):
-                raise
-            self.logger.debug("Could not read airing mode: %s", err)
 
-        # Read pause mode
-        try:
-            data = await client.read_gatt_char(characteristics.PAUSE)
-            self.logger.debug("RAW DATA - PAUSE: %s", data.hex())
+        data = await self._read_characteristic(
+            client, characteristics.PAUSE, raise_on_not_found
+        )
+        if data is not None:
             parsed = self.parser.pause_read(data)  # type: ignore[assignment]
             device.modes.pause = PauseMode(
                 enabled=bool(parsed[KEY_ENABLED]),
                 minutes=int(parsed[KEY_MINUTES]),
             )
-        except BleakError as err:
-            if raise_on_not_found and "not found" in str(err):
-                raise
-            self.logger.debug("Could not read pause mode: %s", err)
 
-        # Read boost mode
-        try:
-            data = await client.read_gatt_char(characteristics.BOOST)
-            self.logger.debug("RAW DATA - BOOST: %s", data.hex())
+        data = await self._read_characteristic(
+            client, characteristics.BOOST, raise_on_not_found
+        )
+        if data is not None:
             parsed = self.parser.boost_read(data)  # type: ignore[assignment]
             device.modes.boost = BoostMode(
                 enabled=bool(parsed[KEY_ENABLED]),
                 seconds=int(parsed[KEY_SECONDS]),
                 rpm=int(parsed[KEY_RPM]),
             )
-        except BleakError as err:
-            if raise_on_not_found and "not found" in str(err):
-                raise
-            self.logger.debug("Could not read boost mode: %s", err)

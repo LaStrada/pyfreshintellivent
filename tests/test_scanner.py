@@ -11,9 +11,7 @@ def test_device_filter_matches_service_uuid():
     """Returns True when advertised UUID matches Fresh Intellivent service."""
     device = Mock(spec=BLEDevice)
     device.name = "Other"
-    advertisement = SimpleNamespace(
-        service_uuids=[str(characteristics.UUID_SERVICE)]
-    )
+    advertisement = SimpleNamespace(service_uuids=[str(characteristics.UUID_SERVICE)])
 
     assert scanner.device_filter(device, advertisement) is True
 

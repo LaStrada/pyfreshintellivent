@@ -136,7 +136,9 @@ class TestTimer:
             parser.timer_read(bytearray.fromhex("000000000000"))
 
     def test_write_valid(self):
-        val = parser.timer_write(minutes=5, delay_enabled=True, delay_minutes=2, rpm=1000)
+        val = parser.timer_write(
+            minutes=5, delay_enabled=True, delay_minutes=2, rpm=1000
+        )
         assert val == bytearray.fromhex("050102E803")
 
 

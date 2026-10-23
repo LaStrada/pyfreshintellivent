@@ -1,7 +1,7 @@
 """Tests for device module."""
 
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from bleak.backends.device import BLEDevice
@@ -86,10 +86,10 @@ class TestFreshIntelliventBluetoothDeviceData:
 
         logger = logging.getLogger("test")
         parser = FreshIntelliventBluetoothDeviceData(
-            logger=logger, max_attempts=5, authentication_code="1234"
+            logger=logger, max_attempts=5, authentication_code="12345678"
         )
         assert parser.max_attempts == 5
-        assert parser.authentication_code == "1234"
+        assert parser.authentication_code == "12345678"
         assert parser.logger == logger
 
     def test_handle_disconnect(self):
@@ -150,10 +150,8 @@ class TestFreshIntelliventBluetoothDeviceData:
     @pytest.mark.asyncio
     async def test_update_device_with_zero_attempts_raises(self, ble_device):
         """Guard against misconfiguration of max_attempts."""
-        parser = FreshIntelliventBluetoothDeviceData(max_attempts=0)
-
-        with pytest.raises(RuntimeError):
-            await parser.update_device(ble_device)
+        with pytest.raises(ValueError):
+            FreshIntelliventBluetoothDeviceData(max_attempts=0)
 
     @pytest.mark.asyncio
     async def test_update_device_retry_on_bleak_error(self, ble_device):
@@ -250,7 +248,7 @@ class TestFreshIntelliventBluetoothDeviceData:
     @pytest.mark.asyncio
     async def test_authenticate_with_code(self, mock_client):
         """Test authenticate with authentication code."""
-        parser = FreshIntelliventBluetoothDeviceData(authentication_code="1234")
+        parser = FreshIntelliventBluetoothDeviceData(authentication_code="12345678")
 
         await parser.authenticate(mock_client)
 
@@ -260,7 +258,7 @@ class TestFreshIntelliventBluetoothDeviceData:
     @pytest.mark.asyncio
     async def test_authenticate_failure(self, mock_client):
         """Test authenticate failure."""
-        parser = FreshIntelliventBluetoothDeviceData(authentication_code="1234")
+        parser = FreshIntelliventBluetoothDeviceData(authentication_code="12345678")
 
         # Mock write to raise error
         mock_client.write_gatt_char.side_effect = BleakError("auth failed")
@@ -413,7 +411,7 @@ class TestUpdateDeviceInternal:
     @pytest.mark.asyncio
     async def test_update_device_with_authentication(self, ble_device):
         """Test device update with authentication."""
-        parser = FreshIntelliventBluetoothDeviceData(authentication_code="1234")
+        parser = FreshIntelliventBluetoothDeviceData(authentication_code="12345678")
 
         with (
             patch("pyfreshintellivent.device.establish_connection") as mock_establish,
