@@ -248,9 +248,15 @@ class FreshIntelliventBluetoothDeviceData:
             # Wait for authentication to process
             await asyncio.sleep(1)
 
-            self.logger.debug("Authentication write completed")
+            confirmation = await client.read_gatt_char(
+                characteristics.AUTH_CONFIRMATION
+            )
+            if not confirmation or confirmation[0] != 1:
+                raise AuthenticationError("Device rejected authentication")
+
+            self.logger.debug("Authentication confirmed")
         except BleakError as err:
-            raise AuthenticationError("Authentication write failed") from err
+            raise AuthenticationError("Authentication exchange failed") from err
 
     async def _read_characteristic(
         self, client: BleakClient, characteristic: UUID, strict: bool

@@ -116,9 +116,7 @@ class SkyModeParser:
             },
             "voc": {
                 "enabled": voc_enabled,
-                "detection": h.detection_int_as_string(
-                    value=voc_detection, regular_order=False
-                ),
+                "detection": h.detection_int_as_string(value=voc_detection),
                 "detection_raw": voc_detection,
             },
         }

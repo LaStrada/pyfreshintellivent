@@ -33,6 +33,7 @@ def mock_client():
     client = AsyncMock()
     client.address = "AA:BB:CC:DD:EE:FF"
     client.is_connected = True
+    client.read_gatt_char.return_value = bytearray([1])
     return client
 
 
@@ -346,8 +347,8 @@ class TestDeviceDataReading:
 
         await parser.get_sensor_data(mock_client, device)
 
-        assert device.sensors.status is True
-        assert device.sensors.temperature == 27.9
+        assert device.sensors.flags_raw == 1
+        assert device.sensors.temperature == 28
         assert device.sensors.rpm == 1234
 
     @pytest.mark.asyncio

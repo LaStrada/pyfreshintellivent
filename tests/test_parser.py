@@ -50,7 +50,7 @@ class TestLightAndVoc:
         assert val["light"]["detection"] == "Medium"
         assert val["light"]["detection_raw"] == 1
         assert val["voc"]["enabled"] is True
-        assert val["voc"]["detection"] == "High"
+        assert val["voc"]["detection"] == "Low"
         assert val["voc"]["detection_raw"] == 1
 
         valid = bytearray.fromhex("00020002")
