@@ -56,7 +56,9 @@ with an existing-key field for migration and recovery.
 - `FreshIntelliventTimeoutError`: connection/read deadline expired.
 - `ConnectionCleanupError`: disconnect could not be confirmed; caller should
   back off and investigate instead of immediately opening another connection.
-- `BleakError`: transport failure after attempts are exhausted.
+- `BleakError`: transport failure after attempts are exhausted, including failures
+  writing the key or reading confirmation. A lost BLE packet does not prove the
+  key is wrong and must not trigger reauthentication.
 - `ValueError`: invalid input or malformed response; firmware/protocol evidence
   is needed before widening packet acceptance.
 

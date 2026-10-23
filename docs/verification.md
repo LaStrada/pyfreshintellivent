@@ -9,10 +9,11 @@
 
 ## Automated verification
 
-As of the initial protocol follow-up: 414 tests and 100% runtime statement/branch
+After the authentication recovery review: 417 tests and 100% runtime statement/branch
 coverage. Tests include cancellation during connect/read/disconnect, repeated
 cancellation, bounded cleanup, serialized reads, cancelled lock waiters, retry
-exhaustion, transport failures, negative PIN confirmation, failed pairing without retaining a key, malformed packets,
+exhaustion, transport failures during authentication, negative PIN confirmation,
+failed pairing without retaining a key, malformed packets,
 all nonzero trigger/motor combinations, VOC round trips and discovery false
 positives. CI adds Python 3.12–3.14 and simulated transport behavior on three OSes.
 No simulated test proves physical Bluetooth interoperability.
