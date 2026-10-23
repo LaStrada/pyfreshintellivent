@@ -45,8 +45,8 @@ async def read_fan():
 
 ## What is supported
 
-- SKY sensor and configuration reads, with optional four-byte authentication and
-  explicit PIN confirmation.
+- SKY sensor and configuration reads, physical pairing key acquisition and
+  four-byte authentication with explicit PIN confirmation.
 - RPM, operating mode, temperature byte, raw sensor values and configuration models.
 - Name-based discovery for SKY and ICE. ICE is a protocol candidate supported by
   community reports, **not hardware-validated by this rewrite**.

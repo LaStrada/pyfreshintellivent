@@ -34,6 +34,20 @@ radio recovery. If cleanup fails after a retryable read failure, a
 `ConnectionCleanupError` stops reconnect attempts. It is available from
 `pyfreshintellivent.exceptions` and is a `FreshIntelliventError`.
 
+## Physical pairing
+
+`await reader.pair_device(ble_device)` reads the four-byte key while the user has
+enabled pairing on the fan, authenticates with its confirmation characteristic,
+validates a complete snapshot, and disconnects. Only then does it return immutable
+key bytes and retain the key for subsequent reads. A zero key, negative
+confirmation, bad packet, transport error, cancellation or failed cleanup leaves
+the reader's previous key unchanged. Pairing uses the same lock as polling and
+makes one attempt; it does not trigger physical pairing or reset the fan.
+
+Store the returned key in the caller's private credential/config-entry storage;
+do not log it. A HA flow can offer this as its normal authenticated setup path,
+with an existing-key field for migration and recovery.
+
 ## Errors
 
 - `AuthenticationError`: invalid/rejected authentication exchange; prompt to

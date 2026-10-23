@@ -33,8 +33,9 @@ reads its first byte as a boolean. Requiring 1 avoids accepting unknown replies.
 In the documented SKY pairing procedure, reveal the touch controls and hold the
 wireless button for roughly eight seconds, then read the key characteristic.
 The key is not available as a nonzero value outside pairing mode. Follow the
-manual for the actual model. Automated key acquisition is not yet a public
-library operation. Never print key bytes in diagnostics or examples.
+manual for the actual model. Use `await reader.pair_device(ble_device)` while pairing is enabled. It verifies
+the key, reads a complete snapshot and finishes disconnect cleanup before returning
+the key bytes and retaining them on the reader. Failure preserves any previous key. Never print key bytes in diagnostics or examples.
 
 ## Sensor packet
 
@@ -97,8 +98,8 @@ comparison remains necessary before declaring every firmware verified. Light's
 legacy low-to-medium UI normalization remains in the parser.
 
 Known encoder limitations retained for compatibility: RPM clamps to 800–2400,
-negative durations clamp to zero, and the airing encoder hardcodes cycle period
-26. The read model currently omits that period. These encoders must not serve as
+negative durations clamp to zero. The airing encoder defaults to cycle period
+26 for old callers; pass the freshly read `cycle_period` explicitly to preserve it. These encoders must not serve as
 an unchecked read-modify-write transaction layer. ICE's reported minimum 700 RPM
 requires model-specific validation before ICE writes can be supported.
 
