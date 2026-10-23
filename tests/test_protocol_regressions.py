@@ -32,7 +32,7 @@ async def test_pin_confirmation_transport_failure():
     client = AsyncMock()
     client.read_gatt_char.side_effect = BleakError("failed")
     with patch("pyfreshintellivent.device.asyncio.sleep", new_callable=AsyncMock):
-        with pytest.raises(AuthenticationError, match="exchange"):
+        with pytest.raises(BleakError, match="failed"):
             await reader.authenticate(client)
 
 
@@ -158,3 +158,57 @@ async def test_pairing_cleanup_failure_does_not_retain_key():
             await reader.pair_device(Mock(address=client.address))
     assert reader.authentication_code is None
     connect.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("operation", ["write_gatt_char", "read_gatt_char"])
+async def test_auth_transport_failure_retries_after_cleanup(operation, caplog):
+    """A lost auth packet must not tell HA to discard a valid key."""
+    reader = FreshIntelliventBluetoothDeviceData(
+        authentication_code="12345678", max_attempts=2
+    )
+    first = AsyncMock(address="AA:BB:CC:DD:EE:FF")
+    second = AsyncMock(address=first.address)
+    second.read_gatt_char.return_value = b"\x01"
+    getattr(first, operation).side_effect = BleakError("backend-sensitive-payload")
+    clients = iter([first, second])
+
+    async def connect(*args, **kwargs):
+        client = next(clients)
+        if client is second:
+            first.disconnect.assert_awaited_once()
+        return client
+
+    with (
+        caplog.at_level("DEBUG", logger="pyfreshintellivent.device"),
+        patch("pyfreshintellivent.device.establish_connection", side_effect=connect),
+        patch("pyfreshintellivent.device.asyncio.sleep", new_callable=AsyncMock),
+        patch.object(reader, "get_device_info"),
+        patch.object(reader, "get_sensor_data"),
+        patch.object(reader, "get_mode_settings"),
+    ):
+        result = await reader.update_device(Mock(address=first.address))
+    assert result.address == first.address
+    first.disconnect.assert_awaited_once()
+    second.disconnect.assert_awaited_once()
+    assert reader.authentication_code == "12345678"
+    assert "backend-sensitive-payload" not in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_rejected_authentication_is_not_retried():
+    reader = FreshIntelliventBluetoothDeviceData(
+        authentication_code="12345678", max_attempts=3
+    )
+    client = AsyncMock(address="AA:BB:CC:DD:EE:FF")
+    client.read_gatt_char.return_value = b"\x00"
+    with (
+        patch(
+            "pyfreshintellivent.device.establish_connection", return_value=client
+        ) as connect,
+        patch("pyfreshintellivent.device.asyncio.sleep", new_callable=AsyncMock),
+    ):
+        with pytest.raises(AuthenticationError):
+            await reader.update_device(Mock(address=client.address))
+    connect.assert_awaited_once()
+    client.disconnect.assert_awaited_once()
