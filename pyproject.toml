@@ -33,14 +33,14 @@ repository = "https://github.com/LaStrada/pyfreshintellivent"
 include = ["characteristics.md"]
 
 [tool.poetry.group.dev.dependencies]
-black = ">=25.9.0"
+black = ">=26.10.1"
 isort = "^7.0.0"
 ruff = ">=0.14.3"
 mypy = "^1.18.2"
 pylint = "^4.0.2"
 
 [tool.poetry.group.test.dependencies]
-pytest = "^8.4.2"
+pytest = "^9.0.3"
 pytest-asyncio = "^1.2.0"
 pytest-cov = "^7.0.0"
 pytest-rerunfailures = "^16.1.0"
