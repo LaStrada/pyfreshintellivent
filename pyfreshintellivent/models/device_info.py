@@ -17,6 +17,7 @@ class DeviceInfo:
 
     manufacturer: str = MANUFACTURER
     model: str = DEVICE_MODEL
+    model_number: str | None = None
     hw_version: str | None = None
     sw_version: str | None = None
     fw_version: str | None = None

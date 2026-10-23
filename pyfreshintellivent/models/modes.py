@@ -73,6 +73,7 @@ class AiringMode:
     enabled: bool
     minutes: int
     rpm: int
+    cycle_period: int | None = None
 
 
 @dataclasses.dataclass

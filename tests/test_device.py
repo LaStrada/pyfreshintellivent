@@ -277,9 +277,10 @@ class TestDeviceDataReading:
         parser = FreshIntelliventBluetoothDeviceData()
         device = FreshIntelliventDevice(address="AA:BB:CC:DD:EE:FF")
 
-        # Mock characteristic reads - order: name, fw, hw, sw, mfr
+        # Mock characteristic reads - order: name, model, fw, hw, sw, mfr
         mock_client.read_gatt_char.side_effect = [
             b"FreshSky",  # Device name
+            b"40",  # SKY protocol model number
             b"3.0",  # FW version
             b"1.0",  # HW version
             b"2.0",  # SW version
@@ -289,6 +290,7 @@ class TestDeviceDataReading:
         await parser.get_device_info(mock_client, device)
 
         assert device.name == "FreshSky"
+        assert device.info.model_number == "40"
         assert device.info.hw_version == "1.0"
         assert device.info.sw_version == "2.0"
         assert device.info.fw_version == "3.0"
@@ -320,6 +322,7 @@ class TestDeviceDataReading:
 
         values = [
             b"FreshSky",  # Device name
+            b"40",  # SKY protocol model number
             b"3.0",  # FW version
             b"1.0",  # HW version
             b"2.0",  # SW version
@@ -605,14 +608,16 @@ class TestUpdateDeviceInternal:
             if idx == 0:
                 return b"FreshSky"
             if idx == 1:
-                return b"3.0"
+                return b"40"
             if idx == 2:
-                return b"1.0"
+                return b"3.0"
             if idx == 3:
-                return b"2.0"
+                return b"1.0"
             if idx == 4:
-                return b"Manufacturer"
+                return b"2.0"
             if idx == 5:
+                return b"Manufacturer"
+            if idx == 6:
                 raise DisconnectedError("sensor read dropped")
             return b""
 
@@ -624,6 +629,7 @@ class TestUpdateDeviceInternal:
         second_client.disconnect = AsyncMock()
         read_sequence = [
             b"FreshSky",
+            b"40",
             b"3.0",
             b"1.0",
             b"2.0",

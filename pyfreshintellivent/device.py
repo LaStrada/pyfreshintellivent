@@ -137,6 +137,17 @@ class FreshIntelliventBluetoothDeviceData:
                     await self._sleep_before_retry(ble_device, attempt, err)
                     attempt += 1
 
+    async def pair_device(self, ble_device: BLEDevice) -> bytes:
+        """Read a key during physical pairing and verify it before retaining it.
+
+        A single attempt shares the polling lock and full cleanup lifecycle.
+        No key is retained if authentication, snapshot validation or cleanup fails.
+        """
+        async with self._update_lock:
+            await self._update_device(ble_device, pairing=True)
+            assert self.authentication_code is not None
+            return bytes(h.validated_authentication_code(self.authentication_code))
+
     async def _sleep_before_retry(
         self, ble_device: BLEDevice, attempt: int, err: Exception
     ) -> None:
@@ -152,7 +163,9 @@ class FreshIntelliventBluetoothDeviceData:
         )
         await asyncio.sleep(delay)
 
-    async def _update_device(self, ble_device: BLEDevice) -> FreshIntelliventDevice:
+    async def _update_device(
+        self, ble_device: BLEDevice, *, pairing: bool = False
+    ) -> FreshIntelliventDevice:
         """Internal method to connect and read device data."""
         device = FreshIntelliventDevice(address=ble_device.address)
         loop = asyncio.get_running_loop()
@@ -172,6 +185,7 @@ class FreshIntelliventBluetoothDeviceData:
             raise FreshIntelliventTimeoutError(
                 f"Timed out connecting to {ble_device.address}"
             ) from err
+        pairing_key: bytearray | None = None
         primary_error: BaseException | None = None
         try:
             async with (
@@ -182,8 +196,12 @@ class FreshIntelliventBluetoothDeviceData:
                 ),
                 asyncio.timeout(UPDATE_TIMEOUT),
             ):
-                # Authenticate if code provided
-                if self.authentication_code:
+                if pairing:
+                    pairing_key = h.validated_authentication_code(
+                        await client.read_gatt_char(characteristics.AUTH)
+                    )
+                    await self.authenticate(client, authentication_code=pairing_key)
+                elif self.authentication_code:
                     await self.authenticate(client)
 
                 # Read device information
@@ -231,16 +249,28 @@ class FreshIntelliventBluetoothDeviceData:
                     type(cleanup_error).__name__,
                 )
 
+        if pairing_key is not None:
+            self.authentication_code = bytes(pairing_key)
         return device
 
-    async def authenticate(self, client: BleakClient) -> None:
+    async def authenticate(
+        self,
+        client: BleakClient,
+        *,
+        authentication_code: bytes | bytearray | str | None = None,
+    ) -> None:
         """Authenticate with the device using the provided authentication code."""
-        if not self.authentication_code:
+        code = (
+            self.authentication_code
+            if authentication_code is None
+            else authentication_code
+        )
+        if code is None:
             return
 
         try:
             # Convert authentication code to bytearray
-            auth_data = h.validated_authentication_code(self.authentication_code)
+            auth_data = h.validated_authentication_code(code)
 
             # Write authentication code
             await client.write_gatt_char(characteristics.AUTH, auth_data, response=True)
@@ -285,6 +315,7 @@ class FreshIntelliventBluetoothDeviceData:
         if data is not None:
             device.name = data.decode("utf-8").rstrip("\0")
         for field, characteristic in (
+            ("model_number", characteristics.MODEL_NUMBER),
             ("fw_version", characteristics.FIRMWARE_VERSION),
             ("hw_version", characteristics.HARDWARE_VERSION),
             ("sw_version", characteristics.SOFTWARE_VERSION),
@@ -379,6 +410,7 @@ class FreshIntelliventBluetoothDeviceData:
         if data is not None:
             parsed = self.parser.airing_read(data)  # type: ignore[assignment]
             device.modes.airing = AiringMode(
+                cycle_period=int(parsed["cycle_period"]),
                 enabled=bool(parsed[KEY_ENABLED]),
                 minutes=int(parsed[KEY_MINUTES]),
                 rpm=int(parsed[KEY_RPM]),
