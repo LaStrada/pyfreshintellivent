@@ -257,14 +257,14 @@ class TestFreshIntelliventBluetoothDeviceData:
         mock_client.write_gatt_char.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_authenticate_failure(self, mock_client):
+    async def test_authenticate_transport_failure(self, mock_client):
         """Test authenticate failure."""
         parser = FreshIntelliventBluetoothDeviceData(authentication_code="12345678")
 
         # Mock write to raise error
         mock_client.write_gatt_char.side_effect = BleakError("auth failed")
 
-        with pytest.raises(AuthenticationError):
+        with pytest.raises(BleakError):
             await parser.authenticate(mock_client)
 
 

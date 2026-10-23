@@ -108,8 +108,9 @@ class FreshIntelliventBluetoothDeviceData:
         """Connect to device, read all data, and disconnect.
 
         This method handles the complete lifecycle: connect, authenticate (if needed),
-        read all device information and sensor data, then disconnect. The connection
-        is guaranteed to be closed even if errors occur.
+        read all device information and sensor data, then attempt bounded disconnect,
+        including after errors and cancellation.
+        A failed disconnect is reported; physical radio cleanup is not guaranteed.
 
         Args:
             ble_device: The BLE device to connect to
@@ -158,7 +159,7 @@ class FreshIntelliventBluetoothDeviceData:
             attempt + 1,
             self.max_attempts,
             ble_device.address,
-            err,
+            type(err).__name__,
             delay,
         )
         await asyncio.sleep(delay)
@@ -268,25 +269,13 @@ class FreshIntelliventBluetoothDeviceData:
         if code is None:
             return
 
-        try:
-            # Convert authentication code to bytearray
-            auth_data = h.validated_authentication_code(code)
-
-            # Write authentication code
-            await client.write_gatt_char(characteristics.AUTH, auth_data, response=True)
-
-            # Wait for authentication to process
-            await asyncio.sleep(1)
-
-            confirmation = await client.read_gatt_char(
-                characteristics.AUTH_CONFIRMATION
-            )
-            if not confirmation or confirmation[0] != 1:
-                raise AuthenticationError("Device rejected authentication")
-
-            self.logger.debug("Authentication confirmed")
-        except BleakError as err:
-            raise AuthenticationError("Authentication exchange failed") from err
+        auth_data = h.validated_authentication_code(code)
+        await client.write_gatt_char(characteristics.AUTH, auth_data, response=True)
+        await asyncio.sleep(1)
+        confirmation = await client.read_gatt_char(characteristics.AUTH_CONFIRMATION)
+        if not confirmation or confirmation[0] != 1:
+            raise AuthenticationError("Device rejected authentication")
+        self.logger.debug("Authentication confirmed")
 
     async def _read_characteristic(
         self, client: BleakClient, characteristic: UUID, strict: bool
