@@ -8,6 +8,19 @@ keys fail before connecting. One reader should be reused per physical device;
 its lock does not coordinate independent readers, processes, HA instances or a
 phone app.
 
+Only `authentication_code=None` selects reads without authentication. Empty
+strings/bytes, malformed hex, wrong types and zero keys are errors, including
+when replacing `reader.authentication_code`. Failed assignments preserve the
+previous key. Caller-owned bytearrays are copied to immutable bytes; validated
+hex strings retain their string representation for compatibility.
+
+Each connection attempt captures its key before connecting. Replacing the key
+while an attempt is in flight affects the next attempt, including a later retry,
+without changing the current exchange. Anonymous reads never acquire a key or
+write the authentication characteristic. Availability of unauthenticated reads
+is firmware-dependent; see the [recorded auth checks](verification.md#authentication-and-anonymous-reads).
+Do not silently fall back to anonymous reads after a rejected configured key.
+
 `await reader.update_device(ble_device)` returns `FreshIntelliventDevice` with
 `info`, `sensors` and `modes` dataclasses. Obtain `ble_device` from the caller's
 Bluetooth transport. Home Assistant integrations must use HA Bluetooth APIs,
@@ -59,6 +72,8 @@ with an existing-key field for migration and recovery.
 - `BleakError`: transport failure after attempts are exhausted, including failures
   writing the key or reading confirmation. A lost BLE packet does not prove the
   key is wrong and must not trigger reauthentication.
+- `TypeError`: unsupported authentication input type; use bytes, bytearray, hex
+  text or `None`.
 - `ValueError`: invalid input or malformed response; firmware/protocol evidence
   is needed before widening packet acceptance.
 

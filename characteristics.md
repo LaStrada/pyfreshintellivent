@@ -7,9 +7,9 @@ Name matching is only a discovery hint; successful protocol reads still matter.
 ## Evidence and confidence
 
 This reference describes the packet contract implemented by the reader and its
-regression tests. A [limited live SKY check](docs/verification.md#recorded-sky-check)
-verified existing-key reads and HA entry reload/disable-enable; broader hardware
-acceptance remains pending. Do not assume that every firmware revision or
+regression tests. The [recorded live SKY checks](docs/verification.md) cover existing-key and
+anonymous reads, state retention and bounded modes; broader hardware acceptance
+remains pending. Do not assume that every firmware revision or
 related model behaves identically.
 
 Public cross-checks:
@@ -25,7 +25,13 @@ Write the four-byte key to `4cad343a-209a-40b7-b911-4d9b3df569b2` with a GATT
 response, then read `d1ae6b70-ee12-4f6d-b166-d2063dcaffe1`. The reader waits one
 second for processing and accepts first byte `01`; empty or negative replies
 raise `AuthenticationError`. A successful write alone is not authentication.
-Requiring 1 avoids accepting unknown replies.
+Requiring 1 avoids accepting unknown status values. Extended replies are decoded
+by their first byte; trailing bytes are not interpreted.
+
+With no configured key, the reader skips AUTH writes and confirmation reads.
+On the checked SKY, sensor and mode reads also worked on fresh anonymous sessions,
+including after a rejected key. This is read-access evidence only; it does not
+establish anonymous write access or support on other firmware.
 
 In the documented SKY pairing procedure, reveal the touch controls and hold the
 wireless button for roughly eight seconds, then read the key characteristic.

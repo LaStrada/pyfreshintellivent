@@ -2,7 +2,7 @@
 
 | Target | Evidence | Current claim |
 | --- | --- | --- |
-| Fresh Intellivent SKY | Packet contract, captured hardware regressions and attended SKY checks | Existing-key reads, dev-HA polling/reload, configuration retention and bounded transient modes verified on one fan; broader acceptance pending |
+| Fresh Intellivent SKY | Packet contract, captured hardware regressions and attended SKY checks | Existing-key/anonymous reads, rejection/recovery, dev-HA polling/reload, configuration retention and bounded transient modes verified on one fan; broader acceptance pending |
 | Fresh Intellivent ICE / ICE | HACS discovery and 700 RPM reports | Name discovery; reads provisional; no validated ICE write limits |
 | Other Fresh products | Same vendor or app alone | Unsupported until protocol and hardware evidence exists |
 
@@ -59,7 +59,7 @@ Verified on this fan:
 The initial run was interrupted by an unconfirmed dev HTTP configuration's
 restart deadline. The final run confirmed that configuration and completed
 cleanly. This is a limited hardware check, not completion of the release checklist.
-Physical pairing, wrong-key rejection, ten scheduled HA polls, overlapping
+Physical pairing, ten scheduled HA polls, overlapping
 library callers, cancellation during BLE operations, proxy loss/failover, phone contention and
 sensor comparison with the app remain unverified on hardware. App version was
 not recorded because no app comparison was performed. No control entity or
@@ -117,3 +117,36 @@ Intermittent read timeouts and slower reads during long sessions were observed;
 reads recovered with bounded retry. These tests do not prove fault-free radio
 behavior, concurrent control handling, ICE support or completion of the release
 checklist. No production integration code, firmware or pairing was changed.
+
+
+## Authentication and anonymous reads
+
+Further attended checks on SKY firmware `01.01` / hardware `01.00` used the real
+reader's authentication, parsing and cleanup through an ESPHome transport adapter.
+Each case used a fresh BLE connection. The adapter replaced connection setup,
+not authentication or snapshot methods; it did not exercise Bleak route selection.
+
+- Existing-key reads succeeded before and after rejected attempts.
+- Two deliberately incorrect-key attempts used a well-formed key in separate checks.
+  Each received confirmation `00`, raised `AuthenticationError`, disconnected,
+  and performed no metadata/sensor/mode reads or automatic retry.
+- Three fresh sessions made no authentication write: before a valid-key read,
+  after a valid-key read, and directly after a rejected attempt. All returned
+  complete snapshots. All seven mode packets and firmware/hardware/model metadata
+  matched adjacent authenticated reads; sensor RPM remained live and plausible.
+- Valid reads after rejection preserved the original mode packets. Production
+  HA regained ownership and reported fresh constant-speed readings around 1200 rpm.
+
+No AUTH key-characteristic read, physical pairing, key reset or setting write
+was performed. Key acquisition is still outside this live acceptance evidence.
+These observations establish readable data on this fan in the tested sessions,
+not unauthenticated write permission, cold-start behavior, all firmware support
+or a new anonymous Home Assistant setup flow.
+
+Automated regressions cover invalid key formats/types at construction,
+replacement and direct authentication; copying mutable inputs; connection-time
+replacement; rejection/recovery; cancellation and transport failure cleanup;
+retry ordering; no input echo in validation errors, and no backend payloads in library logs. Five
+mutation/in-flight replacement regressions failed against the preceding code
+and pass after the fix. Confirmation policy remains first byte `01`, including
+extended replies; empty, zero and unknown first-byte values fail.

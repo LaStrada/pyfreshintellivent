@@ -31,7 +31,11 @@ round trip no longer changes that setting to 2.
 
 Authentication keys must contain exactly four bytes or eight hex characters;
 an all-zero key is rejected. A write acknowledgement is insufficient; the PIN
-confirmation characteristic must return 1. Previously tolerated bad keys now fail explicitly.
+confirmation characteristic must start with byte 1. Previously tolerated bad keys
+now fail explicitly. Only `None` requests anonymous reads; empty/falsy values are
+not aliases. Replacing `authentication_code` validates immediately and preserves
+the previous key on failure. Mutable bytearray inputs are defensively copied,
+and each connection attempt keeps the key selected before connection begins.
 
 Scan results no longer include arbitrary devices with service 0x180A. Use the
 current advertisement name or a known address supplied by your platform.
