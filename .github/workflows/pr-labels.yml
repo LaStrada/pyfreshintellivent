@@ -1,0 +1,83 @@
+name: PR labels
+
+on:
+  pull_request_target:
+    types: [opened, edited, reopened]
+
+permissions: {}
+
+concurrency:
+  group: pr-labels-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      pull-requests: write
+    steps:
+      # Never check out or execute PR code in this privileged workflow.
+      - uses: actions/github-script@v9
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+            // Fetch the latest description, even if this event was queued.
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: issue_number });
+            const types = new Map([
+              ['Bugfix', 'bug'],
+              ['New feature or device support', 'enhancement'],
+              ['Breaking change', 'breaking'],
+              ['Dependency upgrade', 'dependencies'],
+              ['Maintenance, tests, CI or documentation', 'maintenance'],
+            ]);
+            // Treat the description strictly as data. Ignore comments and fenced examples.
+            const body = (pr.body ?? '').replace(/\r/g, '');
+            const checked = [];
+            let inSection = false;
+            let fence = null;
+            let inComment = false;
+            for (const rawLine of body.split('\n')) {
+              const delimiter = rawLine.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
+              if (fence !== null) {
+                if (delimiter && delimiter[1][0] === fence[0] && delimiter[1].length >= fence.length && delimiter[2].trim() === '') fence = null;
+                continue;
+              }
+              // Comment markers inside a fence (including its info string) are literal.
+              if (!inComment && delimiter) { fence = delimiter[1]; continue; }
+              // HTML comment blocks begin at column 0-3 and consume their closing line.
+              // Inline-code and indented-code examples must not open a comment block.
+              if (inComment || /^ {0,3}<!--/.test(rawLine)) {
+                inComment = !rawLine.includes('-->');
+                continue;
+              }
+              const line = rawLine.replace(/<!--.*?-->/g, '');
+              if (/^ {0,3}#{1,6}(?:\s|$)/.test(line)) {
+                inSection = /^ {0,3}## Type of change\s*#*\s*$/.test(line);
+                continue;
+              }
+              if (!inSection) continue;
+              const match = line.match(/^ {0,3}[-*] \[[xX]\] (.+?)\s*$/);
+              if (match) checked.push(types.get(match[1]));
+            }
+            // Preserve existing/manual labels for bots and older PRs without a selection.
+            if (checked.length === 0) { core.info('No type selected; labels unchanged.'); return; }
+            if (checked.length !== 1 || checked[0] === undefined) {
+              core.setFailed('Check exactly one recognized option under Type of change.');
+              return;
+            }
+            const wanted = checked[0];
+            const labels = await github.paginate(github.rest.issues.listLabelsOnIssue, { owner, repo, issue_number, per_page: 100 });
+            // Add first: a missing repository label/API error must not erase the old type.
+            if (!labels.some(label => label.name === wanted)) {
+              await github.rest.issues.addLabels({ owner, repo, issue_number, labels: [wanted] });
+            }
+            for (const label of labels) {
+              if (![...types.values()].includes(label.name) || label.name === wanted) continue;
+              try {
+                await github.rest.issues.removeLabel({ owner, repo, issue_number, name: label.name });
+              } catch (error) {
+                if (error.status !== 404) throw error;
+              }
+            }
