@@ -720,19 +720,19 @@ testing = ["process-tests", "pytest-xdist", "virtualenv"]
 
 [[package]]
 name = "pytest-rerunfailures"
-version = "16.1"
+version = "16.7"
 description = "pytest plugin to re-run tests to eliminate flaky failures"
 optional = false
 python-versions = ">=3.10"
 groups = ["test"]
 files = [
-    {file = "pytest_rerunfailures-16.1-py3-none-any.whl", hash = "sha256:5d11b12c0ca9a1665b5054052fcc1084f8deadd9328962745ef6b04e26382e86"},
-    {file = "pytest_rerunfailures-16.1.tar.gz", hash = "sha256:c38b266db8a808953ebd71ac25c381cb1981a78ff9340a14bcb9f1b9bff1899e"},
+    {file = "pytest_rerunfailures-16.7-py3-none-any.whl", hash = "sha256:edf1886209c2b7dafe35b5bf1708d6ec40ccf6c6b357f0f02807efcec0204c99"},
+    {file = "pytest_rerunfailures-16.7.tar.gz", hash = "sha256:6956ddfb65ca1d07e7e3d99e2c5359d82300f4cb062e6049563bd2c106f72d5c"},
 ]
 
 [package.dependencies]
 packaging = ">=17.1"
-pytest = ">=7.4,!=8.2.2"
+pytest = ">=8.2,!=8.2.2"
 
 [[package]]
 name = "pytokens"
@@ -1157,4 +1157,4 @@ all = ["winrt-Windows.Foundation.Collections[all] (>=3.2.1.0,<3.2.2.0)", "winrt-
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12"
-content-hash = "ef50b59276be45dacab87131a88e631e23586c38e2d50cda7ce727bb1054d846"
+content-hash = "bb8a21e32792a122c3695c8eda2e30ad7a23e0077cf269bf8d3db62c78d5dad5"
