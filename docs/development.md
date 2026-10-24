@@ -12,12 +12,21 @@ protocol evidence, not be generated solely by the encoder under test.
 
 GitHub Actions runs tests on Linux 3.12–3.14, macOS 3.14 and Windows 3.14, then
 builds an sdist/wheel and imports the installed wheel outside the source tree.
-It verifies the `py.typed` marker. Actions use pinned commits and read-only
-permissions; dependency updates are proposed by Dependabot. Coverage reports and
+It verifies the `py.typed` marker. CI uses read-only permissions; dependency
+updates are proposed by Dependabot. Coverage reports and
 distributions are artifacts, not releases. Existing required checks retain their
 names. Once the workflow is merged, additionally require the new 3.14/platform/
 package checks in branch protection if all supported environments should block
 merges; no protection rules were weakened or silently replaced by this work.
+
+## Action versions
+
+Follow the Airthings BLE convention: use current stable major tags such as
+`actions/checkout@v7`, not commit SHAs or unreleased branches. Check official
+releases and migration notes before choosing a version; a green run does not
+establish that a copied version is current. Dependabot proposes future major
+updates. Keep this convention across all workflows unless a maintainer asks
+for a different policy.
 
 ## Release checklist
 
