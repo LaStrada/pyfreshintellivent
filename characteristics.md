@@ -7,8 +7,10 @@ Name matching is only a discovery hint; successful protocol reads still matter.
 ## Evidence and confidence
 
 This reference describes the packet contract implemented by the reader and its
-regression tests. Physical acceptance testing remains pending. Do not assume
-that every firmware revision or related model behaves identically.
+regression tests. A [limited live SKY check](docs/verification.md#recorded-sky-check)
+verified existing-key reads and HA entry reload/disable-enable; broader hardware
+acceptance remains pending. Do not assume that every firmware revision or
+related model behaves identically.
 
 Public cross-checks:
 
