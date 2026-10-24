@@ -3,7 +3,7 @@
 import asyncio
 from functools import partial
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, PropertyMock, patch
 
 import pytest
 from bleak import BleakClient
@@ -401,3 +401,53 @@ async def test_backend_cleanup_cancellation_is_failure_not_caller_cancel(
     transport.backends[0].disconnect.assert_awaited_once()
     assert len(transport.callbacks) == 1
     assert not reader._update_lock.locked()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("retry", [False, True])
+async def test_disconnect_with_unreadable_address_interrupts_and_cleans_up(
+    transport, retry
+):
+    """Backend teardown cannot prevent disconnect delivery or later recovery."""
+    reader = FreshIntelliventBluetoothDeviceData(max_attempts=2 if retry else 1)
+    entered = asyncio.Event()
+    cancelled = asyncio.Event()
+
+    async def read(client, characteristic, **kwargs):
+        if client._backend is transport.backends[0]:
+            entered.set()
+            try:
+                await asyncio.Event().wait()
+            finally:
+                cancelled.set()
+        transport.backends[0].disconnect.assert_awaited_once()
+        return await transport.read(client, characteristic, **kwargs)
+
+    transport.reads.side_effect = read
+    with patch.object(reader, "_sleep_before_retry", new_callable=AsyncMock):
+        task = asyncio.create_task(reader.update_device(transport.device))
+        try:
+            async with asyncio.timeout(5):
+                await entered.wait()
+                with patch.object(
+                    BleakClient,
+                    "address",
+                    new_callable=PropertyMock,
+                    side_effect=AttributeError("backend already removed"),
+                ) as address:
+                    transport.callbacks[0]()
+                    address.assert_not_called()
+                if retry:
+                    result = await task
+                    assert result.sensors.rpm == 1234
+                else:
+                    with pytest.raises(DisconnectedError):
+                        await task
+        finally:
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+
+    assert cancelled.is_set()
+    transport.backends[0].disconnect.assert_awaited_once()
+    assert not reader._update_lock.locked()
+    assert len(transport.callbacks) == (2 if retry else 1)
