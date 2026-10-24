@@ -34,9 +34,7 @@ For each applicable target verify:
 8. For future controls, capture settings, change one field, read back, restore
    in `finally`, and independently verify restoration. Preserve sibling fields.
 
-The owner's overnight test on 2026-10-24 could not proceed: the fan was powered
-but absent from advertisements on seven HA scanners, while other BLE traffic
-continued. No live write test or successful recovery is claimed. The outage
-started before the HA 2026.10.3 update, so update timing does not establish cause.
+Live hardware acceptance of this rewrite remains pending. Simulated transport
+tests do not establish physical interoperability or successful radio recovery.
 
 100% coverage is an enforced regression baseline, not a reliability guarantee.
