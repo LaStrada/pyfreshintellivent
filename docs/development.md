@@ -5,6 +5,38 @@ Supported Python versions are declared in [package metadata](../pyproject.toml)
 and tested by the CI matrix. Install the lockfile with `poetry install`; run the
 commands in README.
 
+## Before committing
+
+Run the relevant checks locally before committing, rather than relying on the
+first CI run after a push. The [README development commands](../README.md#development)
+provide the full Python check sequence; use the same Poetry environment and
+lockfile as CI.
+
+| Check | Purpose | Scope |
+| --- | --- | --- |
+| `poetry check --lock` | Validate package metadata and lockfile consistency | Project configuration |
+| Black | Check formatting | Library and tests |
+| isort | Check import order using the Black profile | Library and tests |
+| Ruff | Detect configured Python errors | Library and tests |
+| Pylint | Check runtime code quality | Library |
+| mypy | Check static types | Library |
+| pytest with coverage | Verify behavior and the coverage threshold | Library and tests |
+| `poetry build` | Verify wheel and source distribution build | Package |
+
+For Python or dependency changes, run the full sequence before committing.
+Check changed examples with Black, isort and Ruff too; use `--help` to check CLI
+parsing without connecting to hardware. For documentation-only changes, review
+behavior claims against source, verify relative links and run `git diff --check`.
+For workflow changes, run `actionlint`; for PR-label automation changes, also run
+`node --test .github/tests/pr-labels.test.cjs` where that automation is present.
+Do not commit with a known relevant failure or silently skip a failing check.
+
+CI independently repeats the Python checks, expands testing across its supported
+Python/OS matrix, and smoke-tests an installed wheel outside the checkout. Local
+success does not replace those checks. Black owns formatting and isort owns import
+ordering in this project; Ruff is currently used for linting, not as a second
+formatter. A toolchain consolidation should be a separate reviewed change.
+
 Coverage includes every package source file, including files not imported by tests.
 Both statements and branches must reach 100%; this also guarantees a >=95% floor
 for each runtime module. Do not lower the threshold or exclude executable error
