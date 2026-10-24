@@ -88,13 +88,31 @@ class FreshIntelliventBluetoothDeviceData:
             or max_attempts < 1
         ):
             raise ValueError("max_attempts must be a positive integer")
-        if authentication_code is not None:
-            h.validated_authentication_code(authentication_code)
         self._update_lock = asyncio.Lock()
         self.logger = logger or logging.getLogger(__name__)
         self.max_attempts = max_attempts
         self.parser = SkyModeParser()
         self.authentication_code = authentication_code
+
+    @property
+    def authentication_code(self) -> bytes | str | None:
+        """Return the configured key; mutable inputs are stored as immutable bytes."""
+        return self._authentication_code
+
+    @authentication_code.setter
+    def authentication_code(self, value: bytes | bytearray | str | None) -> None:
+        """Validate replacements before retaining them; only None is anonymous.
+
+        A replacement applies to the next connection attempt. An attempt already
+        connecting or authenticating keeps the key it captured before connecting.
+        """
+        if value is None:
+            self._authentication_code: bytes | str | None = None
+            return
+        validated = h.validated_authentication_code(value)
+        self._authentication_code = (
+            value if isinstance(value, str) else bytes(validated)
+        )
 
     def _handle_disconnect(
         self,
@@ -141,6 +159,17 @@ class FreshIntelliventBluetoothDeviceData:
                     await self._sleep_before_retry(ble_device, attempt, err)
                     attempt += 1
 
+    async def pair_device(self, ble_device: BLEDevice) -> bytes:
+        """Read a key during physical pairing and verify it before retaining it.
+
+        A single attempt shares the polling lock and full cleanup lifecycle.
+        No key is retained if authentication, snapshot validation or cleanup fails.
+        """
+        async with self._update_lock:
+            await self._update_device(ble_device, pairing=True)
+            assert self.authentication_code is not None
+            return bytes(h.validated_authentication_code(self.authentication_code))
+
     async def _sleep_before_retry(
         self, ble_device: BLEDevice, attempt: int, err: Exception
     ) -> None:
@@ -186,12 +215,16 @@ class FreshIntelliventBluetoothDeviceData:
             raise
         return client
 
-    async def _update_device(self, ble_device: BLEDevice) -> FreshIntelliventDevice:
+    async def _update_device(
+        self, ble_device: BLEDevice, *, pairing: bool = False
+    ) -> FreshIntelliventDevice:
         """Internal method to connect and read device data."""
+        authentication_code = self.authentication_code
         device = FreshIntelliventDevice(address=ble_device.address)
         loop = asyncio.get_running_loop()
         disconnect_future: asyncio.Future[bool] = loop.create_future()
         client = await self._connect_device(ble_device, disconnect_future)
+        pairing_key: bytearray | None = None
         primary_error: BaseException | None = None
         try:
             async with (
@@ -202,9 +235,15 @@ class FreshIntelliventBluetoothDeviceData:
                 ),
                 asyncio.timeout(UPDATE_TIMEOUT),
             ):
-                # Authenticate if code provided
-                if self.authentication_code:
-                    await self.authenticate(client)
+                if pairing:
+                    pairing_key = h.validated_authentication_code(
+                        await client.read_gatt_char(characteristics.AUTH)
+                    )
+                    await self.authenticate(client, authentication_code=pairing_key)
+                elif authentication_code is not None:
+                    await self.authenticate(
+                        client, authentication_code=authentication_code
+                    )
 
                 # Read device information
                 await self.get_device_info(client, device, raise_on_not_found=True)
@@ -251,26 +290,32 @@ class FreshIntelliventBluetoothDeviceData:
                     type(cleanup_error).__name__,
                 )
 
+        if pairing_key is not None:
+            self.authentication_code = bytes(pairing_key)
         return device
 
-    async def authenticate(self, client: BleakClient) -> None:
+    async def authenticate(
+        self,
+        client: BleakClient,
+        *,
+        authentication_code: bytes | bytearray | str | None = None,
+    ) -> None:
         """Authenticate with the device using the provided authentication code."""
-        if not self.authentication_code:
+        code = (
+            self.authentication_code
+            if authentication_code is None
+            else authentication_code
+        )
+        if code is None:
             return
 
-        try:
-            # Convert authentication code to bytearray
-            auth_data = h.validated_authentication_code(self.authentication_code)
-
-            # Write authentication code
-            await client.write_gatt_char(characteristics.AUTH, auth_data, response=True)
-
-            # Wait for authentication to process
-            await asyncio.sleep(1)
-
-            self.logger.debug("Authentication write completed")
-        except BleakError as err:
-            raise AuthenticationError("Authentication write failed") from err
+        auth_data = h.validated_authentication_code(code)
+        await client.write_gatt_char(characteristics.AUTH, auth_data, response=True)
+        await asyncio.sleep(1)
+        confirmation = await client.read_gatt_char(characteristics.AUTH_CONFIRMATION)
+        if not confirmation or confirmation[0] != 1:
+            raise AuthenticationError("Device rejected authentication")
+        self.logger.debug("Authentication confirmed")
 
     async def _read_characteristic(
         self, client: BleakClient, characteristic: UUID, strict: bool
@@ -299,6 +344,7 @@ class FreshIntelliventBluetoothDeviceData:
         if data is not None:
             device.name = data.decode("utf-8").rstrip("\0")
         for field, characteristic in (
+            ("model_number", characteristics.MODEL_NUMBER),
             ("fw_version", characteristics.FIRMWARE_VERSION),
             ("hw_version", characteristics.HARDWARE_VERSION),
             ("sw_version", characteristics.SOFTWARE_VERSION),
@@ -393,6 +439,7 @@ class FreshIntelliventBluetoothDeviceData:
         if data is not None:
             parsed = self.parser.airing_read(data)  # type: ignore[assignment]
             device.modes.airing = AiringMode(
+                cycle_period=int(parsed["cycle_period"]),
                 enabled=bool(parsed[KEY_ENABLED]),
                 minutes=int(parsed[KEY_MINUTES]),
                 rpm=int(parsed[KEY_RPM]),

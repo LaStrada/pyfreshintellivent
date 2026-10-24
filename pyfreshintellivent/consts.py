@@ -2,6 +2,7 @@
 
 # Device identification
 DEVICE_NAME = "Intellivent SKY"
+DISCOVERY_NAMES = frozenset({"intellivent sky", "intellivent ice", "ice"})
 
 # Connection and update settings
 UPDATE_TIMEOUT = 30.0  # Timeout for update operations in seconds

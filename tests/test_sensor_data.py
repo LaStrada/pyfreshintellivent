@@ -1,89 +1,77 @@
+"""Golden packets and exhaustive mode-nibble decoding regressions."""
+
 import pytest
 
 from pyfreshintellivent.models import SensorData
 
 
-def test_sensordata_valid():
-    sensors = SensorData.from_bytes(bytearray.fromhex("00009001CE090000E8033C0A000000"))
-    assert sensors.status is False
-    assert sensors.temperature == 25.1
-    assert sensors.rpm == 1000
-    assert sensors.authenticated is False
-    assert sensors.mode == "Off"
-    assert sensors.mode_raw == 0
-
-    sensors = SensorData.from_bytes(bytearray.fromhex("01003702E60Abd01D204040B001c00"))
-    assert sensors.status is True
-    assert sensors.temperature == 27.9
-    assert sensors.rpm == 1234
-    assert sensors.authenticated is True
-    assert sensors.mode == "Off"
-    assert sensors.mode_raw == 0
-
-
-def test_sensordata_with_humidity():
-    """Test SensorData with humidity value (non-zero)."""
-    # Create data with humidity value 0x03E8 (1000) which should give log(100)*10
-    # Format: status, mode, humidity(2), temp(2), unknown(1), auth(1), rpm(2), temp_avg(2), unknown(3)
-    sensors = SensorData.from_bytes(bytearray.fromhex("0100E8030000000000000000000000"))
-    assert sensors.humidity is not None
-    assert sensors.humidity == 46.1  # round(log(1000/10) * 10, 1)
+def test_packet_offsets_from_fresh_connect():
+    # Distinct bytes at every position catch offset, width and endianness errors.
+    sensor = SensorData.from_bytes(bytes.fromhex("a55434127856bc9af0de2143651809"))
+    assert sensor.flags_raw == 0xA5
+    assert sensor.mode_raw == 0x54
+    assert sensor.active_trigger == 4
+    assert sensor.motor_speed_code == 5
+    assert sensor.mode == "VOC"
+    assert sensor.humidity_raw == 0x1234
+    assert sensor.voc_raw == 0x5678
+    assert sensor.light_raw == 0x9ABC
+    assert sensor.rpm == 0xDEF0
+    assert sensor.reference_raw == 0x4321
+    assert sensor.minutes_active == 0x65
+    assert sensor.temperature == 24
+    assert sensor.error_code == 9
+    assert not hasattr(sensor, "humidity")
+    assert not hasattr(sensor, "authenticated")
+    assert not hasattr(sensor, "temperature_avg")
 
 
-def test_sensordata_without_humidity():
-    """Test SensorData without humidity (zero value)."""
-    # Create data with humidity value 0x0000 (15 bytes total)
-    sensors = SensorData.from_bytes(bytearray.fromhex("010000000000000000000000000000"))
-    assert sensors.humidity is None
+def test_legacy_capture_no_longer_confuses_voc_with_temperature():
+    sensor = SensorData.from_bytes(bytearray.fromhex("01003702e60abd01d204040b001c00"))
+    assert sensor.voc_raw == 2790
+    assert sensor.temperature == 28
+    assert sensor.light_raw == 445
+    assert sensor.reference_raw == 2820
+    assert sensor.rpm == 1234
 
 
-def test_sensordata_modes_known():
-    # Off - 00
-    sensors = SensorData.from_bytes(bytearray.fromhex("000090010000000000000000000000"))
-    assert sensors.mode_raw == 0
-    assert sensors.mode == "Off"
-
-    # Pause - 06
-    sensors = SensorData.from_bytes(bytearray.fromhex("000690010000000000000000000000"))
-    assert sensors.mode_raw == 6
-    assert sensors.mode == "Pause"
-
-    # Constant speed - 16
-    sensors = SensorData.from_bytes(bytearray.fromhex("001090010000000000000000000000"))
-    assert sensors.mode_raw == 16
-    assert sensors.mode == "Constant speed"
-
-    # Light - 34
-    sensors = SensorData.from_bytes(bytearray.fromhex("002290010000000000000000000000"))
-    assert sensors.mode_raw == 34
-    assert sensors.mode == "Light"
-
-    # Timer - 35
-    sensors = SensorData.from_bytes(bytearray.fromhex("002390010000000000000000000000"))
-    assert sensors.mode_raw == 35
-    assert sensors.mode == "Timer"
-
-    # Humidity - 49
-    sensors = SensorData.from_bytes(bytearray.fromhex("003190010000000000000000000000"))
-    assert sensors.mode_raw == 49
-    assert sensors.mode == "Humidity"
-
-    # VOC - 52
-    sensors = SensorData.from_bytes(bytearray.fromhex("003490010000000000000000000000"))
-    assert sensors.mode_raw == 52
-    assert sensors.mode == "VOC"
-
-    # Boost - 103
-    sensors = SensorData.from_bytes(bytearray.fromhex("006790010000000000000000000000"))
-    assert sensors.mode_raw == 103
-    assert sensors.mode == "Boost"
+@pytest.mark.parametrize("motor", range(16))
+@pytest.mark.parametrize(
+    "trigger,mode",
+    [
+        (1, "Humidity"),
+        (2, "Light"),
+        (3, "Timer"),
+        (4, "VOC"),
+        (5, "Airing"),
+        (6, "Pause"),
+        (7, "Boost"),
+        (8, "Motor test"),
+        (9, "Humidity sinking"),
+        (10, "Unknown"),
+        (11, "Delayed start"),
+        (12, "Unknown"),
+        (13, "Unknown"),
+        (14, "Unknown"),
+        (15, "Unknown"),
+    ],
+)
+def test_trigger_independent_of_motor_speed(motor, trigger, mode):
+    sensor = SensorData.from_bytes(bytes([0, motor << 4 | trigger]) + bytes(13))
+    assert sensor.mode == mode
+    assert sensor.active_trigger == trigger
+    assert sensor.motor_speed_code == motor
 
 
-def test_sensordata_invalid_too_short():
-    with pytest.raises(ValueError, match=r"Length need to be exactly*"):
-        SensorData.from_bytes(bytearray.fromhex("0000900100000000000000000000"))
+@pytest.mark.parametrize(
+    "motor,mode", [(0, "Off"), (1, "Constant speed"), (2, "Unknown"), (15, "Unknown")]
+)
+def test_no_trigger_uses_motor_code(motor, mode):
+    sensor = SensorData.from_bytes(bytes([0, motor << 4]) + bytes(13))
+    assert sensor.mode == mode
 
 
-def test_sensordata_invalid_too_long():
-    with pytest.raises(ValueError, match=r"Length need to be exactly*"):
-        SensorData.from_bytes(bytearray.fromhex("00009001000000000000000000000000"))
+@pytest.mark.parametrize("length", [0, 1, 14, 16, 32])
+def test_reject_malformed_packet(length):
+    with pytest.raises(ValueError, match="exactly 15"):
+        SensorData.from_bytes(bytes(length))
