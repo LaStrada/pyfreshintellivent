@@ -57,15 +57,19 @@ should obtain it through HA's Bluetooth manager.
 ## Supported features
 
 - SKY sensor and configuration reads, authenticated reads and physical pairing.
-- RPM, operating mode, raw sensor fields and configuration models.
+- RPM, operating mode, device-reported temperature, raw sensor fields and
+  configuration models.
 - Name-based SKY and ICE discovery. ICE reads remain provisional; see the
   [device support and verification guide](docs/verification.md).
 - Configuration packet encoders in `SkyModeParser`. These return bytes;
   the library does not send or confirm setting changes.
 
 Humidity percentage is unavailable: `humidity_raw`, `voc_raw` and `light_raw`
-have no validated conversion to physical units. Temperature is exposed as a
-protocol byte and needs hardware validation. See the [protocol reference](characteristics.md).
+have no validated conversion to physical units. Temperature uses the dedicated
+protocol field; sensor placement and measurement accuracy remain unverified.
+See the [protocol reference](characteristics.md) for services, characteristics
+and packet layouts, and the [verification matrix](docs/verification.md) for
+software-tested versus hardware-verified capabilities.
 
 ## Documentation
 

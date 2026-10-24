@@ -18,7 +18,7 @@ Each connection attempt captures its key before connecting. Replacing the key
 while an attempt is in flight affects the next attempt, including a later retry,
 without changing the current exchange. Anonymous reads never acquire a key or
 write the authentication characteristic. Availability of unauthenticated reads
-is firmware-dependent; see the [recorded auth checks](verification.md#authentication-and-anonymous-reads).
+is firmware-dependent; see the [authentication verification](verification.md#authentication-and-anonymous-reads).
 Do not silently fall back to anonymous reads after a rejected configured key.
 
 `await reader.update_device(ble_device)` returns `FreshIntelliventDevice` with
