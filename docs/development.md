@@ -55,6 +55,34 @@ migration requirements before upgrading; dependency-update PRs need the same
 review as other changes. Keep CI permissions read-only except for jobs that
 explicitly require a write operation, such as applying PR labels.
 
+## Home Assistant dependency compatibility
+
+The library supports Python 3.12, 3.13 and 3.14 without compatibility shims.
+Its dependency floors match the shared packages below. Check both Home Assistant's
+stable release and a specific development revision before raising those floors.
+
+Dependency references checked on 2026-10-24:
+
+| Home Assistant reference | Required Python | Shared Bluetooth dependencies |
+| --- | --- | --- |
+| Stable `2026.10.3`: [project metadata](https://github.com/home-assistant/core/blob/2026.10.3/pyproject.toml), [Bluetooth manifest](https://github.com/home-assistant/core/blob/2026.10.3/homeassistant/components/bluetooth/manifest.json) | `>=3.14.2` | `bleak==3.0.2`, `bleak-retry-connector==4.7.1`, `async-interrupt==1.2.2` |
+| Development revision `21faf911e37c181015129b5df5a933c5145a7d2b`: [project metadata](https://github.com/home-assistant/core/blob/21faf911e37c181015129b5df5a933c5145a7d2b/pyproject.toml), [Bluetooth manifest](https://github.com/home-assistant/core/blob/21faf911e37c181015129b5df5a933c5145a7d2b/homeassistant/components/bluetooth/manifest.json) | `>=3.14.2` | `bleak==3.0.2`, `bleak-retry-connector==4.7.1`, `async-interrupt==1.2.2` |
+
+When changing dependencies:
+
+1. Recheck Core's `pyproject.toml` and Bluetooth manifest for stable and development
+   references; record the exact tag or commit used.
+2. Test the library with those exact shared pins, as well as its supported Python
+   versions. Dependency resolution and API tests do not establish that the full
+   Home Assistant integration suite passes.
+3. Keep compatible ranges in library metadata. Do not copy Core's complete set
+   of transitive pins into the library.
+4. When expanding CI, preserve the existing required Python 3.13 lint check name
+   so branch protection continues to match it.
+
+These references establish dependency alignment at the recorded revisions, not
+compatibility with future development changes.
+
 ## Release checklist
 
 1. Review API compatibility and the [migration guide](migration.md).
