@@ -1,6 +1,7 @@
 """Behavioral regressions for polling, cancellation, cleanup and input validation."""
 
 import asyncio
+from contextlib import suppress
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -57,17 +58,26 @@ async def test_concurrent_updates_are_serialized_and_waiter_can_cancel():
     device = Mock(spec=BLEDevice, address="AA:BB:CC:DD:EE:FF")
     with patch.object(reader, "_update_device", side_effect=read) as update:
         first = asyncio.create_task(reader.update_device(device))
-        await first_entered.wait()
-        waiter = asyncio.create_task(reader.update_device(device))
-        await asyncio.sleep(0)
-        assert count == 1
-        waiter.cancel()
-        with pytest.raises(asyncio.CancelledError):
-            await waiter
-        release.set()
-        await first
-        await reader.update_device(device)
-        assert update.await_count == 2
+        tasks = [first]
+        try:
+            async with asyncio.timeout(5):
+                await first_entered.wait()
+                waiter = asyncio.create_task(reader.update_device(device))
+                tasks.append(waiter)
+                await asyncio.sleep(0)
+                assert count == 1
+                waiter.cancel()
+                with pytest.raises(asyncio.CancelledError):
+                    await waiter
+                release.set()
+                await first
+                await reader.update_device(device)
+                assert update.await_count == 2
+        finally:
+            release.set()
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
 
 
 @pytest.mark.asyncio
@@ -90,13 +100,19 @@ async def test_cancelled_poll_disconnects_before_next_update():
         patch.object(reader, "get_device_info", side_effect=read),
     ):
         task = asyncio.create_task(reader.update_device(Mock(address=client.address)))
-        await entered.wait()
-        task.cancel()
-        with pytest.raises(asyncio.CancelledError):
-            await task
-        assert disconnected.is_set()
-        assert not reader._update_lock.locked()
-        client.disconnect.assert_awaited_once()
+        try:
+            async with asyncio.timeout(5):
+                await entered.wait()
+                task.cancel()
+                with pytest.raises(asyncio.CancelledError):
+                    await task
+            assert disconnected.is_set()
+            assert not reader._update_lock.locked()
+            client.disconnect.assert_awaited_once()
+        finally:
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                await task
 
 
 @pytest.mark.asyncio
