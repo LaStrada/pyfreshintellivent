@@ -72,8 +72,12 @@ See the [protocol evidence](characteristics.md) before presenting readings to us
 
 ## Development
 
+Run the relevant checks locally before committing; see the
+[checklist and tool roles](docs/development.md#before-committing).
+
 ```sh
 poetry install
+poetry check --lock
 poetry run pytest
 poetry run black --check pyfreshintellivent tests
 poetry run isort --check-only pyfreshintellivent tests
