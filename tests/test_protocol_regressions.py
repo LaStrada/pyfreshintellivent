@@ -212,3 +212,33 @@ async def test_rejected_authentication_is_not_retried():
             await reader.update_device(Mock(address=client.address))
     connect.assert_awaited_once()
     client.disconnect.assert_awaited_once()
+
+
+@pytest.mark.parametrize("raw,level", [(1, "Low"), (2, "Medium"), (3, "High")])
+@pytest.mark.parametrize("light_enabled,voc_enabled", [(False, True), (True, False)])
+def test_light_golden_values_preserve_sibling_settings(
+    raw, level, light_enabled, voc_enabled
+):
+    """Decoding and re-encoding must not silently alter the light threshold."""
+    parser = SkyModeParser()
+    packet = bytes([light_enabled, raw, voc_enabled, 2])
+    values = parser.light_and_voc_read(packet)
+    assert values["light"] == {
+        "enabled": light_enabled,
+        "detection": level,
+        "detection_raw": raw,
+    }
+    assert values["voc"] == {
+        "enabled": voc_enabled,
+        "detection": "Medium",
+        "detection_raw": 2,
+    }
+    assert (
+        parser.light_and_voc_write(
+            values["light"]["enabled"],
+            values["light"]["detection"],
+            values["voc"]["enabled"],
+            values["voc"]["detection"],
+        )
+        == packet
+    )

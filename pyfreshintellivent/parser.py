@@ -116,9 +116,7 @@ class SkyModeParser:
         return {
             "light": {
                 "enabled": light_enabled,
-                "detection": h.detection_int_as_string(
-                    value=light_detection, disable_low=True
-                ),
+                "detection": h.detection_int_as_string(value=light_detection),
                 "detection_raw": light_detection,
             },
             "voc": {
