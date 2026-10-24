@@ -69,5 +69,5 @@ credentials, addresses or private transport details without reviewing/redacting.
 
 `SkyModeParser` has paired `*_read` / `*_write` methods for existing setting
 packets. `*_write` returns bytes only. There is no transaction queue, optimistic
-state handling or device write-confirmation API in this reader release.
+state handling or device write-confirmation API in this reader.
 See [the packet table and limitations](../characteristics.md).

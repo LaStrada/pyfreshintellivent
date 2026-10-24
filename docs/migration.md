@@ -1,8 +1,9 @@
-# Migrating to the unreleased 1.0 API
+# Migrating from the legacy API
 
-This is a major rewrite. Do not install it under a HACS integration that expects
-the 0.3.x connection/write API. Develop and test the caller against this branch
-in isolation first; retain a supported production version until rollout is ready.
+The snapshot reader replaces the legacy connection/write API. Do not install it
+under a HACS integration that expects `FreshIntelliVent`. Develop and test the
+caller against the new API in isolation first; retain a supported production
+package until rollout is ready.
 
 Use `FreshIntelliventBluetoothDeviceData.update_device(BLEDevice)` to obtain a
 new snapshot. The old `FreshIntelliVent` API is not available. Read current
