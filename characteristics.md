@@ -28,9 +28,11 @@ Requiring 1 avoids accepting unknown replies.
 In the documented SKY pairing procedure, reveal the touch controls and hold the
 wireless button for roughly eight seconds, then read the key characteristic.
 The key is not available as a nonzero value outside pairing mode. Follow the
-manual for the actual model. Use `await reader.pair_device(ble_device)` while pairing is enabled. It verifies
-the key, reads a complete snapshot and finishes disconnect cleanup before returning
-the key bytes and retaining them on the reader. Failure preserves any previous key. Never print key bytes in diagnostics or examples.
+manual for the actual model. Use `await reader.pair_device(ble_device)` while
+pairing is enabled. It verifies the key, reads a complete snapshot and finishes
+disconnect cleanup before returning the key bytes and retaining them on the
+reader. Failure preserves any previous key. Never print key bytes in diagnostics
+or examples.
 
 ## Sensor packet
 
@@ -85,6 +87,9 @@ All UUIDs below use suffix `-2f33-11e7-93ae-92361f002671`.
 | `7c4adc07` | Boost | active u8, RPM u16, remaining seconds u16 |
 | `7c4adc08` | Motor test | enabled u8, RPM u16 |
 
+Motor-test settings are documented here for protocol reference but are not read
+into device snapshots.
+
 Sensitivity levels are 1 low, 2 medium, 3 high. VOC used to decode in reverse
 while encoding in normal order. The reader now uses the same order in both
 directions.
@@ -93,10 +98,14 @@ comparison remains necessary before declaring every firmware verified. Light
 levels also preserve 1=Low, 2=Medium, 3=High; reading Low must not silently
 normalize it to Medium and change the next encoded packet.
 
-Known encoder limitations retained for compatibility: RPM clamps to 800–2400,
-negative durations clamp to zero. The airing encoder defaults to cycle period
-26 for old callers; pass the freshly read `cycle_period` explicitly to preserve it. These encoders must not serve as
-an unchecked read-modify-write transaction layer. ICE's reported minimum 700 RPM
+Known encoder limits: RPM clamps to 800–2400. Negative airing, boost and pause
+durations clamp to zero. Timer duration and delay are encoded directly as unsigned
+bytes (0–255); out-of-range values raise `struct.error`. Airing and pause durations
+must fit 0–255 minutes, and boost must fit 0–65535 seconds after negative values
+are clamped. Values above these limits raise `struct.error`; they are not clamped.
+The airing encoder defaults to cycle period 26;
+pass the freshly read `cycle_period` explicitly to preserve it. Setting changes
+need a read-current/write/readback transaction around these encoders. ICE's reported minimum 700 RPM
 requires model-specific validation before ICE writes can be supported.
 
 The first byte of constant-speed settings is an enabled flag, not an opcode.

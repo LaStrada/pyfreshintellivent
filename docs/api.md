@@ -67,7 +67,9 @@ credentials, addresses or private transport details without reviewing/redacting.
 
 ## Encoders
 
-`SkyModeParser` has paired `*_read` / `*_write` methods for existing setting
-packets. `*_write` returns bytes only. There is no transaction queue, optimistic
+`SkyModeParser` has `*_read` / `*_write` pairs for humidity, light/VOC,
+constant speed, timer, airing, pause and boost settings.
+`temporary_speed_write()` is an encoder with no paired reader. All `*_write`
+methods return bytes only. There is no transaction queue, optimistic
 state handling or device write-confirmation API in this reader.
 See [the packet table and limitations](../characteristics.md).

@@ -18,8 +18,9 @@ controls.
 To select a known device, add `--address` with its BLE address or platform UUID.
 Without `--authenticate`, the script reads `FRESH_AUTH_CODE` from the environment
 if supplied by your credential tooling. Otherwise it attempts an unauthenticated
-read, whose available fields depend on the device. Do not pass a key as a
-positional argument or paste it into a shell command.
+read. The reader still requires a complete snapshot: if a required characteristic
+needs authentication, the read fails instead of returning partial data. Do not
+pass a key as a positional argument or paste it into a shell command.
 
 ```sh
 poetry run python examples/read.py --help

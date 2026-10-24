@@ -1,9 +1,8 @@
 # Migrating from the legacy API
 
-The snapshot reader replaces the legacy connection/write API. Do not install it
-under a HACS integration that expects `FreshIntelliVent`. Develop and test the
-caller against the new API in isolation first; retain a supported production
-package until rollout is ready.
+The snapshot reader is incompatible with the legacy `FreshIntelliVent`
+connection/write API. Integrations using that API must migrate before updating
+their library dependency.
 
 Use `FreshIntelliventBluetoothDeviceData.update_device(BLEDevice)` to obtain a
 new snapshot. The old `FreshIntelliVent` API is not available. Read current
@@ -30,9 +29,9 @@ compare with its current app before issuing further writes. Light sensitivity no
 also preserves raw 1 as Low instead of normalizing it to Medium; a read/encode
 round trip no longer changes that setting to 2.
 
-Authentication keys must contain exactly four nonzero-as-a-whole bytes or eight
-hex characters. A write acknowledgement is insufficient; the PIN confirmation
-characteristic must return 1. Previously tolerated bad keys now fail explicitly.
+Authentication keys must contain exactly four bytes or eight hex characters;
+an all-zero key is rejected. A write acknowledgement is insufficient; the PIN
+confirmation characteristic must return 1. Previously tolerated bad keys now fail explicitly.
 
 Scan results no longer include arbitrary devices with service 0x180A. Use the
 current advertisement name or a known address supplied by your platform.

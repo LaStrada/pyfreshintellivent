@@ -2,38 +2,40 @@
 
 [![CI](https://github.com/LaStrada/pyfreshintellivent/actions/workflows/ci.yml/badge.svg)](https://github.com/LaStrada/pyfreshintellivent/actions/workflows/ci.yml)
 
-Async Bluetooth reader for Fresh Intellivent SKY. See
-[package metadata](pyproject.toml) for supported Python versions.
+Async Bluetooth reader for Fresh Intellivent SKY. Each read connects to the fan,
+returns a complete snapshot of its sensors and settings, and releases the
+connection. Concurrent reads on the same reader are serialized.
 
-This documentation describes the source in this checkout. For an installed
-package, use the documentation at its corresponding release tag.
-The reader API is incompatible with integrations using the legacy
-`FreshIntelliVent` connection/write API; update and test the caller before
-replacing its library dependency.
-
-The reader connects, optionally authenticates, reads a complete snapshot and
-releases the connection. Concurrent reads on the same reader are serialized.
-Retries and disconnect cleanup are bounded, including cancellation during startup
-or shutdown.
+The reader API replaces the legacy `FreshIntelliVent` connection/write API.
+Existing callers need to follow the [migration guide](docs/migration.md).
+This documentation describes the current source; for an installed package, use
+its release-tag documentation.
 
 ## Read a fan
+
+From the repository root:
 
 ```sh
 poetry install
 poetry run python examples/read.py --authenticate
 ```
 
-The example prompts for an existing authentication key without echoing it. An
-address can be selected with `--address`; secrets should not be command-line
-arguments. Integrators may obtain a `BLEDevice` from Home Assistant's Bluetooth
-manager, including an ESPHome proxy, and pass it to the reader.
+The script prompts for an existing authentication key without echoing it.
+Use `--address` to select a known fan. See [examples](examples/README.md) for
+scanning and [pairing](docs/api.md#physical-pairing) to obtain a key.
+
+For application code, this example reads the key from `FRESH_AUTH_CODE`, supplied
+by your credential tooling:
 
 ```python
+import asyncio
 import os
+
 from pyfreshintellivent import FreshIntelliventBluetoothDeviceData
 from pyfreshintellivent.scanner import scan
 
-async def read_fan():
+
+async def main() -> None:
     device = await scan(timeout=10)
     if device is None:
         raise RuntimeError("No supported fan discovered")
@@ -42,54 +44,38 @@ async def read_fan():
         max_attempts=1,
     )
     snapshot = await reader.update_device(device)
-    return snapshot.sensors.rpm, snapshot.sensors.mode
+    print(f"RPM: {snapshot.sensors.rpm}, mode: {snapshot.sensors.mode}")
+
+
+asyncio.run(main())
 ```
 
-## What is supported
+Reuse one reader per device for repeated polling. Applications that manage
+Bluetooth themselves can pass their own `BLEDevice`; Home Assistant integrations
+should obtain it through HA's Bluetooth manager.
 
-- SKY sensor and configuration reads, physical pairing key acquisition and
-  four-byte authentication with explicit PIN confirmation.
-- RPM, operating mode, temperature byte, raw sensor values and configuration models.
-- Name-based discovery for SKY and ICE. ICE is a protocol candidate supported by
-  community reports, **not hardware-validated by this rewrite**.
-- Existing configuration encoders in `SkyModeParser`. They generate bytes; they do
-  not execute, queue or confirm setting changes.
+## Supported features
 
-There is **no humidity percentage**. Its previous conversion had no established
-basis. `humidity_raw`, `voc_raw` and `light_raw` have no calibrated physical units.
-Temperature comes from byte 13; the old temperature field actually decoded VOC.
-See the [protocol evidence](characteristics.md) before presenting readings to users.
+- SKY sensor and configuration reads, authenticated reads and physical pairing.
+- RPM, operating mode, raw sensor fields and configuration models.
+- Name-based SKY and ICE discovery. ICE reads remain provisional; see the
+  [device support and verification guide](docs/verification.md).
+- Configuration packet encoders in `SkyModeParser`. These return bytes;
+  the library does not send or confirm setting changes.
+
+Humidity percentage is unavailable: `humidity_raw`, `voc_raw` and `light_raw`
+have no validated conversion to physical units. Temperature is exposed as a
+protocol byte and needs hardware validation. See the [protocol reference](characteristics.md).
 
 ## Documentation
 
-- [API and connection behavior](docs/api.md)
+- [API, pairing and error handling](docs/api.md)
 - [Migration from the legacy API](docs/migration.md)
-- [Protocol and source evidence](characteristics.md)
-- [Device support and verification matrix](docs/verification.md)
-- [Home Assistant roadmap and controls design](docs/home-assistant.md)
-- [Development and release checks](docs/development.md)
+- [Bluetooth protocol](characteristics.md)
+- [Device support and hardware verification](docs/verification.md)
+- [Home Assistant integration roadmap](docs/home-assistant.md)
+- [Development, checks and releases](docs/development.md)
 
-## Development
-
-Run the relevant checks locally before committing; see the
-[checklist and tool roles](docs/development.md#before-committing).
-
-```sh
-poetry install
-poetry check --lock
-poetry run pytest
-poetry run black --check pyfreshintellivent tests
-poetry run isort --check-only pyfreshintellivent tests
-poetry run ruff check pyfreshintellivent tests
-poetry run mypy pyfreshintellivent
-poetry run pylint pyfreshintellivent
-poetry build
-```
-
-The package configuration requires 100% runtime statement and branch coverage.
-The [CI workflow](.github/workflows/ci.yml) defines the active Python and platform
-matrix; the independent [CI maintenance PR](https://github.com/LaStrada/pyfreshintellivent/pull/63)
-adds cross-platform and installed-wheel checks. Coverage does not establish
-firmware correctness or replace physical-device testing.
+Supported Python versions are declared in [package metadata](pyproject.toml).
 
 Licensed under [Apache 2.0](LICENSE.md).
