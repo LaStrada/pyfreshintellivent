@@ -25,7 +25,9 @@ are distinct from a humidity measurement and remain readable.
 
 VOC decoding now agrees with the encoder: 1=Low, 2=Medium, 3=High. If a device
 previously appeared to revert between Low and High, capture the raw setting and
-compare with its current app before issuing further writes.
+compare with its current app before issuing further writes. Light sensitivity now
+also preserves raw 1 as Low instead of normalizing it to Medium; a read/encode
+round trip no longer changes that setting to 2.
 
 Authentication keys must contain exactly four nonzero-as-a-whole bytes or eight
 hex characters. A write acknowledgement is insufficient; the PIN confirmation

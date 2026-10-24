@@ -2,17 +2,18 @@
 
 | Target | Evidence | Current claim |
 | --- | --- | --- |
-| Fresh Intellivent SKY | Two Android app protocols, historical captures and user reports | Primary reader target; new lifecycle/auth changes still need live validation |
-| Fresh Intellivent ICE / ICE | HACS discovery and 700 RPM reports, same app family | Name discovery; reads provisional; no validated ICE write limits |
-| Aviant / Pure Sense / Svensa | Grouped with SKY family in Fresh Connect | Research candidates, not declared supported |
+| Fresh Intellivent SKY | Documented packet contract, regression fixtures and user reports | Primary reader target; new lifecycle/auth changes still need live validation |
+| Fresh Intellivent ICE / ICE | HACS discovery and 700 RPM reports | Name discovery; reads provisional; no validated ICE write limits |
+| Aviant / Pure Sense / Svensa | Related products; model-specific protocol and hardware validation pending | Research candidates, not declared supported |
 | Other Fresh products | Same vendor or app alone | Unsupported until protocol and hardware evidence exists |
 
 ## Automated verification
 
-After the authentication recovery review: 417 tests and 100% runtime statement/branch
+After the lifecycle and integration review: 439 tests and 100% runtime statement/branch
 coverage. Tests include cancellation during connect/read/disconnect, repeated
 cancellation, bounded cleanup, serialized reads, cancelled lock waiters, retry
-exhaustion, transport failures during authentication, negative PIN confirmation,
+exhaustion, real connector callback/deadline composition, backend versus caller
+cancellation, transport failures during authentication, negative PIN confirmation,
 failed pairing without retaining a key, malformed packets,
 all nonzero trigger/motor combinations, VOC round trips and discovery false
 positives. CI adds Python 3.12–3.14 and simulated transport behavior on three OSes.
