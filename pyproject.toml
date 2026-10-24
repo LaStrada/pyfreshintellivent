@@ -56,6 +56,10 @@ pythonpath = ["pyfreshintellivent"]
 branch = true
 
 [tool.coverage.report]
+# Enforce complete coverage together with the lifecycle rewrite and its tests.
+fail_under = 100
+precision = 2
+show_missing = true
 exclude_lines = [
     "pragma: no cover",
     "@overload",
