@@ -12,6 +12,8 @@ The test suite enforces 100% runtime statement and branch coverage. It covers:
 
 - Connection/read/disconnect cancellation, deadlines and cleanup failures.
 - Serialized reads, cancelled lock waiters, retries and connector callbacks.
+- Disconnect delivery after backend teardown, without accessing the torn-down
+  client address; interrupted-read cleanup and subsequent retry recovery.
 - Authentication rejection, transport failures and failed pairing.
 - Malformed packets, trigger/motor combinations, setting round trips and discovery.
 - Captured hardware snapshots, independent nested state across reads, sibling

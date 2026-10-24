@@ -39,6 +39,10 @@ strict: a transport failure cannot return an apparently successful partial
 snapshot. Individual `get_*` methods default to diagnostic, best-effort reads;
 they are lower-level APIs and require the caller to own a connected client.
 
+Disconnect callbacks use the address captured before connecting, so a torn-down
+backend cannot prevent delivery of the disconnect signal. Late callbacks remain
+isolated to their original attempt.
+
 Cancellation during connect cleans up the partially established client.
 Cancellation during a read waits for bounded disconnect cleanup before releasing
 the lock and propagating `CancelledError`. A backend can still ignore cancellation
