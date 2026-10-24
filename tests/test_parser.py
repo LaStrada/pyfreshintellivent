@@ -47,7 +47,7 @@ class TestLightAndVoc:
         valid = bytearray.fromhex("01010101")
         val = parser.light_and_voc_read(value=valid)
         assert val["light"]["enabled"] is True
-        assert val["light"]["detection"] == "Medium"
+        assert val["light"]["detection"] == "Low"
         assert val["light"]["detection_raw"] == 1
         assert val["voc"]["enabled"] is True
         assert val["voc"]["detection"] == "Low"

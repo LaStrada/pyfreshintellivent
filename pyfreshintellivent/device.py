@@ -15,7 +15,7 @@ from bleak_retry_connector import BleakClientWithServiceCache, establish_connect
 
 from . import characteristics
 from . import helpers as h
-from .connection import ClientWithCleanup, disconnect
+from .connection import ClientWithCleanup, ConnectionState, disconnect
 from .consts import (
     DEFAULT_MAX_UPDATE_ATTEMPTS,
     KEY_DELAY,
@@ -164,14 +164,11 @@ class FreshIntelliventBluetoothDeviceData:
         )
         await asyncio.sleep(delay)
 
-    async def _update_device(
-        self, ble_device: BLEDevice, *, pairing: bool = False
-    ) -> FreshIntelliventDevice:
-        """Internal method to connect and read device data."""
-        device = FreshIntelliventDevice(address=ble_device.address)
-        loop = asyncio.get_running_loop()
-        disconnect_future = loop.create_future()
-
+    async def _connect_device(
+        self, ble_device: BLEDevice, disconnect_future: asyncio.Future[bool]
+    ) -> BleakClientWithServiceCache:
+        """Establish a connection without retrying after uncertain cleanup."""
+        connection_state = ConnectionState()
         try:
             async with asyncio.timeout(UPDATE_TIMEOUT):
                 client: BleakClientWithServiceCache = await establish_connection(
@@ -181,11 +178,30 @@ class FreshIntelliventBluetoothDeviceData:
                     disconnected_callback=partial(
                         self._handle_disconnect, disconnect_future
                     ),
+                    connection_state=connection_state,
                 )
-        except asyncio.TimeoutError as err:
-            raise FreshIntelliventTimeoutError(
-                f"Timed out connecting to {ble_device.address}"
-            ) from err
+        except Exception as err:
+            # Cancellation stays cancellation until the owning timeout converts it.
+            # Cleanup failure then takes precedence over a retryable timeout/error.
+            if connection_state.cleanup_error is not None:
+                raise ConnectionCleanupError(
+                    "Failed to close partial connection"
+                ) from connection_state.cleanup_error
+            if isinstance(err, TimeoutError):
+                raise FreshIntelliventTimeoutError(
+                    f"Timed out connecting to {ble_device.address}"
+                ) from err
+            raise
+        return client
+
+    async def _update_device(
+        self, ble_device: BLEDevice, *, pairing: bool = False
+    ) -> FreshIntelliventDevice:
+        """Internal method to connect and read device data."""
+        device = FreshIntelliventDevice(address=ble_device.address)
+        loop = asyncio.get_running_loop()
+        disconnect_future: asyncio.Future[bool] = loop.create_future()
+        client = await self._connect_device(ble_device, disconnect_future)
         pairing_key: bytearray | None = None
         primary_error: BaseException | None = None
         try:
