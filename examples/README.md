@@ -11,8 +11,9 @@ poetry run python examples/read.py --authenticate
 ```
 
 The script prompts for an existing authentication key without echoing it. It
-prints operating mode, RPM and the temperature byte, then disconnects. It does
-not expose humidity percentage, raw characteristic dumps or settings controls.
+reads a snapshot, disconnects, then prints operating mode, RPM and the temperature
+byte. It does not expose humidity percentage, raw characteristic dumps or settings
+controls.
 
 To select a known device, add `--address` with its BLE address or platform UUID.
 Without `--authenticate`, the script reads `FRESH_AUTH_CODE` from the environment
