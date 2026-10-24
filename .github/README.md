@@ -16,10 +16,12 @@ refactoring, tests, CI and documentation. These labels do not publish releases
 or change version numbers.
 
 Templates become available after merging to the default branch. PR labeling
-uses the workflow from the PR's base branch on open, description edit or reopen.
+uses the workflow from the default branch on open, description edit or reopen.
 It has only PR write permission, performs no checkout, and treats PR text as data.
 The ordinary read-only CI job tests the exact embedded script with a mocked API:
 
 ```sh
 node --test .github/tests/pr-labels.test.cjs
 ```
+
+Reference: [GitHub pull_request_target events](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request_target).
