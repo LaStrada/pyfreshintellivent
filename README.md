@@ -14,8 +14,7 @@ replacing its library dependency.
 The reader connects, optionally authenticates, reads a complete snapshot and
 releases the connection. Concurrent reads on the same reader are serialized.
 Retries and disconnect cleanup are bounded, including cancellation during startup
-or shutdown. This reduces software-side connection leaks; it cannot recover a
-powered fan whose Bluetooth radio has stopped advertising.
+or shutdown.
 
 ## Read a fan
 
