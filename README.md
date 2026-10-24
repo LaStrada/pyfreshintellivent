@@ -1,115 +1,85 @@
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![PyPI version](https://badge.fury.io/py/pyfreshintellivent.svg)](https://badge.fury.io/py/pyfreshintellivent)
-![Linting](https://github.com/LaStrada/pyfreshintellivent/actions/workflows/linting.yml/badge.svg)
-![Tests](https://github.com/LaStrada/pyfreshintellivent/actions/workflows/tests.yml/badge.svg)
-
 # pyfreshintellivent
 
-Modern, type-safe Python interface for Fresh Intellivent Sky bathroom ventilation fan using Bluetooth Low Energy.
+[![CI](https://github.com/LaStrada/pyfreshintellivent/actions/workflows/ci.yml/badge.svg)](https://github.com/LaStrada/pyfreshintellivent/actions/workflows/ci.yml)
 
-## ✨ Features
+Async Bluetooth reader for Fresh Intellivent SKY. Each read connects to the fan,
+returns a complete snapshot of its sensors and settings, and releases the
+connection. Concurrent reads on the same reader are serialized.
 
-- 🔒 **Type-safe**: Full type hints and IDE autocomplete support
-- 🔄 **Automatic connection management**: No more hanging connections
-- 🛡️ **Robust error handling**: Automatic retries and proper cleanup
-- 📊 **Typed data models**: All sensor readings and modes are strongly typed
-- 🚀 **Modern async/await**: Built on latest asyncio patterns
-- 🔐 **Authentication support**: Optional authentication for protected devices
+The reader API replaces the legacy `FreshIntelliVent` connection/write API.
+Existing callers need to follow the [migration guide](docs/migration.md).
+This documentation describes the current source; for an installed package, use
+its release-tag documentation.
 
-## 📋 Requirements
+## Read a fan
 
-- Python 3.12 or higher
-- Bluetooth 4.0+ adapter
+From the repository root:
 
-## 📦 Installation
-
-```bash
-pip install pyfreshintellivent
+```sh
+poetry install
+poetry run python examples/read.py --authenticate
 ```
 
-## 🚀 Quick Start
+The script prompts for an existing authentication key without echoing it.
+Use `--address` to select a known fan. See [examples](examples/README.md) for
+scanning and [pairing](docs/api.md#physical-pairing) to obtain a key.
+
+For application code, this example reads the key from `FRESH_AUTH_CODE`, supplied
+by your credential tooling:
 
 ```python
 import asyncio
-from bleak import BleakScanner
-from pyfreshintellivent import FreshIntelliventBluetoothDeviceData
+import os
 
-async def main():
-    # Find device
-    device = await BleakScanner.find_device_by_name("Intellivent SKY")
-    
-    # Create parser
-    parser = FreshIntelliventBluetoothDeviceData()
-    
-    # Read all data (connection is automatically managed)
-    fresh_device = await parser.update_device(device)
-    
-    # Access typed data with full IDE support
-    print(f"Temperature: {fresh_device.sensors.temperature}°C")
-    print(f"Humidity: {fresh_device.sensors.humidity}%")
-    print(f"RPM: {fresh_device.sensors.rpm}")
-    
-    # Access mode settings
-    if fresh_device.modes.humidity:
-        mode = fresh_device.modes.humidity
-        print(f"Humidity mode: {mode.detection}, RPM: {mode.rpm}")
+from pyfreshintellivent import FreshIntelliventBluetoothDeviceData
+from pyfreshintellivent.scanner import scan
+
+
+async def main() -> None:
+    device = await scan(timeout=10)
+    if device is None:
+        raise RuntimeError("No supported fan discovered")
+    reader = FreshIntelliventBluetoothDeviceData(
+        authentication_code=os.environ["FRESH_AUTH_CODE"],
+        max_attempts=1,
+    )
+    snapshot = await reader.update_device(device)
+    print(f"RPM: {snapshot.sensors.rpm}, mode: {snapshot.sensors.mode}")
+
 
 asyncio.run(main())
 ```
 
-## 📖 Documentation
+Reuse one reader per device for repeated polling. Applications that manage
+Bluetooth themselves can pass their own `BLEDevice`; Home Assistant integrations
+should obtain it through HA's Bluetooth manager.
 
-- **[API Reference](docs/api.md)** - Complete API documentation
-- **[Examples](examples/)** - Working code examples
+## Supported features
 
-### Examples
+- SKY sensor and configuration reads, authenticated reads and physical pairing.
+- RPM, operating mode, device-reported temperature, raw sensor fields and
+  configuration models.
+- Name-based SKY and ICE discovery. ICE reads remain provisional; see the
+  [device support and verification guide](docs/verification.md).
+- Configuration packet encoders in `SkyModeParser`. These return bytes;
+  the library does not send or confirm setting changes.
 
-- `python examples/scan.py` — quick one-shot scan that prints the first matching device (10s timeout).
-- `python examples/read.py [--address AA:BB:CC:DD:EE:FF] [--auth CODE]` — read all data; accepts an optional BLE address/UUID to skip the picker and an optional auth code for protected devices.
+Humidity percentage is unavailable: `humidity_raw`, `voc_raw` and `light_raw`
+have no validated conversion to physical units. Temperature uses the dedicated
+protocol field; sensor placement and measurement accuracy remain unverified.
+See the [protocol reference](characteristics.md) for services, characteristics
+and packet layouts, and the [verification matrix](docs/verification.md) for
+software-tested versus hardware-verified capabilities.
 
-## 🔐 Authentication
+## Documentation
 
-For devices that require authentication:
+- [API, pairing and error handling](docs/api.md)
+- [Migration from the legacy API](docs/migration.md)
+- [Bluetooth protocol](characteristics.md)
+- [Device support and hardware verification](docs/verification.md)
+- [Home Assistant integration roadmap](docs/home-assistant.md)
+- [Development, checks and releases](docs/development.md)
 
-```python
-parser = FreshIntelliventBluetoothDeviceData(
-    authentication_code="your_code_here"
-)
-device = await parser.update_device(ble_device)
-```
+Supported Python versions are declared in [package metadata](pyproject.toml).
 
-## 🧪 Development
-
-```bash
-# Install dependencies
-poetry install
-
-# Run tests
-poetry run pytest
-
-# Run linters
-poetry run ruff check pyfreshintellivent
-poetry run mypy pyfreshintellivent
-poetry run pylint pyfreshintellivent
-```
-
-## 🤝 Contributing
-
-Contributions are welcome! Please ensure:
-
-1. All tests pass
-2. Code is typed (mypy passes)
-3. Linting passes (ruff, pylint)
-4. Add tests for new features
-
-## 📄 License
-
-Apache License 2.0 - see [LICENSE](LICENSE.md)
-
-## 🔗 Related Projects
-
-- [Fresh Intellivent Sky integration for Home Assistant](https://github.com/angoyd/freshintelliventHacs)
-
-## 🙏 Credits
-
-Created and maintained by the community. Special thanks to all contributors!
+Licensed under [Apache 2.0](LICENSE.md).
