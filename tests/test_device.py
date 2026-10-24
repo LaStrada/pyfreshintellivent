@@ -433,7 +433,9 @@ class TestUpdateDeviceInternal:
             result = await parser._update_device(ble_device)
 
             assert isinstance(result, FreshIntelliventDevice)
-            mock_auth.assert_called_once_with(mock_client)
+            mock_auth.assert_called_once_with(
+                mock_client, authentication_code="12345678"
+            )
             mock_info.assert_called_once()
             mock_sensor.assert_called_once()
             mock_modes.assert_called_once()

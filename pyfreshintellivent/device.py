@@ -88,13 +88,31 @@ class FreshIntelliventBluetoothDeviceData:
             or max_attempts < 1
         ):
             raise ValueError("max_attempts must be a positive integer")
-        if authentication_code is not None:
-            h.validated_authentication_code(authentication_code)
         self._update_lock = asyncio.Lock()
         self.logger = logger or logging.getLogger(__name__)
         self.max_attempts = max_attempts
         self.parser = SkyModeParser()
         self.authentication_code = authentication_code
+
+    @property
+    def authentication_code(self) -> bytes | str | None:
+        """Return the configured key; mutable inputs are stored as immutable bytes."""
+        return self._authentication_code
+
+    @authentication_code.setter
+    def authentication_code(self, value: bytes | bytearray | str | None) -> None:
+        """Validate replacements before retaining them; only None is anonymous.
+
+        A replacement applies to the next connection attempt. An attempt already
+        connecting or authenticating keeps the key it captured before connecting.
+        """
+        if value is None:
+            self._authentication_code: bytes | str | None = None
+            return
+        validated = h.validated_authentication_code(value)
+        self._authentication_code = (
+            value if isinstance(value, str) else bytes(validated)
+        )
 
     def _handle_disconnect(
         self, disconnect_future: asyncio.Future[bool], client: BleakClient
@@ -198,6 +216,7 @@ class FreshIntelliventBluetoothDeviceData:
         self, ble_device: BLEDevice, *, pairing: bool = False
     ) -> FreshIntelliventDevice:
         """Internal method to connect and read device data."""
+        authentication_code = self.authentication_code
         device = FreshIntelliventDevice(address=ble_device.address)
         loop = asyncio.get_running_loop()
         disconnect_future: asyncio.Future[bool] = loop.create_future()
@@ -218,8 +237,10 @@ class FreshIntelliventBluetoothDeviceData:
                         await client.read_gatt_char(characteristics.AUTH)
                     )
                     await self.authenticate(client, authentication_code=pairing_key)
-                elif self.authentication_code:
-                    await self.authenticate(client)
+                elif authentication_code is not None:
+                    await self.authenticate(
+                        client, authentication_code=authentication_code
+                    )
 
                 # Read device information
                 await self.get_device_info(client, device, raise_on_not_found=True)
