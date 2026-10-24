@@ -2,11 +2,14 @@
 
 [![CI](https://github.com/LaStrada/pyfreshintellivent/actions/workflows/ci.yml/badge.svg)](https://github.com/LaStrada/pyfreshintellivent/actions/workflows/ci.yml)
 
-Async Bluetooth reader for Fresh Intellivent SKY. Python 3.12–3.14.
+Async Bluetooth reader for Fresh Intellivent SKY. See
+[package metadata](pyproject.toml) for supported Python versions.
 
-**This branch contains the unreleased 1.0.0b1 rewrite.** It is incompatible with
-0.3.x and must not replace the library underneath an existing HACS integration.
-No 1.0 package has been published by this work.
+This documentation describes the source in this checkout. For an installed
+package, use the documentation at its corresponding release tag.
+The reader API is incompatible with integrations using the legacy
+`FreshIntelliVent` connection/write API; update and test the caller before
+replacing its library dependency.
 
 The reader connects, optionally authenticates, reads a complete snapshot and
 releases the connection. Concurrent reads on the same reader are serialized.
@@ -61,7 +64,7 @@ See the [protocol evidence](characteristics.md) before presenting readings to us
 ## Documentation
 
 - [API and connection behavior](docs/api.md)
-- [Migration from 0.3.x and earlier rewrite snapshots](docs/migration.md)
+- [Migration from the legacy API](docs/migration.md)
 - [Protocol and source evidence](characteristics.md)
 - [Device support and verification matrix](docs/verification.md)
 - [Home Assistant roadmap and controls design](docs/home-assistant.md)
