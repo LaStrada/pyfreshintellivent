@@ -97,10 +97,13 @@ class FreshIntelliventBluetoothDeviceData:
         self.authentication_code = authentication_code
 
     def _handle_disconnect(
-        self, disconnect_future: asyncio.Future[bool], client: BleakClient
+        self,
+        disconnect_future: asyncio.Future[bool],
+        address: str,
+        _client: BleakClient,
     ) -> None:
-        """Handle disconnect from device."""
-        self.logger.debug("Disconnected from %s", client.address)
+        """Signal disconnect without accessing a potentially torn-down backend."""
+        self.logger.debug("Disconnected from %s", address)
         if not disconnect_future.done():
             disconnect_future.set_result(True)
 
@@ -165,7 +168,7 @@ class FreshIntelliventBluetoothDeviceData:
                     ble_device,
                     ble_device.address,
                     disconnected_callback=partial(
-                        self._handle_disconnect, disconnect_future
+                        self._handle_disconnect, disconnect_future, ble_device.address
                     ),
                     connection_state=connection_state,
                 )
@@ -195,7 +198,7 @@ class FreshIntelliventBluetoothDeviceData:
                 interrupt(
                     disconnect_future,
                     DisconnectedError,
-                    f"Disconnected from {client.address}",
+                    f"Disconnected from {ble_device.address}",
                 ),
                 asyncio.timeout(UPDATE_TIMEOUT),
             ):

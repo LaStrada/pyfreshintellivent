@@ -1,7 +1,7 @@
 """Tests for device module."""
 
 import asyncio
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, PropertyMock, patch
 
 import pytest
 from bleak.backends.device import BLEDevice
@@ -101,7 +101,17 @@ class TestFreshIntelliventBluetoothDeviceData:
         loop = asyncio.new_event_loop()
         disconnect_future = loop.create_future()
 
-        parser._handle_disconnect(disconnect_future, mock_client)
+        with patch.object(
+            type(mock_client),
+            "address",
+            new_callable=PropertyMock,
+            create=True,
+            side_effect=AttributeError("backend already removed"),
+        ) as address:
+            parser._handle_disconnect(
+                disconnect_future, "AA:BB:CC:DD:EE:FF", mock_client
+            )
+            address.assert_not_called()
 
         assert disconnect_future.done()
         assert disconnect_future.result() is True
@@ -118,7 +128,17 @@ class TestFreshIntelliventBluetoothDeviceData:
         disconnect_future.set_result(True)
 
         # Should not raise even if future is already done
-        parser._handle_disconnect(disconnect_future, mock_client)
+        with patch.object(
+            type(mock_client),
+            "address",
+            new_callable=PropertyMock,
+            create=True,
+            side_effect=AttributeError("backend already removed"),
+        ) as address:
+            parser._handle_disconnect(
+                disconnect_future, "AA:BB:CC:DD:EE:FF", mock_client
+            )
+            address.assert_not_called()
 
         assert disconnect_future.done()
         loop.close()
