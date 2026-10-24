@@ -153,3 +153,49 @@ test('other removal errors fail visibly', async () => {
   const result = await simulate(selection('Bugfix'), ['bug', 'enhancement'], { removeError: error });
   assert.equal(result.error, error);
 });
+
+
+for (const fence of ['```html', '~~~html', '```html <!-- literal']) {
+  test(`comment markers inside ${fence} do not hide the real selection`, async () => {
+    const body = ['## Description', fence, '<!-- unclosed example', fence.slice(0, 3), selection('Bugfix')].join('\n');
+    const result = await simulate(body, ['enhancement', 'research']);
+    assert.deepEqual(result.failures, []);
+    assert.equal(result.error, undefined);
+    assert.deepEqual(result.mutations.map(([op, args]) => [op, args.labels ?? args.name]), [
+      ['add', ['bug']], ['remove', 'enhancement'],
+    ]);
+  });
+}
+
+test('fences inside comments remain comments and trailing comments are ignored', async () => {
+  const body = [
+    '<!-- hidden', '```md', selection('Breaking change'), '-->',
+    '## Type of change',
+    '- [x] Bugfix <!-- trailing -->',
+  ].join('\n');
+  const result = await simulate(body);
+  assert.deepEqual(result.failures, []);
+  assert.equal(result.error, undefined);
+  assert.deepEqual(result.mutations.map(([op, args]) => [op, args.labels ?? args.name]), [['add', ['bug']]]);
+});
+
+
+for (const description of ['Use `<!--` to hide text', 'An unclosed <!-- inline marker', '    <!-- indented example', '\t<!-- tab-indented example']) {
+  test(`literal comment in description does not hide the selection: ${description}`, async () => {
+    const result = await simulate(`## Description\n\n${description}\n\n${selection('Bugfix')}`);
+    assert.deepEqual(result.failures, []);
+    assert.equal(result.error, undefined);
+    assert.deepEqual(result.mutations.map(([op, args]) => [op, args.labels ?? args.name]), [['add', ['bug']]]);
+  });
+}
+
+test('HTML comment blocks hide the entire closing line', async () => {
+  const body = [
+    '<!-- hidden', '-->## Type of change', '- [x] Breaking change',
+    '## Type of change', '<!-- hidden -->- [x] Breaking change', '- [x] Bugfix',
+  ].join('\n');
+  const result = await simulate(body);
+  assert.deepEqual(result.failures, []);
+  assert.equal(result.error, undefined);
+  assert.deepEqual(result.mutations.map(([op, args]) => [op, args.labels ?? args.name]), [['add', ['bug']]]);
+});

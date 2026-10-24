@@ -33,17 +33,26 @@ jobs:
               ['Maintenance, tests, CI or documentation', 'maintenance'],
             ]);
             // Treat the description strictly as data. Ignore comments and fenced examples.
-            const body = (pr.body ?? '').replace(/<!--[^]*?(?:-->|$)/g, '').replace(/\r/g, '');
+            const body = (pr.body ?? '').replace(/\r/g, '');
             const checked = [];
             let inSection = false;
             let fence = null;
-            for (const line of body.split('\n')) {
-              const delimiter = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
+            let inComment = false;
+            for (const rawLine of body.split('\n')) {
+              const delimiter = rawLine.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
               if (fence !== null) {
                 if (delimiter && delimiter[1][0] === fence[0] && delimiter[1].length >= fence.length && delimiter[2].trim() === '') fence = null;
                 continue;
               }
-              if (delimiter) { fence = delimiter[1]; continue; }
+              // Comment markers inside a fence (including its info string) are literal.
+              if (!inComment && delimiter) { fence = delimiter[1]; continue; }
+              // HTML comment blocks begin at column 0-3 and consume their closing line.
+              // Inline-code and indented-code examples must not open a comment block.
+              if (inComment || /^ {0,3}<!--/.test(rawLine)) {
+                inComment = !rawLine.includes('-->');
+                continue;
+              }
+              const line = rawLine.replace(/<!--.*?-->/g, '');
               if (/^ {0,3}#{1,6}(?:\s|$)/.test(line)) {
                 inSection = /^ {0,3}## Type of change\s*#*\s*$/.test(line);
                 continue;
