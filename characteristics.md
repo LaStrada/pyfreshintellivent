@@ -75,9 +75,13 @@ include 0 off, 1 constant, 2 timer, 3 humidity, 4 automatic cycles,
 valid modes when the upper nibble changes.
 
 **Do not expose relative humidity, lux, ppb or a VOC index from the raw fields.**
-There is no established calibration. The temperature interpretation
-still needs comparison with hardware; its sensor location and accuracy are not
-established. Bytes 10–11 are not an average temperature. Byte 7 is not an
+There is no established calibration for these raw fields. Temperature comes
+from the separate byte at offset 13, which reported 29–30 in the recorded SKY
+hardware checks. It can be exposed as the fan-reported temperature; agreement
+with a reference thermometer, sensor location and accuracy remain unverified.
+For example, one captured packet has temperature 29, VOC raw 2512 and reference
+raw 2518: dividing either raw word by 100 would produce a plausible but unrelated
+25.12 or 25.18. Bytes 10–11 are not an average temperature. Byte 7 is not an
 authentication flag.
 
 ## Configuration packets

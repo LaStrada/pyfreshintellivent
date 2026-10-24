@@ -6,9 +6,10 @@ Require a config flow that tests the key against the device, supports
 reauthentication, and prevents duplicate entries by Bluetooth address. Use HA's Bluetooth manager and fresh device lookup
 on every poll so local adapters and ESPHome proxies work through the same API.
 
-Expose RPM and operating mode; temperature should initially be diagnostic pending
-hardware verification. Do not expose humidity or label raw VOC/light as physical
-units. Failed reads must make sensors unavailable rather than preserve a fresh
+Expose RPM, operating mode and the device-reported temperature as enabled
+sensors. Temperature uses the dedicated byte at offset 13; its sensor location
+and accuracy relative to a room thermometer remain unverified. Do not expose
+humidity or label raw VOC/light as physical units. Failed reads must make sensors unavailable rather than preserve a fresh
 success timestamp with stale data. Use one coordinator and one reader per entry.
 Unload and cancellation must release the session.
 
