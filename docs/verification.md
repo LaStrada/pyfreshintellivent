@@ -2,7 +2,7 @@
 
 | Target | Evidence | Current claim |
 | --- | --- | --- |
-| Fresh Intellivent SKY | Packet contract, regression fixtures and a live SKY check | Existing-key reads, two scheduled polls and HA entry reload/disable-enable verified on one fan; broader acceptance pending |
+| Fresh Intellivent SKY | Packet contract, captured hardware regressions and attended SKY checks | Existing-key reads, dev-HA polling/reload, configuration retention and bounded transient modes verified on one fan; broader acceptance pending |
 | Fresh Intellivent ICE / ICE | HACS discovery and 700 RPM reports | Name discovery; reads provisional; no validated ICE write limits |
 | Other Fresh products | Same vendor or app alone | Unsupported until protocol and hardware evidence exists |
 
@@ -14,6 +14,8 @@ The test suite enforces 100% runtime statement and branch coverage. It covers:
 - Serialized reads, cancelled lock waiters, retries and connector callbacks.
 - Authentication rejection, transport failures and failed pairing.
 - Malformed packets, trigger/motor combinations, setting round trips and discovery.
+- Captured hardware snapshots, independent nested state across reads, sibling
+  settings and observed firmware normalization. See the [hardware fixtures](../tests/fixtures/sky_hardware_snapshots.json).
 
 The [CI workflow](../.github/workflows/ci.yml) defines the active Python/platform
 matrix. Simulated tests verify software behavior. Use the hardware checklist
@@ -57,9 +59,61 @@ Verified on this fan:
 The initial run was interrupted by an unconfirmed dev HTTP configuration's
 restart deadline. The final run confirmed that configuration and completed
 cleanly. This is a limited hardware check, not completion of the release checklist.
-Physical pairing, wrong-key rejection, ten-poll/overlapping-call stress tests,
-cancellation during BLE operations, proxy loss/failover, phone contention and
+Physical pairing, wrong-key rejection, ten scheduled HA polls, overlapping
+library callers, cancellation during BLE operations, proxy loss/failover, phone contention and
 sensor comparison with the app remain unverified on hardware. App version was
 not recorded because no app comparison was performed. No control entity or
 supported device-write API was exercised by the dev integration. Other firmware
 and ICE support still require separate validation.
+
+
+## State retention and bounded mode checks
+
+Additional attended tests on the same SKY used the reader and packet encoders
+through an ESPHome proxy. A separate test harness performed direct acknowledged
+GATT writes after recording all original settings; it was not a supported
+library device-write API or HA control entity.
+
+- Ten authenticated disconnect/reconnect/read cycles retained all configuration
+  packets and earlier snapshots.
+- Single-field tests covered constant-speed RPM/enabled, humidity RPM/detection/
+  enabled, independent light/VOC detection/enabled, timer duration/delay/RPM and
+  airing RPM/duration/enabled. Other fields and mode packets were checked.
+- Ten ordered RPM edits and eight interleaved field edits preserved cumulative
+  state through a reconnect. Each transaction read, patched, wrote and read back.
+- Twelve acknowledged speed writes without intervening reads took approximately
+  0.71 seconds from first to last acknowledgement. Immediate and delayed reads
+  retained the final 1500 rpm setting and unrelated fields. This verifies the
+  final result, not that every intermediate speed was physically reached.
+- A 60-second boost read back 58 seconds after about two seconds and reported
+  trigger 7. With pause added, both flags remained enabled, boost had 55 seconds
+  left, and the active trigger was pause (6). Behavior after pause expiry was not
+  tested. Pause alone reported zero RPM. A short 1300 rpm motor test reported
+  trigger 8 and 1327 measured RPM; off was acknowledged within about eight seconds.
+- Original raw packets were restored and verified again across a fresh connection.
+  Production HA resumed fresh polling after ownership was returned.
+
+One concrete normalization was observed: an airing request for 5 minutes was
+acknowledged but read back as 15 minutes, with the other fields unchanged. The
+raw encoder remains unchanged: this observation does not establish a universal
+minimum across firmware or devices. Controls must publish confirmed readback,
+not assume that acknowledgement means the requested value was stored exactly.
+
+The [snapshot tests](../tests/test_hardware_snapshots.py) replay 46 complete
+captures and four separate transient sensor packets. Expected values are fixed
+literals independently checked against byte positions. They cover real reader
+authentication, decoding, snapshot allocation and cleanup over mocked BLE I/O;
+they do not emulate firmware writes or a production command queue.
+
+Off, constant speed, VOC, boost, pause and motor-test operation were observed.
+Humidity, light, timer and airing settings were checked without deliberately
+activating their environmental/scheduled triggers. Measured RPM can lag a setpoint
+or follow another active mode while the constant setting remains unchanged.
+Sequential characteristic reads are not an atomic firmware snapshot.
+
+An early run exceeded the harness's cumulative transaction deadline; another
+stopped on the airing normalization. Both restored their original settings.
+Intermittent read timeouts and slower reads during long sessions were observed;
+reads recovered with bounded retry. These tests do not prove fault-free radio
+behavior, concurrent control handling, ICE support or completion of the release
+checklist. No production integration code, firmware or pairing was changed.

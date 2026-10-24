@@ -1,0 +1,1993 @@
+{
+  "description": "Sanitized SKY hardware captures. Fixed expectations independently checked against packet offsets; no auth, address or device name is recorded. Mode changes override the baseline expected modes.",
+  "model_number": "40",
+  "firmware": "01.01",
+  "hardware": "01.00",
+  "baseline_expected_modes": {
+    "humidity": {
+      "enabled": true,
+      "detection": "High",
+      "detection_raw": 3,
+      "rpm": 2000
+    },
+    "light_and_voc": {
+      "light": {
+        "enabled": true,
+        "detection": "High",
+        "detection_raw": 3
+      },
+      "voc": {
+        "enabled": true,
+        "detection": "High",
+        "detection_raw": 3
+      }
+    },
+    "constant_speed": {
+      "enabled": true,
+      "rpm": 1200
+    },
+    "timer": {
+      "delay": {
+        "enabled": true,
+        "minutes": 5
+      },
+      "minutes": 60,
+      "rpm": 1800
+    },
+    "airing": {
+      "enabled": false,
+      "minutes": 119,
+      "rpm": 800,
+      "cycle_period": 26
+    },
+    "pause": {
+      "enabled": false,
+      "minutes": 60
+    },
+    "boost": {
+      "enabled": false,
+      "seconds": 600,
+      "rpm": 2400
+    }
+  },
+  "airing_duration_observation": {
+    "requested_minutes": 5,
+    "written": "001a058403",
+    "read_back": "001a0f8403",
+    "expected_read_back": {
+      "enabled": false,
+      "cycle_period": 26,
+      "minutes": 15,
+      "rpm": 900
+    }
+  },
+  "snapshots": [
+    {
+      "label": "baseline",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "00100f01d009d000aa04d609001d00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 0,
+        "mode": "Constant speed",
+        "mode_raw": 16,
+        "active_trigger": 0,
+        "motor_speed_code": 1,
+        "temperature": 29,
+        "rpm": 1194,
+        "humidity_raw": 271,
+        "voc_raw": 2512,
+        "light_raw": 208,
+        "reference_raw": 2518,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {}
+    },
+    {
+      "label": "constant_1",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "00100e01d009cf009804d609001d00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "011405",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 0,
+        "mode": "Constant speed",
+        "mode_raw": 16,
+        "active_trigger": 0,
+        "motor_speed_code": 1,
+        "temperature": 29,
+        "rpm": 1176,
+        "humidity_raw": 270,
+        "voc_raw": 2512,
+        "light_raw": 207,
+        "reference_raw": 2518,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1300
+        }
+      }
+    },
+    {
+      "label": "constant_2",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "00100e01cf09ce00c704d609001d00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "017805",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 0,
+        "mode": "Constant speed",
+        "mode_raw": 16,
+        "active_trigger": 0,
+        "motor_speed_code": 1,
+        "temperature": 29,
+        "rpm": 1223,
+        "humidity_raw": 270,
+        "voc_raw": 2511,
+        "light_raw": 206,
+        "reference_raw": 2518,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1400
+        }
+      }
+    },
+    {
+      "label": "constant_3",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "00000e01cf09ce000000d609001d00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "007805",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 0,
+        "mode": "Off",
+        "mode_raw": 0,
+        "active_trigger": 0,
+        "motor_speed_code": 0,
+        "temperature": 29,
+        "rpm": 0,
+        "humidity_raw": 270,
+        "voc_raw": 2511,
+        "light_raw": 206,
+        "reference_raw": 2518,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": false,
+          "rpm": 1400
+        }
+      }
+    },
+    {
+      "label": "constant_4",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "00100e01cf09ce000806d209001d00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "017805",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 0,
+        "mode": "Constant speed",
+        "mode_raw": 16,
+        "active_trigger": 0,
+        "motor_speed_code": 1,
+        "temperature": 29,
+        "rpm": 1544,
+        "humidity_raw": 270,
+        "voc_raw": 2511,
+        "light_raw": 206,
+        "reference_raw": 2514,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1400
+        }
+      }
+    },
+    {
+      "label": "humidity_2",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "00100e01cf094b00b804d209001d00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "01016c07",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 0,
+        "mode": "Constant speed",
+        "mode_raw": 16,
+        "active_trigger": 0,
+        "motor_speed_code": 1,
+        "temperature": 29,
+        "rpm": 1208,
+        "humidity_raw": 270,
+        "voc_raw": 2511,
+        "light_raw": 75,
+        "reference_raw": 2514,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "humidity": {
+          "enabled": true,
+          "detection": "Low",
+          "detection_raw": 1,
+          "rpm": 1900
+        }
+      }
+    },
+    {
+      "label": "humidity_5",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "00101001cf094b00b304d209001d00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "00036c07",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 0,
+        "mode": "Constant speed",
+        "mode_raw": 16,
+        "active_trigger": 0,
+        "motor_speed_code": 1,
+        "temperature": 29,
+        "rpm": 1203,
+        "humidity_raw": 272,
+        "voc_raw": 2511,
+        "light_raw": 75,
+        "reference_raw": 2514,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "humidity": {
+          "enabled": false,
+          "detection": "High",
+          "detection_raw": 3,
+          "rpm": 1900
+        }
+      }
+    },
+    {
+      "label": "light_voc_1",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "00101401240ace00ae04d709001d00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01010103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 0,
+        "mode": "Constant speed",
+        "mode_raw": 16,
+        "active_trigger": 0,
+        "motor_speed_code": 1,
+        "temperature": 29,
+        "rpm": 1198,
+        "humidity_raw": 276,
+        "voc_raw": 2596,
+        "light_raw": 206,
+        "reference_raw": 2519,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "light_and_voc": {
+          "light": {
+            "enabled": true,
+            "detection": "Low",
+            "detection_raw": 1
+          },
+          "voc": {
+            "enabled": true,
+            "detection": "High",
+            "detection_raw": 3
+          }
+        }
+      }
+    },
+    {
+      "label": "light_voc_2",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "103415012f0a060bb504d7093c1d00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01010101",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 29,
+        "rpm": 1205,
+        "humidity_raw": 277,
+        "voc_raw": 2607,
+        "light_raw": 2822,
+        "reference_raw": 2519,
+        "minutes_active": 60,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "light_and_voc": {
+          "light": {
+            "enabled": true,
+            "detection": "Low",
+            "detection_raw": 1
+          },
+          "voc": {
+            "enabled": true,
+            "detection": "Low",
+            "detection_raw": 1
+          }
+        }
+      }
+    },
+    {
+      "label": "light_voc_3",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10341401390a2a0b1307d709381d00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01020101",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 29,
+        "rpm": 1811,
+        "humidity_raw": 276,
+        "voc_raw": 2617,
+        "light_raw": 2858,
+        "reference_raw": 2519,
+        "minutes_active": 56,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "light_and_voc": {
+          "light": {
+            "enabled": true,
+            "detection": "Medium",
+            "detection_raw": 2
+          },
+          "voc": {
+            "enabled": true,
+            "detection": "Low",
+            "detection_raw": 1
+          }
+        }
+      }
+    },
+    {
+      "label": "light_voc_4",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10341401450a2b0bca07d709341d00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01020102",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 29,
+        "rpm": 1994,
+        "humidity_raw": 276,
+        "voc_raw": 2629,
+        "light_raw": 2859,
+        "reference_raw": 2519,
+        "minutes_active": 52,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "light_and_voc": {
+          "light": {
+            "enabled": true,
+            "detection": "Medium",
+            "detection_raw": 2
+          },
+          "voc": {
+            "enabled": true,
+            "detection": "Medium",
+            "detection_raw": 2
+          }
+        }
+      }
+    },
+    {
+      "label": "light_voc_5",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10341401570a2b0bc207d7092c1d00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "00020102",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 29,
+        "rpm": 1986,
+        "humidity_raw": 276,
+        "voc_raw": 2647,
+        "light_raw": 2859,
+        "reference_raw": 2519,
+        "minutes_active": 44,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "light_and_voc": {
+          "light": {
+            "enabled": false,
+            "detection": "Medium",
+            "detection_raw": 2
+          },
+          "voc": {
+            "enabled": true,
+            "detection": "Medium",
+            "detection_raw": 2
+          }
+        }
+      }
+    },
+    {
+      "label": "light_voc_6",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "101013015b0a5001c207d7092b1d00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "00020002",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "Constant speed",
+        "mode_raw": 16,
+        "active_trigger": 0,
+        "motor_speed_code": 1,
+        "temperature": 29,
+        "rpm": 1986,
+        "humidity_raw": 275,
+        "voc_raw": 2651,
+        "light_raw": 336,
+        "reference_raw": 2519,
+        "minutes_active": 43,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "light_and_voc": {
+          "light": {
+            "enabled": false,
+            "detection": "Medium",
+            "detection_raw": 2
+          },
+          "voc": {
+            "enabled": false,
+            "detection": "Medium",
+            "detection_raw": 2
+          }
+        }
+      }
+    },
+    {
+      "label": "light_voc_7",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "101012015e0acf005e07d709291d00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01020002",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "Constant speed",
+        "mode_raw": 16,
+        "active_trigger": 0,
+        "motor_speed_code": 1,
+        "temperature": 29,
+        "rpm": 1886,
+        "humidity_raw": 274,
+        "voc_raw": 2654,
+        "light_raw": 207,
+        "reference_raw": 2519,
+        "minutes_active": 41,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "light_and_voc": {
+          "light": {
+            "enabled": true,
+            "detection": "Medium",
+            "detection_raw": 2
+          },
+          "voc": {
+            "enabled": false,
+            "detection": "Medium",
+            "detection_raw": 2
+          }
+        }
+      }
+    },
+    {
+      "label": "light_voc_8",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10341201640a2b0b9307d709261d00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01020102",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 29,
+        "rpm": 1939,
+        "humidity_raw": 274,
+        "voc_raw": 2660,
+        "light_raw": 2859,
+        "reference_raw": 2519,
+        "minutes_active": 38,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "light_and_voc": {
+          "light": {
+            "enabled": true,
+            "detection": "Medium",
+            "detection_raw": 2
+          },
+          "voc": {
+            "enabled": true,
+            "detection": "Medium",
+            "detection_raw": 2
+          }
+        }
+      }
+    },
+    {
+      "label": "timer_1",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10341101c80a2f0bbe07e809001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "0a01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1982,
+        "humidity_raw": 273,
+        "voc_raw": 2760,
+        "light_raw": 2863,
+        "reference_raw": 2536,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "timer": {
+          "delay": {
+            "enabled": true,
+            "minutes": 5
+          },
+          "minutes": 10,
+          "rpm": 1800
+        }
+      }
+    },
+    {
+      "label": "timer_2",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10341001ca0a2e0bb707e809001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "0a01020807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1975,
+        "humidity_raw": 272,
+        "voc_raw": 2762,
+        "light_raw": 2862,
+        "reference_raw": 2536,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "timer": {
+          "delay": {
+            "enabled": true,
+            "minutes": 2
+          },
+          "minutes": 10,
+          "rpm": 1800
+        }
+      }
+    },
+    {
+      "label": "timer_3",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10341101cc0a2e0bb507e809001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "0a00020807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1973,
+        "humidity_raw": 273,
+        "voc_raw": 2764,
+        "light_raw": 2862,
+        "reference_raw": 2536,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "timer": {
+          "delay": {
+            "enabled": false,
+            "minutes": 2
+          },
+          "minutes": 10,
+          "rpm": 1800
+        }
+      }
+    },
+    {
+      "label": "timer_4",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10341001ce0a2e0ba907e809001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "0a0002a406",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1961,
+        "humidity_raw": 272,
+        "voc_raw": 2766,
+        "light_raw": 2862,
+        "reference_raw": 2536,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "timer": {
+          "delay": {
+            "enabled": false,
+            "minutes": 2
+          },
+          "minutes": 10,
+          "rpm": 1700
+        }
+      }
+    },
+    {
+      "label": "timer_5",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10341001d00a2e0bb707e809001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "0a0102a406",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1975,
+        "humidity_raw": 272,
+        "voc_raw": 2768,
+        "light_raw": 2862,
+        "reference_raw": 2536,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "timer": {
+          "delay": {
+            "enabled": true,
+            "minutes": 2
+          },
+          "minutes": 10,
+          "rpm": 1700
+        }
+      }
+    },
+    {
+      "label": "airing_1",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10341001d40ad10abb07e809001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a778403",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1979,
+        "humidity_raw": 272,
+        "voc_raw": 2772,
+        "light_raw": 2769,
+        "reference_raw": 2536,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "airing": {
+          "enabled": false,
+          "minutes": 119,
+          "rpm": 900,
+          "cycle_period": 26
+        }
+      }
+    },
+    {
+      "label": "airing_2",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340e01ce0a2d0bc807fd09001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a0f8403",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1992,
+        "humidity_raw": 270,
+        "voc_raw": 2766,
+        "light_raw": 2861,
+        "reference_raw": 2557,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "airing": {
+          "enabled": false,
+          "minutes": 15,
+          "rpm": 900,
+          "cycle_period": 26
+        }
+      }
+    },
+    {
+      "label": "airing_3",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340c01d30a2e0bc007fd09001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "011a0f8403",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1984,
+        "humidity_raw": 268,
+        "voc_raw": 2771,
+        "light_raw": 2862,
+        "reference_raw": 2557,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "airing": {
+          "enabled": true,
+          "minutes": 15,
+          "rpm": 900,
+          "cycle_period": 26
+        }
+      }
+    },
+    {
+      "label": "airing_4",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340d01db0a2e0bbe07fd09001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a0f8403",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1982,
+        "humidity_raw": 269,
+        "voc_raw": 2779,
+        "light_raw": 2862,
+        "reference_raw": 2557,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "airing": {
+          "enabled": false,
+          "minutes": 15,
+          "rpm": 900,
+          "cycle_period": 26
+        }
+      }
+    },
+    {
+      "label": "burst_constant_1",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340c01e60a2e0bc807110a001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1992,
+        "humidity_raw": 268,
+        "voc_raw": 2790,
+        "light_raw": 2862,
+        "reference_raw": 2577,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1200
+        }
+      }
+    },
+    {
+      "label": "burst_constant_2",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340c01ed0a2f0bc007110a001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "011405",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1984,
+        "humidity_raw": 268,
+        "voc_raw": 2797,
+        "light_raw": 2863,
+        "reference_raw": 2577,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1300
+        }
+      }
+    },
+    {
+      "label": "burst_constant_3",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340e01fe0a2f0bb707110a001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "017805",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1975,
+        "humidity_raw": 270,
+        "voc_raw": 2814,
+        "light_raw": 2863,
+        "reference_raw": 2577,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1400
+        }
+      }
+    },
+    {
+      "label": "burst_constant_4",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340e01040b2e0bb507110a001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01dc05",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1973,
+        "humidity_raw": 270,
+        "voc_raw": 2820,
+        "light_raw": 2862,
+        "reference_raw": 2577,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1500
+        }
+      }
+    },
+    {
+      "label": "burst_constant_5",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340e010a0b2f0bb707110a001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1975,
+        "humidity_raw": 270,
+        "voc_raw": 2826,
+        "light_raw": 2863,
+        "reference_raw": 2577,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1200
+        }
+      }
+    },
+    {
+      "label": "burst_constant_6",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340c01130b2f0bb707110a001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "011405",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1975,
+        "humidity_raw": 268,
+        "voc_raw": 2835,
+        "light_raw": 2863,
+        "reference_raw": 2577,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1300
+        }
+      }
+    },
+    {
+      "label": "burst_constant_7",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340c01170b2f0bb207110a001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "017805",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1970,
+        "humidity_raw": 268,
+        "voc_raw": 2839,
+        "light_raw": 2863,
+        "reference_raw": 2577,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1400
+        }
+      }
+    },
+    {
+      "label": "burst_constant_8",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340d011d0b2f0bb607110a001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01dc05",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1974,
+        "humidity_raw": 269,
+        "voc_raw": 2845,
+        "light_raw": 2863,
+        "reference_raw": 2577,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1500
+        }
+      }
+    },
+    {
+      "label": "burst_constant_9",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340c01210b2f0bba07110a001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1978,
+        "humidity_raw": 268,
+        "voc_raw": 2849,
+        "light_raw": 2863,
+        "reference_raw": 2577,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1200
+        }
+      }
+    },
+    {
+      "label": "burst_constant_10",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340c012b0b2f0bb507110a001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "011405",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1973,
+        "humidity_raw": 268,
+        "voc_raw": 2859,
+        "light_raw": 2863,
+        "reference_raw": 2577,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1300
+        }
+      }
+    },
+    {
+      "label": "burst_mixed_1",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340e012d0b2e0bb507110a001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01010103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "011405",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1973,
+        "humidity_raw": 270,
+        "voc_raw": 2861,
+        "light_raw": 2862,
+        "reference_raw": 2577,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1300
+        },
+        "light_and_voc": {
+          "light": {
+            "enabled": true,
+            "detection": "Low",
+            "detection_raw": 1
+          },
+          "voc": {
+            "enabled": true,
+            "detection": "High",
+            "detection_raw": 3
+          }
+        }
+      }
+    },
+    {
+      "label": "burst_mixed_2",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340d01310b2f0bb907110a001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01010102",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "011405",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1977,
+        "humidity_raw": 269,
+        "voc_raw": 2865,
+        "light_raw": 2863,
+        "reference_raw": 2577,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1300
+        },
+        "light_and_voc": {
+          "light": {
+            "enabled": true,
+            "detection": "Low",
+            "detection_raw": 1
+          },
+          "voc": {
+            "enabled": true,
+            "detection": "Medium",
+            "detection_raw": 2
+          }
+        }
+      }
+    },
+    {
+      "label": "burst_mixed_3",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340d01330b2f0bb607110a001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01010102",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "011405",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "0f01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1974,
+        "humidity_raw": 269,
+        "voc_raw": 2867,
+        "light_raw": 2863,
+        "reference_raw": 2577,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1300
+        },
+        "light_and_voc": {
+          "light": {
+            "enabled": true,
+            "detection": "Low",
+            "detection_raw": 1
+          },
+          "voc": {
+            "enabled": true,
+            "detection": "Medium",
+            "detection_raw": 2
+          }
+        },
+        "timer": {
+          "delay": {
+            "enabled": true,
+            "minutes": 5
+          },
+          "minutes": 15,
+          "rpm": 1800
+        }
+      }
+    },
+    {
+      "label": "burst_mixed_4",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340c013c0b2f0bc907110a001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01010102",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "011405",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "0f01054006",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1993,
+        "humidity_raw": 268,
+        "voc_raw": 2876,
+        "light_raw": 2863,
+        "reference_raw": 2577,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1300
+        },
+        "light_and_voc": {
+          "light": {
+            "enabled": true,
+            "detection": "Low",
+            "detection_raw": 1
+          },
+          "voc": {
+            "enabled": true,
+            "detection": "Medium",
+            "detection_raw": 2
+          }
+        },
+        "timer": {
+          "delay": {
+            "enabled": true,
+            "minutes": 5
+          },
+          "minutes": 15,
+          "rpm": 1600
+        }
+      }
+    },
+    {
+      "label": "burst_mixed_5",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340d012d0b2f0b09072b0a001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "01030807",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01010102",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "011405",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "0f01054006",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1801,
+        "humidity_raw": 269,
+        "voc_raw": 2861,
+        "light_raw": 2863,
+        "reference_raw": 2603,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1300
+        },
+        "light_and_voc": {
+          "light": {
+            "enabled": true,
+            "detection": "Low",
+            "detection_raw": 1
+          },
+          "voc": {
+            "enabled": true,
+            "detection": "Medium",
+            "detection_raw": 2
+          }
+        },
+        "timer": {
+          "delay": {
+            "enabled": true,
+            "minutes": 5
+          },
+          "minutes": 15,
+          "rpm": 1600
+        },
+        "humidity": {
+          "enabled": true,
+          "detection": "High",
+          "detection_raw": 3,
+          "rpm": 1800
+        }
+      }
+    },
+    {
+      "label": "burst_mixed_6",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340d01120b2f0b16072b0a001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "01020807",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01010102",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "011405",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "0f01054006",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1814,
+        "humidity_raw": 269,
+        "voc_raw": 2834,
+        "light_raw": 2863,
+        "reference_raw": 2603,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1300
+        },
+        "light_and_voc": {
+          "light": {
+            "enabled": true,
+            "detection": "Low",
+            "detection_raw": 1
+          },
+          "voc": {
+            "enabled": true,
+            "detection": "Medium",
+            "detection_raw": 2
+          }
+        },
+        "timer": {
+          "delay": {
+            "enabled": true,
+            "minutes": 5
+          },
+          "minutes": 15,
+          "rpm": 1600
+        },
+        "humidity": {
+          "enabled": true,
+          "detection": "Medium",
+          "detection_raw": 2,
+          "rpm": 1800
+        }
+      }
+    },
+    {
+      "label": "burst_mixed_7",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340c01f70a2f0b10072b0a001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "01020807",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01010102",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01dc05",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "0f01054006",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1808,
+        "humidity_raw": 268,
+        "voc_raw": 2807,
+        "light_raw": 2863,
+        "reference_raw": 2603,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1500
+        },
+        "light_and_voc": {
+          "light": {
+            "enabled": true,
+            "detection": "Low",
+            "detection_raw": 1
+          },
+          "voc": {
+            "enabled": true,
+            "detection": "Medium",
+            "detection_raw": 2
+          }
+        },
+        "timer": {
+          "delay": {
+            "enabled": true,
+            "minutes": 5
+          },
+          "minutes": 15,
+          "rpm": 1600
+        },
+        "humidity": {
+          "enabled": true,
+          "detection": "Medium",
+          "detection_raw": 2,
+          "rpm": 1800
+        }
+      }
+    },
+    {
+      "label": "burst_mixed_8",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340b010f0b300b0a073d0a001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "01020807",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01010102",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01dc05",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "0f01054006",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1802,
+        "humidity_raw": 267,
+        "voc_raw": 2831,
+        "light_raw": 2864,
+        "reference_raw": 2621,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1500
+        },
+        "light_and_voc": {
+          "light": {
+            "enabled": true,
+            "detection": "Low",
+            "detection_raw": 1
+          },
+          "voc": {
+            "enabled": true,
+            "detection": "Medium",
+            "detection_raw": 2
+          }
+        },
+        "timer": {
+          "delay": {
+            "enabled": true,
+            "minutes": 5
+          },
+          "minutes": 15,
+          "rpm": 1600
+        },
+        "humidity": {
+          "enabled": true,
+          "detection": "Medium",
+          "detection_raw": 2,
+          "rpm": 1800
+        }
+      }
+    },
+    {
+      "label": "burst_after_reconnect",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340b01270bd20a0f073d0a001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "01020807",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01010102",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01dc05",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "0f01054006",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1807,
+        "humidity_raw": 267,
+        "voc_raw": 2855,
+        "light_raw": 2770,
+        "reference_raw": 2621,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1500
+        },
+        "light_and_voc": {
+          "light": {
+            "enabled": true,
+            "detection": "Low",
+            "detection_raw": 1
+          },
+          "voc": {
+            "enabled": true,
+            "detection": "Medium",
+            "detection_raw": 2
+          }
+        },
+        "timer": {
+          "delay": {
+            "enabled": true,
+            "minutes": 5
+          },
+          "minutes": 15,
+          "rpm": 1600
+        },
+        "humidity": {
+          "enabled": true,
+          "detection": "Medium",
+          "detection_raw": 2,
+          "rpm": 1800
+        }
+      }
+    },
+    {
+      "label": "back_to_back_final",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340c012c0bd10ab8073d0a001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01dc05",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 1976,
+        "humidity_raw": 268,
+        "voc_raw": 2860,
+        "light_raw": 2769,
+        "reference_raw": 2621,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "constant_speed": {
+          "enabled": true,
+          "rpm": 1500
+        }
+      }
+    },
+    {
+      "label": "overlay_sequential_observation",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10060a012f0bd10a00003d0a001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "0101",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0140063600"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "Pause",
+        "mode_raw": 6,
+        "active_trigger": 6,
+        "motor_speed_code": 0,
+        "temperature": 30,
+        "rpm": 0,
+        "humidity_raw": 266,
+        "voc_raw": 2863,
+        "light_raw": 2769,
+        "reference_raw": 2621,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {
+        "pause": {
+          "enabled": true,
+          "minutes": 1
+        },
+        "boost": {
+          "enabled": true,
+          "seconds": 54,
+          "rpm": 1600
+        }
+      }
+    },
+    {
+      "label": "final_restored",
+      "packets": {
+        "528b80e8-c47a-4c0a-bdf1-916a7748f412": "10340a01280bd00ae707530a001e00",
+        "7c4adc01-2f33-11e7-93ae-92361f002671": "0103d007",
+        "7c4adc02-2f33-11e7-93ae-92361f002671": "01030103",
+        "7c4adc03-2f33-11e7-93ae-92361f002671": "01b004",
+        "7c4adc04-2f33-11e7-93ae-92361f002671": "3c01050807",
+        "7c4adc05-2f33-11e7-93ae-92361f002671": "001a772003",
+        "7c4adc06-2f33-11e7-93ae-92361f002671": "003c",
+        "7c4adc07-2f33-11e7-93ae-92361f002671": "0060095802"
+      },
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "VOC",
+        "mode_raw": 52,
+        "active_trigger": 4,
+        "motor_speed_code": 3,
+        "temperature": 30,
+        "rpm": 2023,
+        "humidity_raw": 266,
+        "voc_raw": 2856,
+        "light_raw": 2768,
+        "reference_raw": 2643,
+        "minutes_active": 0,
+        "error_code": 0
+      },
+      "expected_mode_changes": {}
+    }
+  ],
+  "sensor_snapshots": [
+    {
+      "label": "boost_active",
+      "packet": "10670c012f0bd20a6e063d0a001e00",
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "Boost",
+        "mode_raw": 103,
+        "active_trigger": 7,
+        "motor_speed_code": 6,
+        "temperature": 30,
+        "rpm": 1646,
+        "humidity_raw": 268,
+        "voc_raw": 2863,
+        "light_raw": 2770,
+        "reference_raw": 2621,
+        "minutes_active": 0,
+        "error_code": 0
+      }
+    },
+    {
+      "label": "boost_and_pause",
+      "packet": "10060b01300bd10a00003d0a001e00",
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "Pause",
+        "mode_raw": 6,
+        "active_trigger": 6,
+        "motor_speed_code": 0,
+        "temperature": 30,
+        "rpm": 0,
+        "humidity_raw": 267,
+        "voc_raw": 2864,
+        "light_raw": 2769,
+        "reference_raw": 2621,
+        "minutes_active": 0,
+        "error_code": 0
+      }
+    },
+    {
+      "label": "pause_active",
+      "packet": "10060b01320bd10a00003d0a001e00",
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "Pause",
+        "mode_raw": 6,
+        "active_trigger": 6,
+        "motor_speed_code": 0,
+        "temperature": 30,
+        "rpm": 0,
+        "humidity_raw": 267,
+        "voc_raw": 2866,
+        "light_raw": 2769,
+        "reference_raw": 2621,
+        "minutes_active": 0,
+        "error_code": 0
+      }
+    },
+    {
+      "label": "motor_test_active",
+      "packet": "10680c01340bd20a2f053d0a001e00",
+      "expected_sensors": {
+        "flags_raw": 16,
+        "mode": "Motor test",
+        "mode_raw": 104,
+        "active_trigger": 8,
+        "motor_speed_code": 6,
+        "temperature": 30,
+        "rpm": 1327,
+        "humidity_raw": 268,
+        "voc_raw": 2868,
+        "light_raw": 2770,
+        "reference_raw": 2621,
+        "minutes_active": 0,
+        "error_code": 0
+      }
+    }
+  ]
+}

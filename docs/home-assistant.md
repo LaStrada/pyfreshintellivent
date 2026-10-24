@@ -31,7 +31,9 @@ A `fan` entity implies direct on/off or speed semantics that this mode-based dev
 does not consistently provide. Prefer switches for persistent enabled flags,
 numbers for durations/RPM limits and selects for detection levels. A timed boost
 may need an entity action with parameters; a button only suits a fixed preset.
-Decide after confirming whether boost values are defaults or remaining runtime.
+On the checked SKY firmware, active boost reads return remaining seconds.
+Keep a requested duration separate from that countdown; confirm behavior on other
+firmware before choosing entity semantics.
 
 A plain FIFO of complete stale packets is insufficient. A per-device transaction
 lock must cover read-current → merge requested fields → write → read back. Preserve
@@ -40,6 +42,13 @@ and polls; bounded coalescing can combine pending fields with explicit last-writ
 rules. Confirmed state comes from readback. If a write times out, reconcile by
 reading before retrying: a timeout does not mean the device rejected the write.
 Do not silently drop newer changes or clear pending work after a failed write.
+Entities must not assemble complete packets from a client captured during setup.
+A completion may clear only its own pending command, never one queued during an
+await. Keep queues per config entry, refresh running status after writes, and
+separate configured setpoints from measured RPM or the currently active trigger.
+Regression tests must include commands arriving during write/readback awaits,
+interleaved sibling fields, idempotent edits, two-device isolation, normalization,
+and uncertain outcomes without blindly restarting timed modes.
 
 A final independent phase can add unauthenticated read-only setup after its actual
 capabilities and missing fields have been verified across firmware versions.
