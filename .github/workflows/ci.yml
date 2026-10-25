@@ -34,7 +34,7 @@ jobs:
       - run: python -m pip install poetry==2.5.1
       - run: poetry check --lock
       - run: poetry install --no-interaction
-      - run: poetry run pytest --cov-report=xml
+      - run: poetry run pytest tests .github/tests --cov=.github/scripts --cov-report=xml
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -76,6 +76,9 @@ jobs:
       - run: poetry run ruff check pyfreshintellivent tests
       - run: poetry run pylint pyfreshintellivent
       - run: poetry run mypy pyfreshintellivent
+      - run: poetry run black --check .github/scripts .github/tests
+      - run: poetry run isort --check-only .github/scripts .github/tests
+      - run: poetry run ruff check .github/scripts .github/tests
 
   package:
     name: Build and smoke-test wheel
