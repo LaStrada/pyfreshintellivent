@@ -43,6 +43,9 @@ jobs:
     needs: [validate, ci]
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
     environment:
       name: pypi
       url: https://pypi.org/p/pyfreshintellivent
@@ -53,5 +56,4 @@ jobs:
           path: dist/
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          password: ${{ secrets.PYPI_UPLOAD_PASSWORD }}
-          attestations: false
+          attestations: true
