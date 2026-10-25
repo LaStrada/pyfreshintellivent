@@ -39,4 +39,10 @@ HA's full dependency pins into this package.
 1. Check API compatibility and update [migration notes](migration.md).
 2. Review [hardware test gaps](verification.md#remaining-hardware-tests).
 3. Run local checks and build the package.
-4. Select a version, publish, then verify installation of the released wheel.
+4. Merge the package version change, then publish a GitHub release tagged
+   `v<version>`. Mark alpha, beta and RC versions as prereleases.
+
+The release workflow checks the tag/version and runs CI before uploading its
+built distributions to PyPI. It uses the `PYPI_UPLOAD_PASSWORD` repository secret.
+Run it manually for a dry run: manual runs never publish. After publication,
+verify installation of the released wheel in a clean environment.
