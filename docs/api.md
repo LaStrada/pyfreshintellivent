@@ -35,11 +35,11 @@ access. See [authentication verification](verification.md#authentication-and-ano
 | Disconnect | 10 seconds |
 | Clear stale characteristic cache | 30 seconds |
 
-Transport errors, unexpected disconnects and read timeouts are retried, with a
-one-second delay. These deadlines are separate, not a total operation timeout.
+Transport errors, unexpected disconnects and connect/read timeouts are retried,
+with a one-second delay. These deadlines are separate, not a total operation timeout.
 The connector may retry within the connection deadline.
 
-`update_device()` requires all status and configuration reads to succeed.
+`update_device()` requires device information, status and configuration reads to succeed.
 Cancellation waits for disconnect cleanup before releasing the lock.
 Authentication rejection, malformed packets and cleanup failures stop retries.
 Lower-level `get_*` methods default to best-effort reads and require a connected
