@@ -1,6 +1,6 @@
 [project]
 name = "pyfreshintellivent"
-version = "1.0.0rc1"
+version = "1.0.0rc2"
 description = "Modern, type-safe Python interface for Fresh Intellivent Sky bathroom ventilation fan"
 authors = [
     {name = "Ståle Storø Hauknes", email = "walnut-caprice.04@icloud.com"},
