@@ -96,16 +96,12 @@ class FreshIntelliventBluetoothDeviceData:
 
     @property
     def authentication_code(self) -> bytes | str | None:
-        """Return the configured key; mutable inputs are stored as immutable bytes."""
+        """Return the configured authentication key."""
         return self._authentication_code
 
     @authentication_code.setter
     def authentication_code(self, value: bytes | bytearray | str | None) -> None:
-        """Validate replacements before retaining them; only None is anonymous.
-
-        A replacement applies to the next connection attempt. An attempt already
-        connecting or authenticating keeps the key it captured before connecting.
-        """
+        """Set the key for the next connection attempt; None selects anonymous reads."""
         if value is None:
             self._authentication_code: bytes | str | None = None
             return
@@ -160,11 +156,7 @@ class FreshIntelliventBluetoothDeviceData:
                     attempt += 1
 
     async def pair_device(self, ble_device: BLEDevice) -> bytes:
-        """Read a key during physical pairing and verify it before retaining it.
-
-        A single attempt shares the polling lock and full cleanup lifecycle.
-        No key is retained if authentication, snapshot validation or cleanup fails.
-        """
+        """Read a pairing key; retain it only after a successful read and disconnect."""
         async with self._update_lock:
             await self._update_device(ble_device, pairing=True)
             assert self.authentication_code is not None

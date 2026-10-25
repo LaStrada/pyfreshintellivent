@@ -1,8 +1,4 @@
-"""SKY sensor packet, as decoded by Fresh Connect 2.2.1.
-
-Raw humidity, light and VOC readings have no established physical units.
-Authentication is confirmed separately, never inferred from sensor bytes.
-"""
+"""SKY sensor packet decoding."""
 
 from __future__ import annotations
 
@@ -28,7 +24,7 @@ _IDLE_MODES = {0: "Off", 1: "Constant speed"}
 # pylint: disable=too-many-instance-attributes
 @dataclasses.dataclass
 class SensorData:
-    """One sensor snapshot. Raw fields deliberately retain firmware values."""
+    """Sensor snapshot; raw humidity, light and VOC values have unknown units."""
 
     flags_raw: int | None = None
     mode: str | None = None
@@ -46,7 +42,7 @@ class SensorData:
 
     @classmethod
     def from_bytes(cls, data: bytes | bytearray) -> SensorData:
-        """Decode the exact 15-byte SKY packet; reject truncated/extended frames."""
+        """Decode a 15-byte SKY sensor packet."""
         if len(data) != 15:
             raise ValueError(f"Length must be exactly 15, was {len(data)}.")
 
