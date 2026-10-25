@@ -77,7 +77,6 @@ software-tested versus hardware-verified capabilities.
 - [Migration from the legacy API](docs/migration.md)
 - [Bluetooth protocol](characteristics.md)
 - [Device support and hardware verification](docs/verification.md)
-- [Home Assistant integration roadmap](docs/home-assistant.md)
 - [Development, checks and releases](docs/development.md)
 
 Supported Python versions are declared in [package metadata](pyproject.toml).

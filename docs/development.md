@@ -61,12 +61,12 @@ The library supports Python 3.12, 3.13 and 3.14 without compatibility shims.
 Its dependency floors match the shared packages below. Check both Home Assistant's
 stable release and a specific development revision before raising those floors.
 
-Dependency references checked on 2026-10-24:
+Dependency references checked on 2026-10-25:
 
 | Home Assistant reference | Required Python | Shared Bluetooth dependencies |
 | --- | --- | --- |
 | Stable `2026.10.3`: [project metadata](https://github.com/home-assistant/core/blob/2026.10.3/pyproject.toml), [Bluetooth manifest](https://github.com/home-assistant/core/blob/2026.10.3/homeassistant/components/bluetooth/manifest.json) | `>=3.14.2` | `bleak==3.0.2`, `bleak-retry-connector==4.7.1`, `async-interrupt==1.2.2` |
-| Development revision `21faf911e37c181015129b5df5a933c5145a7d2b`: [project metadata](https://github.com/home-assistant/core/blob/21faf911e37c181015129b5df5a933c5145a7d2b/pyproject.toml), [Bluetooth manifest](https://github.com/home-assistant/core/blob/21faf911e37c181015129b5df5a933c5145a7d2b/homeassistant/components/bluetooth/manifest.json) | `>=3.14.2` | `bleak==3.0.2`, `bleak-retry-connector==4.7.1`, `async-interrupt==1.2.2` |
+| Development revision `a9c9e65f35af8e934d77ab5023641697d82007ef`: [project metadata](https://github.com/home-assistant/core/blob/a9c9e65f35af8e934d77ab5023641697d82007ef/pyproject.toml), [Bluetooth manifest](https://github.com/home-assistant/core/blob/a9c9e65f35af8e934d77ab5023641697d82007ef/homeassistant/components/bluetooth/manifest.json) | `>=3.14.2` | `bleak==3.0.2`, `bleak-retry-connector==4.7.1`, `async-interrupt==1.2.2` |
 
 When changing dependencies:
 
