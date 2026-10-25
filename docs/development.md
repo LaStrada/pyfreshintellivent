@@ -43,6 +43,9 @@ HA's full dependency pins into this package.
    `v<version>`. Mark alpha, beta and RC versions as prereleases.
 
 The release workflow checks the tag/version and runs CI before uploading its
-built distributions to PyPI. It uses the `PYPI_UPLOAD_PASSWORD` repository secret.
+built distributions to PyPI using Trusted Publishing, with provenance attestations.
+The PyPI publisher must match owner `LaStrada`, repository `pyfreshintellivent`,
+workflow `release.yml` and environment `pypi`. No upload token is needed.
 Run it manually for a dry run: manual runs never publish. After publication,
-verify installation of the released wheel in a clean environment.
+verify installation of the released wheel in a clean environment and check that
+both the wheel and source archive have attestations on PyPI.
