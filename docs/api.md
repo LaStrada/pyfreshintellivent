@@ -1,94 +1,78 @@
-# API and lifecycle
+# API
 
 ## Reader
 
-`FreshIntelliventBluetoothDeviceData(logger=None, max_attempts=3, authentication_code=None)`
-accepts a four-byte key or eight hexadecimal characters. Invalid and all-zero
-keys fail before connecting. One reader should be reused per physical device;
-its lock does not coordinate independent readers, processes, HA instances or a
-phone app.
+```python
+reader = FreshIntelliventBluetoothDeviceData(
+    authentication_code=key,
+    max_attempts=3,
+    logger=None,
+)
+result = await reader.update_device(ble_device)
+```
 
-Only `authentication_code=None` selects reads without authentication. Empty
-strings/bytes, malformed hex, wrong types and zero keys are errors, including
-when replacing `reader.authentication_code`. Failed assignments preserve the
-previous key. Caller-owned bytearrays are copied to immutable bytes; validated
-hex strings retain their string representation for compatibility.
+`ble_device` is a Bleak `BLEDevice`. The result contains `info`, `sensors` and
+`modes` dataclasses. Reuse one reader per fan: it serializes reads and disconnects
+between them. Separate readers do not share a lock.
 
-Each connection attempt captures its key before connecting. Replacing the key
-while an attempt is in flight affects the next attempt, including a later retry,
-without changing the current exchange. Anonymous reads never acquire a key or
-write the authentication characteristic. Availability of unauthenticated reads
-is firmware-dependent; see the [authentication verification](verification.md#authentication-and-anonymous-reads).
-Do not silently fall back to anonymous reads after a rejected configured key.
+| Argument | Accepted values |
+| --- | --- |
+| `authentication_code` | Four bytes, a four-byte `bytearray`, eight hex characters, or `None` for anonymous reads. Empty and all-zero keys are rejected. |
+| `max_attempts` | Positive integer; use `1` if the caller handles retries. |
+| `logger` | Optional `logging.Logger`. |
 
-`await reader.update_device(ble_device)` returns `FreshIntelliventDevice` with
-`info`, `sensors` and `modes` dataclasses. Obtain `ble_device` from the caller's
-Bluetooth transport. Home Assistant integrations must use HA Bluetooth APIs,
-not start a second scanner.
+Assigning `reader.authentication_code` validates the new key immediately and
+applies it to the next connection attempt. Invalid assignments leave the previous
+key intact; mutable inputs are copied. A rejected key never falls back to anonymous
+access. See [authentication verification](verification.md#authentication-and-anonymous-reads).
 
-Every attempt has a 30-second connection deadline and a separate 30-second
-read deadline. Disconnect has a 10-second deadline. Cache invalidation after a
-missing characteristic has a 30-second deadline. Retry delay is one second;
-`max_attempts=1` is appropriate when the caller already schedules retries.
-The retry connector may perform transport retries inside the connection deadline.
+## Timeouts and retries
 
-Unexpected disconnects, read deadlines and Bleak transport errors are retried
-within the configured limit. Authentication rejection, malformed packets and
-cleanup failures are not blindly retried. Required characteristic reads are
-strict: a transport failure cannot return an apparently successful partial
-snapshot. Individual `get_*` methods default to diagnostic, best-effort reads;
-they are lower-level APIs and require the caller to own a connected client.
+| Operation | Deadline |
+| --- | --- |
+| Connect | 30 seconds |
+| Read | 30 seconds per attempt |
+| Disconnect | 10 seconds |
+| Clear stale characteristic cache | 30 seconds |
 
-Disconnect callbacks use the address captured before connecting, so a torn-down
-backend cannot prevent delivery of the disconnect signal. Late callbacks remain
-isolated to their original attempt.
+Transport errors, unexpected disconnects and read timeouts are retried, with a
+one-second delay. These deadlines are separate, not a total operation timeout.
+The connector may retry within the connection deadline.
 
-Cancellation during connect cleans up the partially established client.
-Cancellation during a read waits for bounded disconnect cleanup before releasing
-the lock and propagating `CancelledError`. A backend can still ignore cancellation
-or fail to release a physical connection; application deadlines are not proof of
-radio recovery. If cleanup fails after a retryable read failure, a
-`ConnectionCleanupError` stops reconnect attempts. It is available from
-`pyfreshintellivent.exceptions` and is a `FreshIntelliventError`.
+`update_device()` requires all status and configuration reads to succeed.
+Cancellation waits for disconnect cleanup before releasing the lock.
+Authentication rejection, malformed packets and cleanup failures stop retries.
+Lower-level `get_*` methods default to best-effort reads and require a connected
+client managed by the caller.
 
 ## Physical pairing
 
-`await reader.pair_device(ble_device)` reads the four-byte key while the user has
-enabled pairing on the fan, authenticates with its confirmation characteristic,
-validates a complete snapshot, and disconnects. Only then does it return immutable
-key bytes and retain the key for subsequent reads. A zero key, negative
-confirmation, bad packet, transport error, cancellation or failed cleanup leaves
-the reader's previous key unchanged. Pairing uses the same lock as polling and
-makes one attempt; it does not trigger physical pairing or reset the fan.
+```python
+key = await reader.pair_device(ble_device)
+```
 
-Store the returned key in the caller's private credential/config-entry storage;
-do not log it. A HA flow can offer this as its normal authenticated setup path,
-with an existing-key field for migration and recovery.
+Enable pairing on the fan first. This makes one attempt to read and authenticate
+the key, read the fan and disconnect. Success returns four key bytes and stores
+them on the reader; failure preserves the previous key. Store the key privately.
+Physical key acquisition has not yet been tested on hardware.
 
 ## Errors
 
-- `AuthenticationError`: invalid/rejected authentication exchange; prompt to
-  check the key or pair again, rather than repeatedly retrying a bad key.
-- `DisconnectedError`: connection dropped while reading.
-- `FreshIntelliventTimeoutError`: connection/read deadline expired.
-- `ConnectionCleanupError`: disconnect could not be confirmed; caller should
-  back off and investigate instead of immediately opening another connection.
-- `BleakError`: transport failure after attempts are exhausted, including failures
-  writing the key or reading confirmation. A lost BLE packet does not prove the
-  key is wrong and must not trigger reauthentication.
-- `TypeError`: unsupported authentication input type; use bytes, bytearray, hex
-  text or `None`.
-- `ValueError`: invalid input or malformed response; firmware/protocol evidence
-  is needed before widening packet acceptance.
+| Exception | Meaning |
+| --- | --- |
+| `AuthenticationError` | Authentication was rejected. |
+| `DisconnectedError` | Connection dropped during a read. |
+| `FreshIntelliventTimeoutError` | Connect or read deadline expired. |
+| `ConnectionCleanupError` | Disconnect failed; back off before reconnecting. Import from `pyfreshintellivent.exceptions`. |
+| `BleakError` | BLE transport failure after retries; does not mean the key is wrong. |
+| `TypeError` | Unsupported authentication input type. |
+| `ValueError` | Invalid input or malformed packet. |
 
-Exceptions can carry chained backend errors. Do not forward raw tracebacks,
-credentials, addresses or private transport details without reviewing/redacting.
+## Packet encoders
 
-## Encoders
+`SkyModeParser` provides `*_read` and `*_write` methods for humidity, light/VOC,
+constant speed, timer, airing, pause and boost. `temporary_speed_write()` encodes
+motor-test settings.
 
-`SkyModeParser` has `*_read` / `*_write` pairs for humidity, light/VOC,
-constant speed, timer, airing, pause and boost settings.
-`temporary_speed_write()` is an encoder with no paired reader. All `*_write`
-methods return bytes only. There is no transaction queue, optimistic
-state handling or device write-confirmation API in this reader.
-See [the packet table and limitations](../characteristics.md).
+The write methods return bytes. They do not send settings, confirm changes or
+queue commands. See [packet formats and limits](../characteristics.md#configuration-packets).

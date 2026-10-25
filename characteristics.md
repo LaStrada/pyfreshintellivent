@@ -3,26 +3,21 @@
 This reference defines the UUIDs, packet layouts and decoding rules used by the
 reader and encoders. Numeric words are unsigned and little-endian; offsets are
 zero-based and lengths are in bytes. Configuration flags occupy one byte: the
-reader treats nonzero as true, and encoders write 0 or 1. See
-[verification and device support](docs/verification.md) for the evidence behind
-each capability and its firmware limits.
+reader treats nonzero as true, and encoders write 0 or 1.
 
 ## Services and characteristics
 
-| Service UUID | Meaning | Identification |
-| --- | --- | --- |
-| `0000180a-0000-1000-8000-00805f9b34fb` | Standard Device Information | Shared by many BLE devices; never a Fresh discovery filter on its own |
-| `1a46a853-e5ed-4696-bac0-70e346884a26` | SKY status service containing the status characteristic below | A protocol reference, not a complete compatibility guarantee |
+| Service UUID | Purpose |
+| --- | --- |
+| `0000180a-0000-1000-8000-00805f9b34fb` | Standard Device Information; not specific to Fresh |
+| `1a46a853-e5ed-4696-bac0-70e346884a26` | SKY status service |
 
-The reader resolves custom characteristics by UUID. The tables below do not
-claim a complete GATT service inventory or verified parent-service assignments
-for every custom characteristic. Advertisement names are discovery hints;
-protocol reads and model/firmware evidence establish compatibility.
+The reader resolves characteristics by UUID. This is not a complete GATT inventory.
 
 | Characteristic UUID | Purpose | Payload / library use |
 | --- | --- | --- |
 | `b85fa07a-9382-4838-871c-81d045dcc2ff` | Device alias | UTF-8 string, trailing NULs removed; read into `name` |
-| `528b80e8-c47a-4c0a-bdf1-916a7748f412` | Sensor/status snapshot | Exactly 15 bytes; see status layout below |
+| `528b80e8-c47a-4c0a-bdf1-916a7748f412` | Sensor/status | Exactly 15 bytes; see status layout below |
 | `4cad343a-209a-40b7-b911-4d9b3df569b2` | Authentication key exchange | Four bytes; written to authenticate, read only for explicit pairing |
 | `d1ae6b70-ee12-4f6d-b166-d2063dcaffe1` | Authentication confirmation | Nonempty response; first byte is interpreted |
 
@@ -38,35 +33,23 @@ Standard Device Information characteristics use the Bluetooth base UUID
 | `2a29` | `info.manufacturer` | UTF-8, trailing NULs removed |
 
 UUID constants are defined in [characteristics.py](pyfreshintellivent/characteristics.py).
-Model string `40` is associated with the SKY protocol family. Shared names,
-identifiers or UUIDs do not establish support for another model.
 
 ## Authentication
 
 Authentication uses an application-level four-byte key. This exchange is separate
 from operating-system Bluetooth pairing or bonding.
 
-Write the four-byte key to `4cad343a-209a-40b7-b911-4d9b3df569b2` with a GATT
-response, then read `d1ae6b70-ee12-4f6d-b166-d2063dcaffe1`. The reader waits one
-second for processing (an implementation delay, not a verified protocol minimum)
-and accepts first byte `01`; empty or negative replies
-raise `AuthenticationError`. A successful write alone is not authentication.
-Requiring 1 avoids accepting unknown status values. Extended replies are decoded
-by their first byte; trailing bytes are not interpreted.
+Write the key to `4cad343a-209a-40b7-b911-4d9b3df569b2` with a GATT response.
+The reader waits one second, then reads `d1ae6b70-ee12-4f6d-b166-d2063dcaffe1`.
+First byte `01` confirms authentication; an empty response or another value
+raises `AuthenticationError`. Trailing bytes are ignored.
 
-With no configured key, the reader skips AUTH writes and confirmation reads.
-Anonymous sensor and mode reads have limited hardware verification; see the
-[authentication matrix](docs/verification.md#authentication-and-anonymous-reads).
-They do not imply anonymous write access or support on every firmware.
+With no key, the reader skips authentication. See
+[anonymous read testing](docs/verification.md#authentication-and-anonymous-reads).
 
-In the documented SKY pairing procedure, reveal the touch controls and hold the
-wireless button for roughly eight seconds, then read the key characteristic.
-The key is not available as a nonzero value outside pairing mode. Follow the
-manual for the actual model. Use `await reader.pair_device(ble_device)` while
-pairing is enabled. It verifies the key, reads a complete snapshot and finishes
-disconnect cleanup before returning the key bytes and retaining them on the
-reader. Failure preserves any previous key. Never print key bytes in diagnostics
-or examples.
+During physical pairing, the key can be read from its characteristic. Enable
+pairing according to the fan's manual, then call
+[`reader.pair_device()`](docs/api.md#physical-pairing). Keep returned keys private.
 
 ## Sensor packet
 
@@ -100,13 +83,9 @@ include 0 off, 1 constant, 2 timer, 3 humidity, 4 automatic cycles,
 `0x34` and `0x54` therefore both mean a VOC trigger. Exact-byte lookup tables lose
 valid modes when the upper nibble changes.
 
-**Do not expose relative humidity, lux, ppb or a VOC index from the raw fields.**
-There is no established calibration for these raw fields. Temperature comes
-from the separate byte at offset 13 and can be exposed as the fan-reported
-temperature. Sensor location and accuracy relative to a reference thermometer
-remain unverified. Do not derive temperature by scaling the VOC or reference
-words, even when the result looks plausible. Bytes 10–11 are not an average
-temperature. Byte 7 is not an authentication flag.
+Humidity, VOC and light are raw readings with no validated conversion to
+percent, ppb or lux. Temperature is byte 13; its accuracy remains unverified.
+Bytes 10–11 are not an average temperature, and byte 7 is not an authentication flag.
 
 ## Configuration packets
 
@@ -125,16 +104,12 @@ All UUIDs below use suffix `-2f33-11e7-93ae-92361f002671`.
 
 `u8` and `u16` mean unsigned 8- and 16-bit values; flags follow the encoding
 rule above. The seven configuration readers require the exact listed lengths.
-Motor test has a packet encoder only and is not read into snapshots. Packet encoders
+Motor test has a packet encoder only and is not read by the library. Packet encoders
 produce bytes; they do not send writes or verify that firmware applied a change.
 
-Sensitivity levels are 1 low, 2 medium, 3 high. VOC used to decode in reverse
-while encoding in normal order. The reader now uses the same order in both
-directions.
-Issue #52 contains an older iOS observation to the contrary; cross-platform/live
-comparison remains necessary before declaring every firmware verified. Light
-levels also preserve 1=Low, 2=Medium, 3=High; reading Low must not silently
-normalize it to Medium and change the next encoded packet.
+Light and VOC sensitivity levels are 1 low, 2 medium, 3 high in both readers
+and encoders. See [#52](https://github.com/LaStrada/pyfreshintellivent/issues/52)
+for a conflicting VOC ordering report.
 
 Known encoder limits: RPM clamps to 800–2400. Negative airing, boost and pause
 durations clamp to zero. Timer duration and delay are encoded directly as unsigned
@@ -158,14 +133,9 @@ mode changes and motor spin-up can take effect later. Another trigger may also
 override a configured mode. Sequential characteristic reads are not an atomic
 firmware snapshot. Preserve fresh sibling fields when encoding an update.
 
-Firmware may normalize a requested value. Use confirmed readback rather than
-assuming that the acknowledged request was stored unchanged; do not generalize
-an observed limit to every firmware. See the
-[capability matrix](docs/verification.md) for verified behavior and remaining gaps.
+Firmware may normalize requested values. Report confirmed readback.
 
 ## Related reports
-
-These reports provide compatibility context, not universal protocol guarantees:
 
 - [VOC ordering dispute, library #52](https://github.com/LaStrada/pyfreshintellivent/issues/52)
 - [VOC raw mode 84, HACS #60](https://github.com/angoyd/freshintelliventHacs/issues/60)

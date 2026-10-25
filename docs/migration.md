@@ -1,41 +1,32 @@
 # Migrating from the legacy API
 
-The snapshot reader is incompatible with the legacy `FreshIntelliVent`
-connection/write API. Integrations using that API must migrate before updating
-their library dependency.
+Replace `FreshIntelliVent` with
+`FreshIntelliventBluetoothDeviceData.update_device(BLEDevice)`. Each call returns
+new data; consumers must replace their previous result. Device writes are no
+longer part of the reader API.
 
-Use `FreshIntelliventBluetoothDeviceData.update_device(BLEDevice)` to obtain a
-new snapshot. The old `FreshIntelliVent` API is not available. Read current
-coordinator data on each update; do not retain an initial snapshot inside entities.
+## Sensor fields
 
-| Earlier sensor field | Replacement / reason |
+| Earlier field | Replacement |
 | --- | --- |
-| `humidity` | Removed. `humidity_raw` has no validated percent conversion. |
-| `temperature` decoded from offset 4 | Corrected to byte 13. Offset 4 is `voc_raw`. |
-| `temperature_avg` | Removed. Offset 10 is `reference_raw`. |
-| `authenticated` | Removed. It was the high byte of `light_raw`; PIN confirmation now validates authentication. |
-| `status` | Removed; use `flags_raw` only with documented bit meanings. |
-| `unknowns` | Replaced with named raw/reference/minutes/temperature/error fields. |
-| Exact `mode_raw` lookup | `active_trigger` and `motor_speed_code`; unknown combinations stay unknown. |
+| `humidity` | `humidity_raw`; no validated percentage conversion. |
+| `temperature` from offset 4 | Byte 13; offset 4 is `voc_raw`. |
+| `temperature_avg` | Removed; offset 10 is `reference_raw`. |
+| `authenticated` | Removed; authentication uses a separate confirmation characteristic. |
+| `status` | `flags_raw`. |
+| `unknowns` | Named raw/reference/minutes/temperature/error fields. |
+| Exact `mode_raw` lookup | Separate `active_trigger` and `motor_speed_code`. |
 
-Do not combine old temperature or humidity statistics with corrected sensors.
-A HA integration should not expose humidity and should use new unique IDs for
-any measurement whose meaning changed. Existing humidity configuration settings
-are distinct from a humidity measurement and remain readable.
+Keep historical statistics separate when a sensor's meaning changes.
+Humidity configuration settings remain readable.
 
-VOC decoding now agrees with the encoder: 1=Low, 2=Medium, 3=High. If a device
-previously appeared to revert between Low and High, capture the raw setting and
-compare with its current app before issuing further writes. Light sensitivity now
-also preserves raw 1 as Low instead of normalizing it to Medium; a read/encode
-round trip no longer changes that setting to 2.
+## Settings and authentication
 
-Authentication keys must contain exactly four bytes or eight hex characters;
-an all-zero key is rejected. A write acknowledgement is insufficient; the PIN
-confirmation characteristic must start with byte 1. Previously tolerated bad keys
-now fail explicitly. Only `None` requests anonymous reads; empty/falsy values are
-not aliases. Replacing `authentication_code` validates immediately and preserves
-the previous key on failure. Mutable bytearray inputs are defensively copied,
-and each connection attempt keeps the key selected before connection begins.
-
-Scan results no longer include arbitrary devices with service 0x180A. Use the
-current advertisement name or a known address supplied by your platform.
+- VOC and light sensitivity use 1=Low, 2=Medium, 3=High in both directions.
+- Keys must contain four bytes or eight hex characters. Empty and all-zero keys
+  are rejected; only `None` selects anonymous reads.
+- Authentication requires confirmation from the fan, not just a write acknowledgement.
+- Replacing a key takes effect on the next connection attempt. Invalid replacements
+  preserve the previous key.
+- Discovery matches device names; the generic Device Information service `0x180A`
+  alone no longer identifies a Fresh fan.
