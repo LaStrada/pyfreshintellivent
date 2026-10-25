@@ -33,6 +33,7 @@ def mock_client():
     client = AsyncMock()
     client.address = "AA:BB:CC:DD:EE:FF"
     client.is_connected = True
+    client.read_gatt_char.return_value = bytearray([1])
     return client
 
 
@@ -276,14 +277,14 @@ class TestFreshIntelliventBluetoothDeviceData:
         mock_client.write_gatt_char.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_authenticate_failure(self, mock_client):
+    async def test_authenticate_transport_failure(self, mock_client):
         """Test authenticate failure."""
         parser = FreshIntelliventBluetoothDeviceData(authentication_code="12345678")
 
         # Mock write to raise error
         mock_client.write_gatt_char.side_effect = BleakError("auth failed")
 
-        with pytest.raises(AuthenticationError):
+        with pytest.raises(BleakError):
             await parser.authenticate(mock_client)
 
 
@@ -296,9 +297,10 @@ class TestDeviceDataReading:
         parser = FreshIntelliventBluetoothDeviceData()
         device = FreshIntelliventDevice(address="AA:BB:CC:DD:EE:FF")
 
-        # Mock characteristic reads - order: name, fw, hw, sw, mfr
+        # Mock characteristic reads - order: name, model, fw, hw, sw, mfr
         mock_client.read_gatt_char.side_effect = [
             b"FreshSky",  # Device name
+            b"40",  # SKY protocol model number
             b"3.0",  # FW version
             b"1.0",  # HW version
             b"2.0",  # SW version
@@ -308,6 +310,7 @@ class TestDeviceDataReading:
         await parser.get_device_info(mock_client, device)
 
         assert device.name == "FreshSky"
+        assert device.info.model_number == "40"
         assert device.info.hw_version == "1.0"
         assert device.info.sw_version == "2.0"
         assert device.info.fw_version == "3.0"
@@ -339,6 +342,7 @@ class TestDeviceDataReading:
 
         values = [
             b"FreshSky",  # Device name
+            b"40",  # SKY protocol model number
             b"3.0",  # FW version
             b"1.0",  # HW version
             b"2.0",  # SW version
@@ -366,8 +370,8 @@ class TestDeviceDataReading:
 
         await parser.get_sensor_data(mock_client, device)
 
-        assert device.sensors.status is True
-        assert device.sensors.temperature == 27.9
+        assert device.sensors.flags_raw == 1
+        assert device.sensors.temperature == 28
         assert device.sensors.rpm == 1234
 
     @pytest.mark.asyncio
@@ -449,7 +453,9 @@ class TestUpdateDeviceInternal:
             result = await parser._update_device(ble_device)
 
             assert isinstance(result, FreshIntelliventDevice)
-            mock_auth.assert_called_once_with(mock_client)
+            mock_auth.assert_called_once_with(
+                mock_client, authentication_code="12345678"
+            )
             mock_info.assert_called_once()
             mock_sensor.assert_called_once()
             mock_modes.assert_called_once()
@@ -624,14 +630,16 @@ class TestUpdateDeviceInternal:
             if idx == 0:
                 return b"FreshSky"
             if idx == 1:
-                return b"3.0"
+                return b"40"
             if idx == 2:
-                return b"1.0"
+                return b"3.0"
             if idx == 3:
-                return b"2.0"
+                return b"1.0"
             if idx == 4:
-                return b"Manufacturer"
+                return b"2.0"
             if idx == 5:
+                return b"Manufacturer"
+            if idx == 6:
                 raise DisconnectedError("sensor read dropped")
             return b""
 
@@ -643,6 +651,7 @@ class TestUpdateDeviceInternal:
         second_client.disconnect = AsyncMock()
         read_sequence = [
             b"FreshSky",
+            b"40",
             b"3.0",
             b"1.0",
             b"2.0",

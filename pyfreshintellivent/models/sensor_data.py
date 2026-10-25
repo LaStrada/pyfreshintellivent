@@ -1,80 +1,73 @@
-"""Sensor data model for Fresh Intellivent Sky devices."""
+"""SKY sensor packet decoding."""
 
 from __future__ import annotations
 
 import dataclasses
-from math import log
 from struct import unpack
 
 MODE_UNKNOWN = "Unknown"
-
-_MODES = {
-    0: "Off",
+_TRIGGER_MODES = {
+    1: "Humidity",
+    2: "Light",
+    3: "Timer",
+    4: "VOC",
+    5: "Airing",
     6: "Pause",
-    16: "Constant speed",
-    34: "Light",
-    35: "Timer",
-    49: "Humidity",
-    52: "VOC",
-    103: "Boost",
+    7: "Boost",
+    8: "Motor test",
+    9: "Humidity sinking",
+    11: "Delayed start",
 }
+_IDLE_MODES = {0: "Off", 1: "Constant speed"}
 
 
-#  pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-instance-attributes
 @dataclasses.dataclass
 class SensorData:
-    """Sensor readings from the device."""
+    """Sensor snapshot; raw humidity, light and VOC values have unknown units."""
 
-    status: bool | None = None
+    flags_raw: int | None = None
     mode: str | None = None
     mode_raw: int | None = None
-    temperature: float | None = None
-    temperature_avg: float | None = None
+    active_trigger: int | None = None
+    motor_speed_code: int | None = None
+    temperature: int | None = None
     rpm: int | None = None
-    humidity: float | None = None
-    authenticated: bool | None = None
-    unknowns: list[int] | None = None
+    humidity_raw: int | None = None
+    voc_raw: int | None = None
+    light_raw: int | None = None
+    reference_raw: int | None = None
+    minutes_active: int | None = None
+    error_code: int | None = None
 
     @classmethod
     def from_bytes(cls, data: bytes | bytearray) -> SensorData:
-        """Parse raw sensor data from the device.
+        """Decode a 15-byte SKY sensor packet."""
+        if len(data) != 15:
+            raise ValueError(f"Length must be exactly 15, was {len(data)}.")
 
-        Args:
-            data: Raw 15-byte sensor data from device
-
-        Returns:
-            SensorData instance with parsed values
-
-        Raises:
-            ValueError: If data length is not exactly 15 bytes
-        """
-        if data is None or len(data) != 15:
-            raise ValueError(f"Length need to be exactly 15, was {len(data)}.")
-
-        values = unpack("<2B2H2B2H3B", data)
-
-        status = bool(values[0])
-        mode_raw = int(values[1])
-        mode = _MODES.get(mode_raw, MODE_UNKNOWN)
-
-        humidity = None
-        if values[2] != 0:
-            humidity = round((log(values[2] / 10) * 10), 1)
-
-        temperature = values[3] / 100
-        temperature_avg = values[7] / 100
-        unknowns = [values[4], values[8], values[9], values[10]]
-        authenticated = bool(values[5])
-        rpm = values[6]
-
+        flags, mode_raw, humidity, voc, light, rpm, reference, minutes, temp, error = (
+            unpack("<BB5H3B", data)
+        )
+        trigger = mode_raw & 0x0F
+        motor = mode_raw >> 4
+        mode = (
+            _TRIGGER_MODES.get(trigger, MODE_UNKNOWN)
+            if trigger
+            else _IDLE_MODES.get(motor, MODE_UNKNOWN)
+        )
         return cls(
-            status=status,
+            flags_raw=flags,
             mode=mode,
             mode_raw=mode_raw,
-            temperature=temperature,
-            temperature_avg=temperature_avg,
+            active_trigger=trigger,
+            motor_speed_code=motor,
+            temperature=temp,
             rpm=rpm,
-            humidity=humidity,
-            authenticated=authenticated,
-            unknowns=unknowns,
+            humidity_raw=humidity,
+            voc_raw=voc,
+            light_raw=light,
+            reference_raw=reference,
+            minutes_active=minutes,
+            error_code=error,
         )

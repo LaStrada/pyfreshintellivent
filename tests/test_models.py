@@ -49,15 +49,14 @@ def test_fresh_intellivent_device():
 def test_sensor_data():
     """Test SensorData model."""
     sensor = SensorData(
-        status=True,
+        flags_raw=1,
         mode="Humidity",
         mode_raw=49,
         temperature=22.5,
-        temperature_avg=21.8,
         rpm=1200,
-        humidity=65.0,
-        authenticated=True,
-        unknowns=[0, 1, 2, 3],
+        humidity_raw=650,
+        voc_raw=123,
+        light_raw=456,
     )
 
     assert sensor.temperature == 22.5

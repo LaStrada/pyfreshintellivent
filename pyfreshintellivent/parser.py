@@ -24,14 +24,21 @@ class SkyModeParser:
 
         return {
             "enabled": enabled,
+            "cycle_period": int(unpacked[1]),
             "minutes": minutes,
             "rpm": rpm,
         }
 
-    def airing_write(self, enabled: bool, minutes: int, rpm: int) -> bytes:
+    def airing_write(
+        self, enabled: bool, minutes: int, rpm: int, *, cycle_period: int = 26
+    ) -> bytes:
         """Write airing mode settings to the device."""
         return pack(
-            "<?2BH", enabled, 26, h.validated_time(minutes), h.validated_rpm(rpm)
+            "<?2BH",
+            enabled,
+            cycle_period,
+            h.validated_time(minutes),
+            h.validated_rpm(rpm),
         )
 
     def boost_read(self, value: Union[bytes, bytearray]) -> dict[str, Union[bool, int]]:
@@ -109,16 +116,12 @@ class SkyModeParser:
         return {
             "light": {
                 "enabled": light_enabled,
-                "detection": h.detection_int_as_string(
-                    value=light_detection, disable_low=True
-                ),
+                "detection": h.detection_int_as_string(value=light_detection),
                 "detection_raw": light_detection,
             },
             "voc": {
                 "enabled": voc_enabled,
-                "detection": h.detection_int_as_string(
-                    value=voc_detection, regular_order=False
-                ),
+                "detection": h.detection_int_as_string(value=voc_detection),
                 "detection_raw": voc_detection,
             },
         }

@@ -62,9 +62,6 @@ def detection_int_as_string(
     value: int, regular_order: bool = True, disable_low: bool = False
 ) -> str:
     """Convert detection integer to string representation."""
-    validated_value = validated_detection(value)
-    assert isinstance(validated_value, int)
-    value = validated_value
     if value == 1:
         if disable_low and regular_order is True:
             return DETECTION_MEDIUM
