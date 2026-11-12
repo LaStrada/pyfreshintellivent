@@ -35,7 +35,7 @@ include = ["characteristics.md"]
 [tool.poetry.group.dev.dependencies]
 black = ">=26.10.1"
 isort = "^7.0.0"
-ruff = ">=0.14.3"
+ruff = ">=0.17.2"
 mypy = "^1.18.2"
 pylint = "^4.1.3"
 
