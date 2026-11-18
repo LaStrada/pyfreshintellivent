@@ -799,14 +799,14 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pylint"
-version = "4.1.3"
+version = "4.1.4"
 description = "python code static checker"
 optional = false
 python-versions = ">=3.10.0"
 groups = ["dev"]
 files = [
-    {file = "pylint-4.1.3-py3-none-any.whl", hash = "sha256:a85357cae24f33ad8d86c8f3daaa92c600ae4012b54a57299cee76000e9364cf"},
-    {file = "pylint-4.1.3.tar.gz", hash = "sha256:9928603068edfa0d1a3c167f174b099d4b97c3db75d32d0fcdd029770b4713a9"},
+    {file = "pylint-4.1.4-py3-none-any.whl", hash = "sha256:b39fcc762ec4a7fe385d01b8e170fd996847297cdc0e3850bdda1435c74cfd95"},
+    {file = "pylint-4.1.4.tar.gz", hash = "sha256:4c9176dc6c9f1b98b742195f01899b290369d5a27b4b41d1014c17f2f96b26f1"},
 ]
 
 [package.dependencies]
@@ -1445,4 +1445,4 @@ all = ["winrt-Windows.Foundation.Collections[all] (>=3.2.1.0,<3.2.2.0)", "winrt-
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4"
-content-hash = "10734e7df0ad70419b9dccefda7efcee51122ce4bc710442fd18141faeaca630"
+content-hash = "6f1c354c0200271a764fa058f12809cccb809133816d6a0bb9e66a97e4d47e4b"
